@@ -6216,8 +6216,8 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     if (m_caster->GetTypeId() != TYPEID_PLAYER)
                         return;
 
-                    // Script Effect Player Cast Mirror Image
-                    m_caster->CastSpell(m_caster, 50217, true);
+                    // Script Effect Cleansing Soul
+                    m_caster->CastSpell(m_caster, 43351, true);
                     return;
                 }
                 case 44455:                                 // Character Script Effect Reverse Cast
