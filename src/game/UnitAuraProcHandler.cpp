@@ -408,7 +408,7 @@ bool Unit::IsTriggeredAtSpellProcEvent(Unit *pVictim, SpellAuraHolder* holder, S
         {
             // Check if player is wearing shield
             Item *item = ((Player*)this)->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
-            if(!item || item->IsBroken() || item->GetProto()->Class != ITEM_CLASS_ARMOR || !((1<<item->GetProto()->SubClass) & spellProto->EquippedItemSubClassMask))
+            if(!item || item->IsBroken() || !IsUseEquipedWeapon(OFF_ATTACK) || item->GetProto()->Class != ITEM_CLASS_ARMOR || !((1<<item->GetProto()->SubClass) & spellProto->EquippedItemSubClassMask))
                 return false;
         }
     }
@@ -1032,7 +1032,7 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                             break;
                         }
                         case CLASS_SHAMAN:
-						{
+                        {
                             uint32 RandomSpell[]={71485,71486,71492};
                             triggered_spell_id = RandomSpell[ irand(0, sizeof(RandomSpell)/sizeof(uint32) - 1) ];
                             break;
@@ -1065,7 +1065,7 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                 {
                     if(GetTypeId() != TYPEID_PLAYER)
                         return SPELL_AURA_PROC_FAILED;
-						
+                        
                     if(HasAura(71559) || HasAura(71561) || HasAura(71560) || HasAura(71556) || HasAura(71558))
                         return SPELL_AURA_PROC_FAILED;
 
@@ -1097,7 +1097,7 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                             break;
                         }
                         case CLASS_SHAMAN:
-						{
+                        {
                             uint32 RandomSpell[]={71556,71558,71560};
                             triggered_spell_id = RandomSpell[ irand(0, sizeof(RandomSpell)/sizeof(uint32) - 1) ];
                             break;
@@ -2131,7 +2131,7 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                 // Seal of Vengeance (damage calc on apply aura)
                 case 31801:
                 {
-                    if (effIndex != EFFECT_INDEX_0)         // effect 1,2 used by seal unleashing code
+                    if (effIndex != EFFECT_INDEX_0 || !(procFlag & PROC_FLAG_SUCCESSFUL_MELEE_HIT))         // effect 1,2 used by seal unleashing code
                         return SPELL_AURA_PROC_FAILED;
 
                     // At melee attack or Hammer of the Righteous spell damage considered as melee attack
@@ -2623,6 +2623,11 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                     target = this;
                     break;
                 }
+                // Earthen Power (Rank 1,2)
+                case 51523:
+                case 51524:
+                    triggered_spell_id = 63532;
+                    break;
                 // Glyph of Healing Wave
                 case 55440:
                 {
@@ -3848,6 +3853,14 @@ SpellAuraProcResult Unit::HandleProcTriggerSpellAuraProc(Unit *pVictim, uint32 d
             {
                 if (procSpell->Id != 47633)
                     return SPELL_AURA_PROC_FAILED;
+            }
+            // Glyph of Death Grip
+            if (auraSpellInfo->Id == 62259)
+            {
+                // remove cooldown of Death Grip
+                if (GetTypeId()==TYPEID_PLAYER)
+                    ((Player*)this)->RemoveSpellCooldown(49576, true);
+                return SPELL_AURA_PROC_OK;
             }
             // Blade Barrier
             else if (auraSpellInfo->SpellIconID == 85)

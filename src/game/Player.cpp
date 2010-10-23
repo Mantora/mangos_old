@@ -4495,7 +4495,8 @@ void Player::BuildPlayerRepop()
     if(GetCorpse())
     {
         sLog.outError("BuildPlayerRepop: player %s(%d) already has a corpse", GetName(), GetGUIDLow());
-        MANGOS_ASSERT(false);
+        sLog.outError("Removing player %s(%d) corpse from DB", GetName(), GetGUIDLow());
+        CharacterDatabase.PExecute("DELETE FROM corpse WHERE player = '%d'",GetGUIDLow());
     }
 
     // create a corpse and place it at the player's location
@@ -4572,7 +4573,11 @@ void Player::ResurrectPlayer(float restore_percent, bool applySickness)
     UpdateObjectVisibility();
 
     if(!applySickness)
+    {
+        if (!GetMap()->Instanceable())
+            CastSpell(this, SPELL_ID_HONORLESS_TARGET, true);
         return;
+    }
 
     //Characters from level 1-10 are not affected by resurrection sickness.
     //Characters from level 11-19 will suffer from one minute of sickness
@@ -7508,7 +7513,7 @@ void Player::_ApplyItemBonuses(ItemPrototype const *proto, uint8 slot, bool appl
             ApplyFeralAPBonus(feral_bonus, apply);
     }
 
-    if(!IsUseEquippedWeapon(slot==EQUIPMENT_SLOT_MAINHAND))
+    if(!IsUseEquipedWeapon(attType))
         return;
 
     if (proto->Delay)
@@ -9400,7 +9405,7 @@ Item* Player::GetWeaponForAttack(WeaponAttackType attackType, bool nonbroken, bo
     if (!item || item->GetProto()->Class != ITEM_CLASS_WEAPON)
         return NULL;
 
-    if (useable && !IsUseEquippedWeapon(attackType==BASE_ATTACK))
+    if (useable && !IsUseEquipedWeapon(attackType))
         return NULL;
 
     if (nonbroken && item->IsBroken())
@@ -9415,10 +9420,10 @@ Item* Player::GetShield(bool useable) const
     if (!item || item->GetProto()->Class != ITEM_CLASS_ARMOR)
         return NULL;
 
-    if(!useable)
+    if (!useable)
         return item;
 
-    if( item->IsBroken())
+   if (item->IsBroken() || !IsUseEquipedWeapon(OFF_ATTACK))
         return NULL;
 
     return item;

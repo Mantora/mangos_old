@@ -382,6 +382,10 @@ SpellSpecific GetSpellSpecific(uint32 spellId)
                 // SpellIcon 2560 is Spell 46687, does not have this flag
                 if ((spellInfo->AttributesEx2 & SPELL_ATTR_EX2_FOOD_BUFF) || spellInfo->SpellIconID == 2560)
                     return SPELL_WELL_FED;
+
+                else if (spellInfo->EffectApplyAuraName[EFFECT_INDEX_0] == SPELL_AURA_MOD_STAT &&  spellInfo->Attributes & SPELL_ATTR_NOT_SHAPESHIFT &&
+                     spellInfo->SchoolMask & SPELL_SCHOOL_MASK_NATURE && spellInfo->PreventionType == SPELL_PREVENTION_TYPE_SILENCE)
+                     return SPELL_SCROLL;
             }
             break;
         }
@@ -1730,7 +1734,25 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
     // Allow stack passive and not passive spells
     if ((spellInfo_1->Attributes & SPELL_ATTR_PASSIVE)!=(spellInfo_2->Attributes & SPELL_ATTR_PASSIVE))
         return false;
-		
+        
+    if (spellInfo_1->AttributesEx6 & SPELL_ATTR_EX6_UNK26 && spellInfo_2->AttributesEx6 & SPELL_ATTR_EX6_UNK26)
+    {
+        // Marks and Gifts of the Wild
+        if (spellInfo_1->EffectApplyAuraName[EFFECT_INDEX_2] == SPELL_AURA_MOD_RESISTANCE_EXCLUSIVE &&
+            spellInfo_2->EffectApplyAuraName[EFFECT_INDEX_2] == SPELL_AURA_MOD_RESISTANCE_EXCLUSIVE)
+            return true;
+
+        // Blessings of Kings and Blessing of Forgotten Kings
+        if (spellInfo_1->EffectApplyAuraName[EFFECT_INDEX_0] == SPELL_AURA_MOD_TOTAL_STAT_PERCENTAGE &&
+            spellInfo_2->EffectApplyAuraName[EFFECT_INDEX_0] == SPELL_AURA_MOD_TOTAL_STAT_PERCENTAGE)
+            return true;
+
+        // Battle Shout and Blessings of Might
+        if (spellInfo_1->EffectApplyAuraName[EFFECT_INDEX_1] == SPELL_AURA_MOD_RANGED_ATTACK_POWER &&
+            spellInfo_2->EffectApplyAuraName[EFFECT_INDEX_1] == SPELL_AURA_MOD_RANGED_ATTACK_POWER)
+            return true;
+    }
+        
     // Mistletoe debuff stack with everything
     if (spellInfo_1->Id == 26218 || spellInfo_2->Id == 26218)
         return false;
@@ -1738,7 +1760,7 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
     // Improved Mind Blast debuff stacks with everything
     if (spellInfo_1->Id == 48301 || spellInfo_2->Id == 48301)
         return false;
-		
+        
     // Ardent Defender cooldown debuff stacks with everything
     if (spellInfo_1->Id == 66233 || spellInfo_2->Id == 66233)
         return false;
@@ -1749,6 +1771,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
         case SPELLFAMILY_GENERIC:
             if (spellInfo_2->SpellFamilyName == SPELLFAMILY_GENERIC)
             {
+                // scrolls of intelect/stamina etc.
+                if ( GetSpellSpecific(spellInfo_1->Id) == SPELL_SCROLL &&
+                    GetSpellSpecific(spellInfo_2->Id) == SPELL_SCROLL )
+                    return true;
+
                 // Dark Essence & Light Essence
                 if ((spellInfo_1->Id == 65684 && spellInfo_2->Id == 65686) ||
                     (spellInfo_2->Id == 65684 && spellInfo_1->Id == 65686))
@@ -1842,6 +1869,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 if( (spellInfo_1->SpellFamilyFlags & UI64LIT(0x1)) && (spellInfo_2->SpellFamilyFlags & UI64LIT(0x400000)) ||
                     (spellInfo_2->SpellFamilyFlags & UI64LIT(0x1)) && (spellInfo_1->SpellFamilyFlags & UI64LIT(0x400000)) )
                     return false;
+
+                // Arcane Intellect and Dalaran Intellect
+                if( (spellInfo_1->SpellFamilyFlags & UI64LIT(0x400)) && (spellInfo_2->SpellFamilyFlags & UI64LIT(0x400)) )
+                    return true;
             }
             break;
         case SPELLFAMILY_WARLOCK:
@@ -1870,6 +1901,16 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
 
                 // Metamorphosis, diff effects
                 if (spellInfo_1->SpellIconID == 3314 && spellInfo_2->SpellIconID == 3314)
+                    return false;
+					
+                // Shadowflame and Corruption
+                if (((spellInfo_1->SpellFamilyFlags2 & 0x2) && spellInfo_2->SpellIconID == 313) ||
+                    ((spellInfo_2->SpellFamilyFlags2 & 0x2) && spellInfo_1->SpellIconID == 313))
+                    return false;
+
+                // Shadowflame and Curse of Agony
+                if (((spellInfo_1->SpellFamilyFlags2 & 0x2) && spellInfo_2->SpellIconID == 544) ||
+                    ((spellInfo_2->SpellFamilyFlags2 & 0x2) && spellInfo_1->SpellIconID == 544))
                     return false;
 
                 // Nether Protection effects
@@ -2040,6 +2081,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
 
                 // Seal of Corruption (caster/target parts stacking allow, other stacking checked by spell specs)
                 if (spellInfo_1->SpellIconID == 2292 && spellInfo_2->SpellIconID == 2292)
+                    return false;
+                    
+                // Seal of Vengeance/Corruption and Righteous Vengeance
+                if (spellInfo_1->SpellIconID == 2292 && spellInfo_2->SpellIconID == 3025 ||
+                    spellInfo_2->SpellIconID == 2292 && spellInfo_1->SpellIconID == 3025)
                     return false;
 
                 // Divine Sacrifice and Divine Guardian

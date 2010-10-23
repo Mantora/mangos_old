@@ -370,6 +370,9 @@ void Unit::Update( uint32 p_time )
 
 bool Unit::haveOffhandWeapon() const
 {
+    if (!IsUseEquipedWeapon(OFF_ATTACK))
+        return false;
+
     if(GetTypeId() == TYPEID_PLAYER)
         return ((Player*)this)->GetWeaponForAttack(OFF_ATTACK,true,true);
     else
@@ -1328,6 +1331,9 @@ void Unit::CastCustomSpell(Unit* Victim, SpellEntry const *spellInfo, int32 cons
             sLog.outError("CastCustomSpell: unknown spell by caster: %s", GetObjectGuid().GetString().c_str());
         return;
     }
+	
+    if(sObjectMgr.IsSpellDisabled(spellInfo->Id))
+        return;
 
     if (castItem)
         DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "WORLD: cast Item spellId - %i", spellInfo->Id);
@@ -1385,6 +1391,9 @@ void Unit::CastSpell(float x, float y, float z, SpellEntry const *spellInfo, boo
             sLog.outError("CastSpell(x,y,z): unknown spell by caster: %s", GetObjectGuid().GetString().c_str());
         return;
     }
+	
+    if(sObjectMgr.IsSpellDisabled(spellInfo->Id))
+        return;
 
     if (castItem)
         DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "WORLD: cast Item spellId - %i", spellInfo->Id);
@@ -3570,7 +3579,7 @@ float Unit::GetUnitBlockChance() const
     if(GetTypeId() == TYPEID_PLAYER)
     {
         Player const* player = (Player const*)this;
-        if(player->CanBlock() )
+        if(player->CanBlock() && player->IsUseEquipedWeapon(OFF_ATTACK))
         {
             Item *tmpitem = player->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND);
             if(tmpitem && !tmpitem->IsBroken() && tmpitem->GetProto()->Block)
@@ -8297,6 +8306,10 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
     {
         invisible = false;
     }
+	
+    // Arena preparation hack
+    if (HasAura(SPELL_ARENA_PREPARATION) && IsHostileTo(u))
+        invisible = true;
 
     // special cases for always overwrite invisibility/stealth
     if(invisible || m_Visibility == VISIBILITY_GROUP_STEALTH)
