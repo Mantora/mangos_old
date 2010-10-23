@@ -130,6 +130,62 @@ bool ChatHandler::HandleAnnounceCommand(char* args)
     return true;
 }
 
+// Nameannounce
+bool ChatHandler::HandleNameAnnounceCommand(char* args)
+{
+    int32 strid = 0;
+ 
+	if(!*args)
+        return false;
+ 	
+
+    switch(m_session->GetSecurity())
+	{
+		case SEC_MODERATOR:
+			strid = LANG_SYSTEMMESSAGE_MODERATOR;
+        break;
+		case SEC_SUPERMODERATOR:
+			strid = LANG_SYSTEMMESSAGE_SUPERMODERATOR;
+        break;
+		case SEC_MODERATORCHIEF:
+			strid = LANG_SYSTEMMESSAGE_MODERATORCHIEF;
+        break;
+		case SEC_GAMEOPERATOR:
+			strid = LANG_SYSTEMMESSAGE_GAMEOPERATOR;
+        break;
+		case SEC_SUPERGAMEOPERATOR:
+			strid = LANG_SYSTEMMESSAGE_SUPERGAMEOPERATOR;
+        break;
+		case SEC_GAMEMASTER:
+			strid = LANG_SYSTEMMESSAGE_GAMEMASTER;
+        break;
+		case SEC_SUPERGAMEMASTER:
+			strid = LANG_SYSTEMMESSAGE_SUPERGAMEMASTER;
+        break;
+		case SEC_QUALITYASSURANCE:
+			strid = LANG_SYSTEMMESSAGE_QUALITYASSURANCE;
+        break;
+		case SEC_DEVELOPER:
+			strid = LANG_SYSTEMMESSAGE_DEVELOPER;
+        break;
+		case SEC_GAMECHIEF:
+			strid = LANG_SYSTEMMESSAGE_GAMECHIEF;
+        break;
+		case SEC_SUBADMINISTRATOR:
+			strid = LANG_SYSTEMMESSAGE_SUBADMINISTRATOR;
+        break;
+		case SEC_ADMINISTRATOR:
+			strid = LANG_SYSTEMMESSAGE_ADMINISTRATOR;
+        break;
+		default:
+			return false;
+    }
+    sWorld.SendWorldText(strid, m_session->GetPlayerName(), args);
+    return true;
+}
+
+
+
 //notification player at the screen
 bool ChatHandler::HandleNotifyCommand(char* args)
 {
