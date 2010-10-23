@@ -22,7 +22,7 @@
 
 LexicsCutter::LexicsCutter()
 {
-    InvalidChars = "~`!@#$%^&*()-_+=[{]}|\\;:'\",<.>/?";
+    InvalidChars = "~`!@#$%^&*()-_+=[{]}|\\;:'\",<.>/?1234567890¹;`";
 }
 
 bool LexicsCutter::ReadUTF8(std::string& in, std::string& out, unsigned int& pos)
