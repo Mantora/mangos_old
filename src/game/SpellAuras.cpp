@@ -2071,6 +2071,21 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                         if (roll_chance_i(20))              // backfire stun
                             target->CastSpell(target, 51581, true, NULL, this);
                         return;
+                    case 43351:
+                        if(Unit* pCaster = GetCaster())
+                        {
+                            if(pCaster->GetTypeId() == TYPEID_PLAYER)
+                            {
+                                Player* pPlayer = (Player*)pCaster;
+
+                                if(!pPlayer)
+                                    return;
+
+                                pPlayer->SetStandState(UNIT_STAND_STATE_SIT);
+                                pPlayer->SetClientControl(pPlayer, 0);
+                            }
+                        }
+                        return;
                     case 43873:                             // Headless Horseman Laugh
                         target->PlayDistanceSound(11965);
                         return;
@@ -3353,6 +3368,49 @@ void Aura::HandleAuraTransform(bool apply, bool Real)
                 }
                 // Murloc costume
                 case 42365: target->SetDisplayId(21723); break;
+                //Dread Corsair
+                case 51926:
+                case 50517:
+                {
+                    switch(target->getGender())
+                    {
+                        case GENDER_MALE:
+                        {
+                            switch(target->getRace())
+                            {
+                                case RACE_UNDEAD_PLAYER: target->SetDisplayId(25042); break;
+                                case RACE_TROLL: target->SetDisplayId(25041); break;
+                                case RACE_TAUREN: target->SetDisplayId(25040); break;
+                                case RACE_ORC: target->SetDisplayId(25039); break;
+                                case RACE_NIGHTELF: target->SetDisplayId(25038); break;
+                                case RACE_HUMAN: target->SetDisplayId(25037); break;
+                                case RACE_GNOME: target->SetDisplayId(25035); break;
+                                case RACE_DWARF: target->SetDisplayId(25034); break;
+                                case RACE_DRAENEI: target->SetDisplayId(25033); break;
+                                case RACE_BLOODELF: target->SetDisplayId(25032); break;
+                            }
+                            break;
+                        }
+                        case GENDER_FEMALE:
+                        {
+                            switch(target->getRace())
+                            {
+                                case RACE_UNDEAD_PLAYER: target->SetDisplayId(25053); break;
+                                case RACE_TROLL: target->SetDisplayId(25052); break;
+                                case RACE_TAUREN: target->SetDisplayId(25051); break;
+                                case RACE_ORC: target->SetDisplayId(25050); break;
+                                case RACE_NIGHTELF: target->SetDisplayId(25049); break;
+                                case RACE_HUMAN: target->SetDisplayId(25048); break;
+                                case RACE_GNOME: target->SetDisplayId(25046); break;
+                                case RACE_DWARF: target->SetDisplayId(25045); break;
+                                case RACE_DRAENEI: target->SetDisplayId(25044); break;
+                                case RACE_BLOODELF: target->SetDisplayId(25043); break;
+                            }
+                            break;
+                        }
+                    }
+                    break;
+                }
                 // Honor the Dead
                 case 65386:
                 case 65495:

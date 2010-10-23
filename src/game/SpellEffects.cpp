@@ -271,7 +271,10 @@ void Spell::EffectInstaKill(SpellEffectIndex /*eff_idx*/)
     if (!unitTarget || !unitTarget->isAlive())
         return;
 
-    if (m_caster == unitTarget)                             // prevent interrupt message
+    if(m_spellInfo->Id==52479 && unitTarget->GetTypeId()==TYPEID_PLAYER)
+        return;
+
+    if (m_caster == unitTarget)                              // prevent interrupt message
         finish();
 
     WorldObject* caster = GetCastingObject();               // we need the original casting object
@@ -2657,7 +2660,8 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 }
                 else
                 {
-                    int32 bp = damage;
+                    int32 bp = m_caster->SpellDamageBonusDone(unitTarget, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE);
+                    bp = unitTarget->SpellDamageBonusTaken(m_caster, m_spellInfo, uint32(bp), SPELL_DIRECT_DAMAGE);
                     m_caster->CastCustomSpell(unitTarget, 47632, &bp, NULL, NULL, true);
                 }
                 return;
@@ -6213,10 +6217,22 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     if (m_caster->GetTypeId() != TYPEID_PLAYER)
                         return;
 
-                    // Script Effect Player Cast Mirror Image
-                    m_caster->CastSpell(m_caster, 50217, true);
+                    // Script Effect Cleansing Soul
+                    m_caster->CastSpell(m_caster, 43351, true);
                     return;
                 }
+				case 43375:
+				case 43972:		// Mixing Blood for Quest 11306 
+                {
+					switch(urand(0, 2))
+					{
+						case 0 : m_caster->CastSpell(m_caster, 43378, true); break;
+						case 1 : m_caster->CastSpell(m_caster, 43376, true); break;
+						case 2 : m_caster->CastSpell(m_caster, 43377, true); break;
+						case 3 : m_caster->CastSpell(m_caster, 43970, true); break;
+					}
+					break;
+				}
                 case 44455:                                 // Character Script Effect Reverse Cast
                 {
                     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT)
@@ -7444,6 +7460,25 @@ void Spell::EffectSanctuary(SpellEffectIndex /*eff_idx*/)
     if(!unitTarget)
         return;
     //unitTarget->CombatStop();
+
+    std::list<Unit *> targets;
+    {
+        MaNGOS::AnyUnfriendlyUnitInObjectRangeCheck u_check(m_caster, m_caster, m_caster->GetMap()->GetVisibilityDistance());
+        MaNGOS::UnitListSearcher<MaNGOS::AnyUnfriendlyUnitInObjectRangeCheck> searcher(targets, u_check);
+        Cell::VisitAllObjects(m_caster, searcher, m_caster->GetMap()->GetVisibilityDistance());
+    }
+
+    for(std::list<Unit *>::iterator tIter = targets.begin(); tIter != targets.end(); ++tIter)
+    {
+        for (uint32 i = CURRENT_FIRST_NON_MELEE_SPELL; i < CURRENT_MAX_SPELL; ++i)
+        {
+            if ((*tIter)->GetCurrentSpell(CurrentSpellTypes(i))
+            && (*tIter)->GetCurrentSpell(CurrentSpellTypes(i))->m_targets.getUnitTargetGUID() == unitTarget->GetGUID())
+            {
+                (*tIter)->InterruptSpell(CurrentSpellTypes(i), false);
+            }
+        }
+    }
 
     unitTarget->CombatStop();
     unitTarget->getHostileRefManager().deleteReferences();  // stop all fighting

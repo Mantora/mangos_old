@@ -267,6 +267,9 @@ class MANGOS_DLL_SPEC WorldSession
         //used with item_page table
         bool SendItemInfo( uint32 itemid, WorldPacket data );
 
+		// External mail
+		static void SendExternalMails();
+
         //auction
         void SendAuctionHello(Unit * unit);
         void SendAuctionCommandResult( uint32 auctionId, uint32 Action, uint32 ErrorCode, uint32 bidError = 0);
@@ -777,6 +780,7 @@ class MANGOS_DLL_SPEC WorldSession
         void HandleAlterAppearanceOpcode(WorldPacket& recv_data);
         void HandleRemoveGlyphOpcode(WorldPacket& recv_data);
         void HandleCharCustomizeOpcode(WorldPacket& recv_data);
+        void HandleCharFactionOrRaceChangeOpcode(WorldPacket& recv_data);
         void HandleQueryInspectAchievementsOpcode(WorldPacket& recv_data);
         void HandleEquipmentSetSaveOpcode(WorldPacket& recv_data);
         void HandleEquipmentSetDeleteOpcode(WorldPacket& recv_data);
