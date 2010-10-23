@@ -2559,7 +2559,7 @@ void Player::GiveXP(uint32 xp, Unit* victim)
     // XP to money conversion processed in Player::RewardQuest
     if(level >= sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
         return;
-		
+        
     if(HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_XP_USER_DISABLED))
         return;
 
@@ -5620,7 +5620,7 @@ void Player::UpdateWeaponSkill (WeaponAttackType attType)
     Unit *pVictim = getVictim();
     if(pVictim && pVictim->IsCharmerOrOwnerPlayerOrPlayerItself())
         return;
-		
+        
     if(pVictim && pVictim->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE ))
         return;
 
@@ -6623,8 +6623,8 @@ void Player::UpdateHonorFields()
     }
 
     m_lastHonorUpdateTime = now;
-	
-	uint32 HonorKills = GetUInt32Value(PLAYER_FIELD_LIFETIME_HONORBALE_KILLS);
+    
+    uint32 HonorKills = GetUInt32Value(PLAYER_FIELD_LIFETIME_HONORBALE_KILLS);
     uint32 victim_rank = 0;
 
     if (HonorKills < 10)
@@ -22370,10 +22370,19 @@ void Player::ActivateSpec(uint8 specNum)
     if(specNum >= GetSpecsCount())
         return;
 
+    if (GetMap()->IsBattleGround() && !HasAura(44521)) // In BattleGround with no Preparation buff
+        return;
+
     if (getClass() == CLASS_HUNTER || getClass() == CLASS_WARLOCK)
         UnsummonPetTemporaryIfAny();
     else if (Pet* pet = GetPet())
         pet->Remove(PET_SAVE_NOT_IN_SLOT, true);
+
+    ClearComboPointHolders();
+    ClearAllReactives();
+    UnsummonAllTotems();
+    RemoveAllEnchantments(TEMP_ENCHANTMENT_SLOT);
+    RemoveArenaAuras();
 
     SendActionButtons(2);
 
