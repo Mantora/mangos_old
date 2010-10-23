@@ -1842,6 +1842,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 if( (spellInfo_1->SpellFamilyFlags & UI64LIT(0x1)) && (spellInfo_2->SpellFamilyFlags & UI64LIT(0x400000)) ||
                     (spellInfo_2->SpellFamilyFlags & UI64LIT(0x1)) && (spellInfo_1->SpellFamilyFlags & UI64LIT(0x400000)) )
                     return false;
+
+                // Arcane Intellect and Dalaran Intellect
+                if( (spellInfo_1->SpellFamilyFlags & UI64LIT(0x400)) && (spellInfo_2->SpellFamilyFlags & UI64LIT(0x400)) )
+                    return true;
             }
             break;
         case SPELLFAMILY_WARLOCK:
