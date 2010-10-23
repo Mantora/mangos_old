@@ -1734,7 +1734,7 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
     // Allow stack passive and not passive spells
     if ((spellInfo_1->Attributes & SPELL_ATTR_PASSIVE)!=(spellInfo_2->Attributes & SPELL_ATTR_PASSIVE))
         return false;
-		
+        
     if (spellInfo_1->AttributesEx6 & SPELL_ATTR_EX6_UNK26 && spellInfo_2->AttributesEx6 & SPELL_ATTR_EX6_UNK26)
     {
         // Marks and Gifts of the Wild
@@ -1752,7 +1752,7 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
             spellInfo_2->EffectApplyAuraName[EFFECT_INDEX_1] == SPELL_AURA_MOD_RANGED_ATTACK_POWER)
             return true;
     }
-		
+        
     // Mistletoe debuff stack with everything
     if (spellInfo_1->Id == 26218 || spellInfo_2->Id == 26218)
         return false;
@@ -1760,7 +1760,7 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
     // Improved Mind Blast debuff stacks with everything
     if (spellInfo_1->Id == 48301 || spellInfo_2->Id == 48301)
         return false;
-		
+        
     // Ardent Defender cooldown debuff stacks with everything
     if (spellInfo_1->Id == 66233 || spellInfo_2->Id == 66233)
         return false;
@@ -2071,6 +2071,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
 
                 // Seal of Corruption (caster/target parts stacking allow, other stacking checked by spell specs)
                 if (spellInfo_1->SpellIconID == 2292 && spellInfo_2->SpellIconID == 2292)
+                    return false;
+                    
+                // Seal of Vengeance/Corruption and Righteous Vengeance
+                if (spellInfo_1->SpellIconID == 2292 && spellInfo_2->SpellIconID == 3025 ||
+                    spellInfo_2->SpellIconID == 2292 && spellInfo_1->SpellIconID == 3025)
                     return false;
 
                 // Divine Sacrifice and Divine Guardian
