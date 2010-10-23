@@ -1730,6 +1730,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
     // Allow stack passive and not passive spells
     if ((spellInfo_1->Attributes & SPELL_ATTR_PASSIVE)!=(spellInfo_2->Attributes & SPELL_ATTR_PASSIVE))
         return false;
+		
+    // Mistletoe debuff stack with everything
+     if (spellInfo_1->Id == 26218 || spellInfo_2->Id == 26218)
+         return false;
 
     // Specific spell family spells
     switch(spellInfo_1->SpellFamilyName)
