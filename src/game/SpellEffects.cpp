@@ -2661,7 +2661,7 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 else
                 {
                     int32 bp = m_caster->SpellDamageBonusDone(unitTarget, m_spellInfo, uint32(damage), SPELL_DIRECT_DAMAGE);
-                    bp = unitTarget->SpellDamageBonusTaken(m_caster, m_spellInfo, uint32(bp), SPELL_DIRECT_DAMAGE);
+                          bp = unitTarget->SpellDamageBonusTaken(m_caster, m_spellInfo, uint32(bp), SPELL_DIRECT_DAMAGE);
                     m_caster->CastCustomSpell(unitTarget, 47632, &bp, NULL, NULL, true);
                 }
                 return;
