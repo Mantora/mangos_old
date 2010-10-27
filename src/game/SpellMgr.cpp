@@ -650,6 +650,15 @@ bool IsPositiveEffect(uint32 spellId, SpellEffectIndex effIndex)
         case 52988:                                         // Penance heal effect trigger - Rank 4
             return true;
     }
+	
+	switch(spellId)
+    {
+        case 11103: // Impact talent
+        case 12357: // Impact talent
+        case 12358: // Impact talent
+        case 64343: // Impact buff
+            return true;
+    }
 
     switch(spellproto->Effect[effIndex])
     {
