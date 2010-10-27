@@ -706,7 +706,7 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                         // Eviscerate and Envenom Bonus Damage (item set effect)
                         if(m_caster->GetDummyAura(37169))
                             damage += combo*40;
-							
+                            
                         // Apply spell mods
                         if (Player* modOwner = m_caster->GetSpellModOwner())
                             modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_DAMAGE, damage);
@@ -3034,6 +3034,11 @@ void Spell::EffectTriggerMissileSpell(SpellEffectIndex effect_idx)
     if (m_CastItem)
         DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "WORLD: cast Item spellId - %i", spellInfo->Id);
 
+    m_caster->CastSpell(m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ, spellInfo, true, m_CastItem, 0, m_originalCasterGUID);
+    
+    // Fix Freezing Arrow
+    if (m_caster->GetTypeId() == TYPEID_PLAYER)
+        ((Player*)m_caster)->RemoveSpellCooldown(triggered_spell_id);
     m_caster->CastSpell(m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ, spellInfo, true, m_CastItem, 0, m_originalCasterGUID);
 }
 
@@ -6215,18 +6220,18 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(m_caster, 43351, true);
                     return;
                 }
-				case 43375:
-				case 43972:		// Mixing Blood for Quest 11306 
+                case 43375:
+                case 43972:        // Mixing Blood for Quest 11306 
                 {
-					switch(urand(0, 2))
-					{
-						case 0 : m_caster->CastSpell(m_caster, 43378, true); break;
-						case 1 : m_caster->CastSpell(m_caster, 43376, true); break;
-						case 2 : m_caster->CastSpell(m_caster, 43377, true); break;
-						case 3 : m_caster->CastSpell(m_caster, 43970, true); break;
-					}
-					break;
-				}
+                    switch(urand(0, 2))
+                    {
+                        case 0 : m_caster->CastSpell(m_caster, 43378, true); break;
+                        case 1 : m_caster->CastSpell(m_caster, 43376, true); break;
+                        case 2 : m_caster->CastSpell(m_caster, 43377, true); break;
+                        case 3 : m_caster->CastSpell(m_caster, 43970, true); break;
+                    }
+                    break;
+                }
                 case 44455:                                 // Character Script Effect Reverse Cast
                 {
                     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT)
@@ -6778,12 +6783,12 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
  
                     switch(entry)
                     {
-                        case 31897: spellID = 7001; break;   // Lightwell Renew	Rank 1
-                        case 31896: spellID = 27873; break;  // Lightwell Renew	Rank 2
-                        case 31895: spellID = 27874; break;  // Lightwell Renew	Rank 3
-                        case 31894: spellID = 28276; break;  // Lightwell Renew	Rank 4
-                        case 31893: spellID = 48084; break;  // Lightwell Renew	Rank 5
-                        case 31883: spellID = 48085; break;  // Lightwell Renew	Rank 6
+                        case 31897: spellID = 7001; break;   // Lightwell Renew    Rank 1
+                        case 31896: spellID = 27873; break;  // Lightwell Renew    Rank 2
+                        case 31895: spellID = 27874; break;  // Lightwell Renew    Rank 3
+                        case 31894: spellID = 28276; break;  // Lightwell Renew    Rank 4
+                        case 31893: spellID = 48084; break;  // Lightwell Renew    Rank 5
+                        case 31883: spellID = 48085; break;  // Lightwell Renew    Rank 6
                         default:
                             sLog.outError("Unknown Lightwell spell caster %u", m_caster->GetEntry());
                             return;
