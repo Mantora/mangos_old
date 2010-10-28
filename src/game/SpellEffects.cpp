@@ -5376,6 +5376,9 @@ void Spell::EffectSummonPet(SpellEffectIndex eff_idx)
 
     Pet* NewSummon = new Pet;
 
+    uint32 originalSpellID = (m_IsTriggeredSpell && m_triggeredBySpellInfo) ? m_triggeredBySpellInfo->Id : m_spellInfo->Id;
+    NewSummon->SetCreateSpellID(originalSpellID);
+
     // petentry==0 for hunter "call pet" (current pet summoned if any)
     if(m_caster->GetTypeId() == TYPEID_PLAYER && NewSummon->LoadPetFromDB((Player*)m_caster, petentry))
         return;
@@ -5396,10 +5399,8 @@ void Spell::EffectSummonPet(SpellEffectIndex eff_idx)
         return;
     }
 
-    uint32 originalSpellID = (m_IsTriggeredSpell && m_triggeredBySpellInfo) ? m_triggeredBySpellInfo->Id : m_spellInfo->Id;
 
     NewSummon->setPetType(SUMMON_PET);
-    NewSummon->SetCreateSpellID(originalSpellID);
     NewSummon->SetPetCounter(0);
     if(!NewSummon->Create(m_caster, petentry))
     {
@@ -6594,6 +6595,13 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     unitTarget->CastSpell(unitTarget, 54522, true);
                     break;
                 }
+                case 52357:                                 // Into the realm of shadows
+                {
+                    if(!unitTarget)
+                        return;
+                    unitTarget->CastSpell(unitTarget, m_spellInfo->EffectBasePoints[eff_idx]+1, true);
+                    break;
+                }
                 case 52694:                                 // Recall Eye of Acherus
                 {
                     if (!m_caster || m_caster->GetTypeId() != TYPEID_UNIT)
@@ -7416,6 +7424,8 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     else
                     {
                         SendCastResult(SPELL_FAILED_REAGENTS);
+                        finish();
+                        CancelGlobalCooldown();
                         return;
                     }
                     ((Player*)m_caster)->RemoveSpellCooldown(triggered_spell_id,true);
