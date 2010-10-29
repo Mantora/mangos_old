@@ -28,15 +28,18 @@ UPDATE `battleground_template` SET `MinPlayersPerTeam`='10' WHERE (`id`='7');
 
 -- #########################################
 -- open doors to Vault of Archavon
-DELETE FROM gameobject WHERE guid = '51165';
-DELETE FROM game_event_gameobject WHERE guid = '51165';
-DELETE FROM gameobject_battleground WHERE guid = '51165';
 DELETE FROM gameobject WHERE guid = '73042';
 DELETE FROM game_event_gameobject WHERE guid = '73042';
 DELETE FROM gameobject_battleground WHERE guid = '73042';
 DELETE FROM gameobject WHERE guid = '49914';
 DELETE FROM game_event_gameobject WHERE guid = '49914';
 DELETE FROM gameobject_battleground WHERE guid = '49914';
+DELETE FROM gameobject WHERE guid = '51165';
+DELETE FROM game_event_gameobject WHERE guid = '51165';
+DELETE FROM gameobject_battleground WHERE guid = '51165';
+DELETE FROM gameobject WHERE guid = '1695';
+DELETE FROM game_event_gameobject WHERE guid = '1695';
+DELETE FROM gameobject_battleground WHERE guid = '1695';
 --
 
 -- move Horde/ally npc to different sides near Vault of Archavon
