@@ -1353,6 +1353,13 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                 triggered_spell_id = 58374;
                 break;
             }
+            // Glyph of Devastate
+            if (dummySpell->Id == 58388)
+            {
+                triggered_spell_id = 58567;
+                break;
+            }
+
             // Sweeping Strikes
             if (dummySpell->Id == 12328)
             {
