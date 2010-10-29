@@ -2136,6 +2136,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 // *Seal of Command and Band of Eternal Champion (multi-family check)
                 if( spellInfo_1->SpellIconID==561 && spellInfo_1->SpellVisual[0]==7992 && spellId_2 == 35081)
                     return false;
+                   
+                //Ardent Defender & Libram of Obstruction (spell 66233 & 60794)
+                if(spellInfo_1->SpellIconID == 2135 && spellInfo_2->SpellIconID == 2135)
+                    return false;
             }
             break;
 
