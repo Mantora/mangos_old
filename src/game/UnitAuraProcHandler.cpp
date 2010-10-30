@@ -1993,7 +1993,7 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
             if ( dummySpell->SpellIconID == 3579 )
             {
                 // Proc only from periodic (from trap activation proc another aura of this spell)
-                if (!(procFlag & PROC_FLAG_ON_DO_PERIODIC) || !roll_chance_i(triggerAmount))
+                if (!(procFlag & PROC_FLAG_ON_DO_PERIODIC) || !(procSpell->SpellFamilyFlags & 0x00000008 || procSpell->SpellFamilyFlags2 & 0x40000) || !roll_chance_i(triggerAmount))
                     return SPELL_AURA_PROC_FAILED;
                 triggered_spell_id = 56453;
                 target = this;
