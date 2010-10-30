@@ -484,6 +484,7 @@ class MANGOS_DLL_SPEC Aura
 
         SpellAuraHolder* const m_spellAuraHolder;
     private:
+		void ApplyHasteToPeriodic();
         void ReapplyAffectedPassiveAuras(Unit* target, bool owner_mode);
 };
 
