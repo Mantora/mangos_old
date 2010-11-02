@@ -4,6 +4,30 @@
 -- author Selector
 
 
+
+-- #########################################
+-- FINAL FIXFROM YTDB TEAM
+-- use it for less warnings and errors after update
+UPDATE `creature`, `creature_template` SET `creature`.`curhealth`=`creature_template`.`minhealth`,`creature`.`curmana`=`creature_template`.`minmana` WHERE `creature`.`id`=`creature_template`.`entry` and `creature_template`.`RegenHealth` = '1';
+UPDATE `creature` SET `MovementType` = 0 WHERE `spawndist` = 0 AND `MovementType`=1;
+UPDATE `creature` SET `spawndist`=0 WHERE `MovementType`=0;
+UPDATE `creature` SET `spawntimesecs` = 300 WHERE `spawntimesecs` = 25;
+UPDATE `gameobject` SET `spawntimesecs` = 300 WHERE `spawntimesecs` = 25;
+UPDATE `creature_template` SET `scale` = 1 WHERE `scale` = 0;
+UPDATE `creature` SET `spawndist` = 0, `MovementType` = 2 WHERE guid in (select distinct(id) from creature_movement);
+UPDATE `creature` SET `spawndist` = 5, `MovementType` = 1 WHERE MovementType=2 and guid not in (select distinct(id) from creature_movement);
+UPDATE quest_template SET SpecialFlags=SpecialFlags|1 WHERE QuestFlags=QuestFlags|4096;
+UPDATE quest_template SET SpecialFlags=SpecialFlags|1 WHERE QuestFlags=QuestFlags|32768;
+DELETE FROM `creature_addon` WHERE `guid` NOT IN (SELECT `guid` FROM `creature`);
+DELETE FROM `creature_movement` WHERE `id` NOT IN (SELECT `guid` FROM `creature`);
+DELETE FROM `npc_gossip` WHERE `npc_guid` NOT IN (SELECT `guid` FROM `creature`);
+DELETE FROM `game_event_gameobject` WHERE `guid` NOT IN (SELECT `guid` FROM `gameobject`);
+DELETE FROM `game_event_creature` WHERE `guid` NOT IN (SELECT `guid` FROM `creature`);
+UPDATE `creature_template` SET `npcflag`=`npcflag`|2 WHERE `entry` IN (SELECT `id` FROM `creature_questrelation`);
+UPDATE `creature_template` SET `npcflag`=`npcflag`|2 WHERE `entry` IN (SELECT `id` FROM `creature_involvedrelation`);
+
+
+
 -- #########################################
 -- close some instances (not supported in repo)
 -- Pit of Saron (not supported)
@@ -236,16 +260,16 @@ INSERT INTO `creature_involvedrelation` (`id`, `quest`) VALUES (29592, 12856);
 UPDATE `creature_template` SET `npcflag`=`npcflag`|2 WHERE `entry`=29592;
 UPDATE `quest_template` SET `Method` = 0 WHERE `entry` = 12856;
 -- make The Valiant's Challenge autocomplete http://www.wowhead.com/search?q=The+Valiant%27s+Challenge
-UPDATE `quest_template` SET `Method` = 0, `ReqCreatureOrGOId1` = 0, `ReqCreatureOrGOCount1` = 0 WHERE `entry` = 13699;
-UPDATE `quest_template` SET `Method` = 0, `ReqCreatureOrGOId1` = 0, `ReqCreatureOrGOCount1` = 0 WHERE `entry` = 13713;
-UPDATE `quest_template` SET `Method` = 0, `ReqCreatureOrGOId1` = 0, `ReqCreatureOrGOCount1` = 0 WHERE `entry` = 13723;
-UPDATE `quest_template` SET `Method` = 0, `ReqCreatureOrGOId1` = 0, `ReqCreatureOrGOCount1` = 0 WHERE `entry` = 13724;
-UPDATE `quest_template` SET `Method` = 0, `ReqCreatureOrGOId1` = 0, `ReqCreatureOrGOCount1` = 0 WHERE `entry` = 13725;
-UPDATE `quest_template` SET `Method` = 0, `ReqCreatureOrGOId1` = 0, `ReqCreatureOrGOCount1` = 0 WHERE `entry` = 13726;
-UPDATE `quest_template` SET `Method` = 0, `ReqCreatureOrGOId1` = 0, `ReqCreatureOrGOCount1` = 0 WHERE `entry` = 13727;
-UPDATE `quest_template` SET `Method` = 0, `ReqCreatureOrGOId1` = 0, `ReqCreatureOrGOCount1` = 0 WHERE `entry` = 13728;
-UPDATE `quest_template` SET `Method` = 0, `ReqCreatureOrGOId1` = 0, `ReqCreatureOrGOCount1` = 0 WHERE `entry` = 13729;
-UPDATE `quest_template` SET `Method` = 0, `ReqCreatureOrGOId1` = 0, `ReqCreatureOrGOCount1` = 0 WHERE `entry` = 13731;
+UPDATE `quest_template` SET `Method` = 0 WHERE `entry` = 13699;
+UPDATE `quest_template` SET `Method` = 0 WHERE `entry` = 13713;
+UPDATE `quest_template` SET `Method` = 0 WHERE `entry` = 13723;
+UPDATE `quest_template` SET `Method` = 0 WHERE `entry` = 13724;
+UPDATE `quest_template` SET `Method` = 0 WHERE `entry` = 13725;
+UPDATE `quest_template` SET `Method` = 0 WHERE `entry` = 13726;
+UPDATE `quest_template` SET `Method` = 0 WHERE `entry` = 13727;
+UPDATE `quest_template` SET `Method` = 0 WHERE `entry` = 13728;
+UPDATE `quest_template` SET `Method` = 0 WHERE `entry` = 13729;
+UPDATE `quest_template` SET `Method` = 0 WHERE `entry` = 13731;
 
 --
 -- Death Knight quests
