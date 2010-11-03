@@ -158,18 +158,27 @@ void Map::InitVisibilityDistance()
 template<class T>
 void Map::AddToGrid(T* obj, NGridType *grid, Cell const& cell)
 {
+	if (!grid)
+		return;
+
     (*grid)(cell.CellX(), cell.CellY()).template AddGridObject<T>(obj);
 }
 
 template<>
 void Map::AddToGrid(Player* obj, NGridType *grid, Cell const& cell)
 {
+	if (!grid)
+		return;
+
     (*grid)(cell.CellX(), cell.CellY()).AddWorldObject(obj);
 }
 
 template<>
 void Map::AddToGrid(Corpse *obj, NGridType *grid, Cell const& cell)
 {
+	if (!grid)
+        return;
+
     // add to world object registry in grid
     if(obj->GetType()!=CORPSE_BONES)
     {
@@ -185,6 +194,9 @@ void Map::AddToGrid(Corpse *obj, NGridType *grid, Cell const& cell)
 template<>
 void Map::AddToGrid(Creature* obj, NGridType *grid, Cell const& cell)
 {
+	if (!grid)
+        return
+
     // add to world object registry in grid
     if(obj->IsPet())
     {
@@ -202,18 +214,27 @@ void Map::AddToGrid(Creature* obj, NGridType *grid, Cell const& cell)
 template<class T>
 void Map::RemoveFromGrid(T* obj, NGridType *grid, Cell const& cell)
 {
+	if (!grid)
+        return;
+
     (*grid)(cell.CellX(), cell.CellY()).template RemoveGridObject<T>(obj);
 }
 
 template<>
 void Map::RemoveFromGrid(Player* obj, NGridType *grid, Cell const& cell)
 {
+	if (!grid)
+        return
+
     (*grid)(cell.CellX(), cell.CellY()).RemoveWorldObject(obj);
 }
 
 template<>
 void Map::RemoveFromGrid(Corpse *obj, NGridType *grid, Cell const& cell)
 {
+	if (!grid)
+        return;
+
     // remove from world object registry in grid
     if(obj->GetType()!=CORPSE_BONES)
     {
