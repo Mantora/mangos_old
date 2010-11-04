@@ -3150,6 +3150,10 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
             // Wandering Plague
             if (dummySpell->SpellIconID == 1614)
             {
+                // prevent proc from other types than disease
+                if (procSpell && procSpell->Dispel != DISPEL_DISEASE)
+                    return false;
+
                 if (!roll_chance_f(GetUnitCriticalChance(BASE_ATTACK, pVictim)))
                     return SPELL_AURA_PROC_FAILED;
                 basepoints[0] = triggerAmount * damage / 100;
