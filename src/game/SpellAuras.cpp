@@ -393,13 +393,10 @@ m_isPersistent(false), m_in_use(0), m_spellAuraHolder(holder)
     if(!caster)
     {
         damage = m_currentBasePoints;
-        m_maxduration = target->CalculateSpellDuration(spellproto, m_effIndex, target);
     }
     else
     {
         damage        = caster->CalculateSpellDamage(target, spellproto, m_effIndex, &m_currentBasePoints);
-        m_maxduration = caster->CalculateSpellDuration(spellproto, m_effIndex, target);
-
         if (!damage && castItem && castItem->GetItemSuffixFactor())
         {
             ItemRandomSuffixEntry const *item_rand_suffix = sItemRandomSuffixStore.LookupEntry(abs(castItem->GetItemRandomPropertyId()));
@@ -425,24 +422,28 @@ m_isPersistent(false), m_in_use(0), m_spellAuraHolder(holder)
         }
     }
 
-    if(m_maxduration == -1 || isPassive && spellproto->DurationIndex == 0)
-        isPermanent = true;
+	SetModifier(AuraType(spellproto->EffectApplyAuraName[eff]), damage, spellproto->EffectAmplitude[eff], spellproto->EffectMiscValue[eff]);
 
     m_origDuration = m_maxduration;
 
-    Player* modOwner = caster ? caster->GetSpellModOwner() : NULL;
+    if (caster)
+        m_maxduration = caster->CalculateBaseSpellDuration(spellproto, &m_modifier.periodictime);
+    else
+        m_maxduration = GetSpellDuration(spellproto);
 
-    if(!isPermanent && modOwner)
+    if (m_maxduration == -1 || isPassive && spellproto->DurationIndex == 0)
+        isPermanent = true;
+
+    if (!isPermanent)
     {
-        modOwner->ApplySpellMod(spellproto->Id, SPELLMOD_DURATION, m_maxduration);
+        m_maxduration = target->CalculateSpellDuration(caster, m_maxduration, spellproto, m_effIndex);
+
         // Get zero duration aura after - need set m_maxduration > 0 for apply/remove aura work
         if (m_maxduration<=0)
             m_maxduration = 1;
     }
 
     DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Aura: construct Spellid : %u, Aura : %u Duration : %d Target : %d Damage : %d", spellproto->Id, spellproto->EffectApplyAuraName[eff], m_maxduration, spellproto->EffectImplicitTargetA[eff],damage);
-
-    SetModifier(AuraType(spellproto->EffectApplyAuraName[eff]), damage, spellproto->EffectAmplitude[eff], spellproto->EffectMiscValue[eff], damage);
 
     //Apply haste to channeled spells and some DoT/HoT auras
     uint32 spellfamily = GetSpellProto()->SpellFamilyName;
@@ -460,9 +461,6 @@ m_isPersistent(false), m_in_use(0), m_spellAuraHolder(holder)
             if( !(GetSpellProto()->Attributes & (SPELL_ATTR_UNK4|SPELL_ATTR_TRADESPELL)) )
 	            m_maxduration = int32(m_origDuration * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
         }
-    // Apply periodic time mod
-    else if(modOwner && m_modifier.periodictime)
-        modOwner->ApplySpellMod(spellproto->Id, SPELLMOD_ACTIVATION_TIME, m_modifier.periodictime);
 
     m_duration = m_maxduration;
 
