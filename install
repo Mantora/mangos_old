@@ -5,12 +5,12 @@ if [ "$1" = "" ]
 then
 	echo "Directory for Installation is needed! Use ./install INSTALLATIONDIR OPTION."
 	echo\
-	"For example ./install live-server ace to compile into live-server with ACE 5.7.5 enabled"
+	"For example ./install live-server to compile into live-server"
 elif [ "$1" = "help" ]
 then
 	echo "Directory for Installation is needed! Use ./install INSTALLATIONDIR OPTION."
 	echo\
-	"For example ./install live-server ace to compile into live-server with ACE 5.7.5 enabled"
+	"For example ./install live-server to compile into live-server"
 else
 	# define variables
 	mangosdir='/home/mangos/server/'
@@ -22,52 +22,41 @@ else
 
 	autoreconf --install --force
 	automake --add-missing
-	automake src/bindings/ScriptDev2/Makefile
-	git apply src/bindings/ScriptDev2/patches/ToC_RU-EN.patch 
+	automake src/bindings/scriptdev2/Makefile
 	mkdir objdir
 	cd objdir
 
 	# check if option is enabled
-	if test "$option" = "ace"
+	if test "$option" = "detail"
 	then
-		../configure CFLAGS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -O3 -m64 -pipe  -msse4.2 -DFD_SETSIZE=4096 -fno-delete-null-pointer-checks -fno-strength-reduce -fno-strict-aliasing -frename-registers" CXXFLAGS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -O3 -m64 -pipe  -msse4.2 -DFD_SETSIZE=4096 -fno-delete-null-pointer-checks -fno-strength-reduce -fno-strict-aliasing -frename-registers" --prefix=$mangosdir$installdir --sysconfdir=$mangosdir$installdir/etc --enable-cli --enable-ra --datadir=$mangosdir$installdir --with-debug-info --disable-builtin-ace
-		echo "ACE 5.7.5 was used!"
+		../configure CFLAGS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -O3 -m64 -pipe  -msse4.2 -DFD_SETSIZE=4096 -fno-delete-null-pointer-checks -fno-strength-reduce -fno-strict-aliasing -frename-registers" CXXFLAGS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -O3 -m64 -pipe  -msse4.2 -DFD_SETSIZE=4096 -fno-delete-null-pointer-checks -fno-strength-reduce -fno-strict-aliasing -frename-registers" --prefix=$mangosdir$installdir --sysconfdir=$mangosdir$installdir/etc --enable-cli --enable-ra --datadir=$mangosdir$installdir --with-debug-info
+		echo "Detail install was used!"
 	else
 		../configure --with-debug-info --prefix=$mangosdir$installdir --sysconfdir=$mangosdir$installdir/etc --enable-cli --enable-ra --datadir=$mangosdir$installdir
-		echo "Mangos builtin ACE was used!"
+		ecgi "Normal install was used!"
 	fi
 
-	make -j2
+	# create errorfile
+	rm error.log
+	touch error.log
+	# write errors in the file error.log
+	make -j2 2>error.log
 
 	# this is only an check if there are problems with creating lib directory
 	mkdir $mangosdir$installdir/lib
+	
 	make install
 	make clean
+
+	# some cleanup
 	cd ..
 	rm -r objdir
-
-	# check if option is enabled
-	if test "$2" = "ace"
-	then
-		cd $mangosdir$installdir/lib
-		rm libtbb.so.2 libtbb.so libtbbmalloc.so.2 libtbbmalloc.so libtbbmalloc_proxy.so.2 libtbbmalloc_proxy.so
+	
+	cd $mangosdir$installdir
+	rm -r scriptdev2 mangos
 		
-		# some cleanup
-		cd $mangosdir$installdir
-		rm -r scriptdev2 mangos
+	cd $mangosdir$installdir/etc
+	rm mangosd.conf.dist realmd.conf.dist scriptdev2.conf.dist
 		
-		cd $mangosdir$installdir/etc
-		rm mangosd.conf.dist realmd.conf.dist scriptdev2.conf.dist
-		
-		echo "New TBB was used!"
-	else
-		# some cleanup
-		cd $mangosdir$installdir
-		rm -r scriptdev2 mangos
-		
-		cd $mangosdir$installdir/etc
-		rm mangosd.conf.dist realmd.conf.dist scriptdev2.conf.dist
-		
-		echo "Mangos builtin TBB was used!"
-	fi
+	echo "Mangos is installed successfully!"
 fi
