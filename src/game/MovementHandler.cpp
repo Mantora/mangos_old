@@ -250,9 +250,6 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     recv_data >> movementInfo;
     /*----------------*/
 
-	if (!mover->IsInWorld())
-		return;
-
     if (!VerifyMovementInfo(movementInfo,guid,mover))
         return;
 
