@@ -2255,6 +2255,11 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     case 75973:                             // X-53 Touring Rocket 
                         Spell::SelectMountByAreaAndSkill(target, 0, 75957, 75972, 76154, 0);
                         return;
+                    case 72350:                             // Fury of Frostmourne
+                        if (GetEffIndex() == EFFECT_INDEX_0)
+                            if (Unit* caster = GetCaster())
+                                caster->CastSpell(caster, 72351, true);
+						return;
                 }
                 break;
             }
