@@ -3476,6 +3476,11 @@ SpellAuraProcResult Unit::HandleProcTriggerSpellAuraProc(Unit *pVictim, uint32 d
                     if (GetStat(STAT_AGILITY)  > stat) { trigger_spell_id = 67772;                               }
                     break;
                 }
+                // Mark of the Fallen Champion (boss spell)
+                case 72293:
+                    CastSpell(pVictim, trigger_spell_id, true, NULL, NULL, pVictim->GetGUID());
+                    return true;
+                break;
             }
             break;
         case SPELLFAMILY_MAGE:
