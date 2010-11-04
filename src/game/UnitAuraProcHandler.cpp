@@ -1271,6 +1271,12 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                     }
                     return SPELL_AURA_PROC_FAILED;
                 }
+				// Arcane Blast proc-off only from arcane school and not from self
+                case 36032:
+                {
+                    if(procSpell->EffectTriggerSpell[1] == 36032 || GetSpellSchoolMask(procSpell) != SPELL_SCHOOL_MASK_ARCANE)
+                        return false;
+                }
                 // Glyph of Ice Block
                 case 56372:
                 {
@@ -1966,6 +1972,10 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
             {
                 if(!procSpell)
                     return SPELL_AURA_PROC_FAILED;
+					
+				//do not proc from spells that do not need combo points
+				if(!NeedsComboPoints(procSpell))
+                    return false;
 
                 // energy cost save
                 basepoints[0] = procSpell->manaCost * triggerAmount/100;
