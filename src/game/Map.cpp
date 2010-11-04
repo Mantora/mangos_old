@@ -195,7 +195,7 @@ template<>
 void Map::AddToGrid(Creature* obj, NGridType *grid, Cell const& cell)
 {
 	if (!grid)
-        return
+        return;
 
     // add to world object registry in grid
     if(obj->IsPet())
@@ -224,7 +224,7 @@ template<>
 void Map::RemoveFromGrid(Player* obj, NGridType *grid, Cell const& cell)
 {
 	if (!grid)
-        return
+        return;
 
     (*grid)(cell.CellX(), cell.CellY()).RemoveWorldObject(obj);
 }

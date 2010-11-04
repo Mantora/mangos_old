@@ -1073,7 +1073,7 @@ void Aura::ReapplyAffectedPassiveAuras( Unit* target, bool owner_mode )
             // non deleted and not same aura (any with same spell id)
             !itr->second->IsDeleted() && itr->second->GetId() != GetId() &&
             // and affected by aura
-            isAffectedOnSpell(itr->second->GetSpellProto()) && !itr->second->m_castItemGuid)
+            isAffectedOnSpell(itr->second->GetSpellProto()) && !itr->second->GetCastItemGUID())
         {
             // only applied by self or aura caster
             if (itr->second->GetCasterGUID() == target->GetGUID())
@@ -2361,12 +2361,12 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
 			{
                 if (GetId() == 52916) // Honor Among Thieves
                 {
-                    if(m_target->GetTypeId() == TYPEID_PLAYER)
+                    if(target->GetTypeId() == TYPEID_PLAYER)
                     {
-                        if (Unit * target = Unit::GetUnit(*m_target,((Player*)m_target)->GetComboTarget()))
-                            m_target->CastSpell(target, 51699, true);
+                        if (Unit * m_target = ObjectAccessor::GetUnit(*target,((Player*)target)->GetComboTargetGuid()))
+                            target->CastSpell(m_target, 51699, true);
                         else if( Unit * target = m_target->getVictim() )
-                            m_target->CastSpell(target, 51699, true);
+                            target->CastSpell(m_target, 51699, true);
                     }
                 }
                 break;

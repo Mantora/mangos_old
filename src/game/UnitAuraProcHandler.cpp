@@ -3152,7 +3152,7 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
             {
                 // prevent proc from other types than disease
                 if (procSpell && procSpell->Dispel != DISPEL_DISEASE)
-                    return false;
+                    return SPELL_AURA_PROC_FAILED;
 
                 if (!roll_chance_f(GetUnitCriticalChance(BASE_ATTACK, pVictim)))
                     return SPELL_AURA_PROC_FAILED;
@@ -3483,7 +3483,7 @@ SpellAuraProcResult Unit::HandleProcTriggerSpellAuraProc(Unit *pVictim, uint32 d
                 // Mark of the Fallen Champion (boss spell)
                 case 72293:
                     CastSpell(pVictim, trigger_spell_id, true, NULL, NULL, pVictim->GetGUID());
-                    return true;
+                    return SPELL_AURA_PROC_OK;
                 break;
             }
             break;
@@ -3958,16 +3958,16 @@ SpellAuraProcResult Unit::HandleProcTriggerSpellAuraProc(Unit *pVictim, uint32 d
         {
             target = triggeredByAura->GetCaster();
             if(!target)
-                return false;
+                return SPELL_AURA_PROC_FAILED;
 
             if( cooldown && GetTypeId() == TYPEID_PLAYER && ((Player*)target)->HasSpellCooldown(trigger_spell_id))
-                return false;
+                return SPELL_AURA_PROC_FAILED;
 
             target->CastSpell(target,trigger_spell_id,true,castItem,triggeredByAura);
 
             if( cooldown && GetTypeId() == TYPEID_PLAYER )
                 ((Player*)this)->AddSpellCooldown(trigger_spell_id,0,time(NULL) + cooldown);
-            return true;
+            return SPELL_AURA_PROC_OK;
         }
         // Cast positive spell on enemy target
         case 7099:  // Curse of Mending

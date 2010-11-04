@@ -3053,6 +3053,7 @@ void Spell::cast(bool skipCheck)
             break;
         }
         case SPELLFAMILY_ROGUE:
+		{
             // Fan of Knives (main hand)
             if (m_spellInfo->Id == 51723 && m_caster->GetTypeId() == TYPEID_PLAYER &&
                 ((Player*)m_caster)->haveOffhandWeapon())
@@ -3060,6 +3061,7 @@ void Spell::cast(bool skipCheck)
                 AddTriggeredSpell(52874);                   // Fan of Knives (offhand)
             }
             break;
+		}
         case SPELLFAMILY_HUNTER:
         {
             // Lock and Load
@@ -3088,6 +3090,7 @@ void Spell::cast(bool skipCheck)
                 if (m_targets.getUnitTarget() && m_targets.getUnitTarget() == m_caster) 
                 {
                     AddPrecastSpell(61987);                 // Avenging Wrath Marker 
+				}
             }
             // Lay on Hands
             else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000008000))
