@@ -157,7 +157,6 @@ class MANGOS_DLL_SPEC Object
         const uint64& GetUInt64Value( uint16 index ) const
         {
             //MANGOS_ASSERT( index + 1 < m_valuesCount || PrintIndexError( index , false) );
-
 			if (!m_uint32Values)
                 return GetUInt64Value(0);
 
