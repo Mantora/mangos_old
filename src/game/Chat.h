@@ -220,6 +220,7 @@ class ChatHandler
         bool HandleGameObjectMoveCommand(char* args);
         bool HandleGameObjectNearCommand(char* args);
         bool HandleGameObjectPhaseCommand(char* args);
+		bool HandleGameObjectStateCommand(char* args);
         bool HandleGameObjectTargetCommand(char* args);
         bool HandleGameObjectTurnCommand(char* args);
 
@@ -254,6 +255,8 @@ class ChatHandler
         bool HandleInstanceListBindsCommand(char* args);
         bool HandleInstanceUnbindCommand(char* args);
         bool HandleInstanceStatsCommand(char* args);
+		bool HandleInstanceSetDataCommand(char * args);
+        bool HandleInstanceGetDataCommand(char * args);
         bool HandleInstanceSaveDataCommand(char* args);
 
         bool HandleLearnCommand(char* args);
