@@ -1121,7 +1121,7 @@ bool ChatHandler::HandleGameObjectAddCommand(char* args)
 bool ChatHandler::HandleGameObjectStateCommand(char* args)
 {
     // number or [name] Shift-click form |color|Hgameobject:go_id|h[name]|h|r
-    char* cId = extractKeyFromLink((char*)args,"Hgameobject");
+    char* cId = ExtractKeyFromLink(&args,"Hgameobject");
     if (!cId)
         return false;
 

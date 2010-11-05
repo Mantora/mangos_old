@@ -6534,10 +6534,11 @@ Unit* Unit::SelectMagnetTarget(Unit *victim, SpellEntry const *spellInfo)
                 if(magnet->IsWithinLOSInMap(this) && magnet->isAlive())
 				{
                     //Destroy totem...
-                    if( ((Creature*)magnet)->isTotem())
+                    if( ((Creature*)magnet)->IsTotem())
                          magnet->CastSpell(magnet, 5, true);
-                }
+                
                     return magnet;
+				}
     }
     // Normal case
     else
@@ -6547,9 +6548,9 @@ Unit* Unit::SelectMagnetTarget(Unit *victim, SpellEntry const *spellInfo)
             if(Unit* magnet = (*i)->GetCaster())
                 if(magnet->isAlive() && magnet->IsWithinLOSInMap(this))
                     if(roll_chance_i((*i)->GetModifier()->m_amount))
-                        if ((*i)->GetAuraCharges())
+                        if ((*i)->GetHolder()->GetAuraCharges())
                         {
-                            if((*i)->DropAuraCharge())
+                            if((*i)->GetHolder()->DropAuraCharge())
                                 victim->RemoveAura((*i),AURA_REMOVE_BY_DEFAULT);
                             return magnet;
                         }

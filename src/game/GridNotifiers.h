@@ -851,6 +851,7 @@ namespace MaNGOS
     {
         public:
             AnyUnitInRangeCheck(WorldObject const* obj, float range) : i_obj(obj), i_range(range) {}
+			WorldObject const& GetFocusObject() const { return *i_obj; }
             bool operator()(Unit* u)
             {
                 if (i_obj->IsWithinDistInMap(u, i_range))

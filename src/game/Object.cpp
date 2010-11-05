@@ -250,7 +250,7 @@ void Object::BuildMovementUpdate(ByteBuffer * data, uint16 updateFlags) const
                 /*if (((Creature*)unit)->hasUnitState(UNIT_STAT_MOVING))
                     unit->m_movementInfo.SetMovementFlags(MOVEFLAG_FORWARD);*/
 
-                if (((Creature*)unit)->canFly() && !(((Creature*)unit)->canWalk()
+                if (((Creature*)unit)->CanFly() && !(((Creature*)unit)->CanWalk()
                     && unit->IsAtGroundLevel(unit->GetPositionX(), unit->GetPositionY(), unit->GetPositionZ())))
                 {
                     // (ok) most seem to have this
@@ -768,7 +768,7 @@ void Object::BuildValuesUpdate(uint8 updatetype, ByteBuffer * data, UpdateMask *
                 uint32 value = m_uint32Values[index];
 
                 if (index == ITEM_FIELD_FLAGS && GetGuidValue(ITEM_FIELD_GIFTCREATOR).IsEmpty())
-                    value &= ~ITEM_FLAGS_HEROIC;
+                    value &= ~ITEM_FLAG_HEROIC;
 
                 *data << value;
             }

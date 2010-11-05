@@ -79,8 +79,8 @@ void TargetedMovementGeneratorMedium<T,D>::_setTargetLocation(T &owner)
     i_destinationHolder.SetDestination(traveller, x, y, z);
 
     D::_addUnitStateMove(owner);
-    if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->canFly() &&
-        !(((Creature*)&owner)->canWalk() && ((Creature*)&owner)->IsAtGroundLevel(x,y,z)))
+    if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly() &&
+        !(((Creature*)&owner)->CanWalk() && ((Creature*)&owner)->IsAtGroundLevel(x,y,z)))
         ((Creature&)owner).AddSplineFlag(SPLINEFLAG_UNKNOWN7);
 }
 
@@ -149,8 +149,8 @@ bool TargetedMovementGeneratorMedium<T,D>::Update(T &owner, const uint32 & time_
         D::_addUnitStateMove(owner);
         float x,y,z;
         i_destinationHolder.GetLocationNowNoMicroMovement(x,y,z);
-        if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->canFly() &&
-            !(((Creature*)&owner)->canWalk() && ((Creature*)&owner)->IsAtGroundLevel(x,y,z)))
+        if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly() &&
+            !(((Creature*)&owner)->CanWalk() && ((Creature*)&owner)->IsAtGroundLevel(x,y,z)))
             ((Creature&)owner).AddSplineFlag(SPLINEFLAG_UNKNOWN7);
 
         i_destinationHolder.StartTravel(traveller);
@@ -218,8 +218,8 @@ void ChaseMovementGenerator<Creature>::Initialize(Creature &owner)
     float x,y,z;
     i_destinationHolder.GetDestination(x,y,z);
 
-    if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->canFly() &&
-        !(((Creature*)&owner)->canWalk() && ((Creature*)&owner)->IsAtGroundLevel(x,y,z)))
+    if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly() &&
+        !(((Creature*)&owner)->CanWalk() && ((Creature*)&owner)->IsAtGroundLevel(x,y,z)))
         owner.AddSplineFlag(SPLINEFLAG_UNKNOWN7);
 }
 
@@ -293,8 +293,8 @@ void FollowMovementGenerator<Creature>::Initialize(Creature &owner)
     float x,y,z;
     i_destinationHolder.GetDestination(x,y,z);
 
-    if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->canFly() &&
-        !(((Creature*)&owner)->canWalk() && ((Creature*)&owner)->IsAtGroundLevel(x,y,z)))
+    if (owner.GetTypeId() == TYPEID_UNIT && ((Creature*)&owner)->CanFly() &&
+        !(((Creature*)&owner)->CanWalk() && ((Creature*)&owner)->IsAtGroundLevel(x,y,z)))
         owner.AddSplineFlag(SPLINEFLAG_UNKNOWN7);
 }
 

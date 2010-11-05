@@ -1275,7 +1275,7 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                 case 36032:
                 {
                     if(procSpell->EffectTriggerSpell[1] == 36032 || GetSpellSchoolMask(procSpell) != SPELL_SCHOOL_MASK_ARCANE)
-                        return false;
+                        return SPELL_AURA_PROC_FAILED;
                 }
                 // Glyph of Ice Block
                 case 56372:
@@ -1681,7 +1681,7 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                 case 70799:
                 {
                     if (GetTypeId() != TYPEID_PLAYER)
-                        return false;
+                        return SPELL_AURA_PROC_FAILED;
                     
                     // Circle of Healing
                     ((Player*)this)->RemoveSpellCategoryCooldown(1204, true);
@@ -1689,7 +1689,7 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                     // Penance
                     ((Player*)this)->RemoveSpellCategoryCooldown(1230, true);
 
-                    return true;
+                    return SPELL_AURA_PROC_OK;
                 }
                 // Glyph of Prayer of Healing
                 case 55680:
@@ -1799,18 +1799,19 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                 // Glyph of Shred
                 case 54815:
                 {
-                    if (Aura * aurEff = target->GetAura(SPELL_AURA_PERIODIC_DAMAGE,SPELLFAMILY_DRUID,0x00800000,0,GetGUID()))
+					if (Aura * aurEff = target->GetAura(SPELL_AURA_PERIODIC_DAMAGE,SPELLFAMILY_DRUID,0x00800000,0,GetGUID()))
                     {
                         uint32 countMin = aurEff->GetAuraMaxDuration();
                         uint32 countMax = 20000;
                         countMax += HasAura(54818) ? 4000 : 0;
                         countMax += HasAura(60141) ? 4000 : 0;
-
-                        if (countMin < countMax)
+						
+						SpellAuraHolder *aurHolder = GetSpellAuraHolder(aurEff->GetId());
+                        if (aurHolder && (countMin < countMax))
                         {
                             aurEff->SetAuraDuration(uint32(aurEff->GetAuraDuration()+3000));
                             aurEff->SetAuraMaxDuration(countMin+2000);
-                            aurEff->SendAuraUpdate(false);
+                            aurHolder->SendAuraUpdate(false);
                         }
                     }
                     break;
@@ -2004,7 +2005,7 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
 					
 				//do not proc from spells that do not need combo points
 				if(!NeedsComboPoints(procSpell))
-                    return false;
+                    return SPELL_AURA_PROC_FAILED;
 
                 // energy cost save
                 basepoints[0] = procSpell->manaCost * triggerAmount/100;
@@ -2139,7 +2140,7 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
 					uint32 WeaponSpeed = pVictim->GetAttackTime(attType);
 					float chanceForVictim = pVictim->GetPPMProcChance(WeaponSpeed, ppmJoL);
 					if (!roll_chance_f(chanceForVictim))
-						return false;
+						return SPELL_AURA_PROC_FAILED;
 
                     basepoints[0] = int32( pVictim->GetMaxHealth() * triggeredByAura->GetModifier()->m_amount / 100 );
                     pVictim->CastCustomSpell(pVictim, 20267, &basepoints[0], NULL, NULL, true, NULL, triggeredByAura);
@@ -3975,11 +3976,11 @@ SpellAuraProcResult Unit::HandleProcTriggerSpellAuraProc(Unit *pVictim, uint32 d
             else if (auraSpellInfo->Id == 70656)
             {
                 if (GetTypeId() != TYPEID_PLAYER || getClass() != CLASS_DEATH_KNIGHT)
-                    return false;
+                    return SPELL_AURA_PROC_FAILED;
 
                 for(uint32 i = 0; i < MAX_RUNES; ++i)
                     if (((Player*)this)->GetRuneCooldown(i) == 0)
-                        return false;
+                        return SPELL_AURA_PROC_FAILED;
             }
             // Blade Barrier
             else if (auraSpellInfo->SpellIconID == 85)

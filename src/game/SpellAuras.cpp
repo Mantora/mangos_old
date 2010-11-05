@@ -4239,7 +4239,7 @@ void Aura::HandleAuraModStun(bool apply, bool Real)
         }
 
         // Seduction (Succubus spell)
-        if (m_spellProto->Id == 6358)
+        if (GetSpellProto()->Id == 6358)
         {
             Unit* pCaster = GetCaster();
             if(!pCaster)
@@ -6262,7 +6262,7 @@ void Aura::HandleModDamagePercentDone(bool apply, bool Real)
 	// Elemental Oath - Damage increase on Clearcasting
     if (apply && GetId() == 16246)
     {
-        Unit::AuraList const& auras = m_target->GetAurasByType(SPELL_AURA_PROC_TRIGGER_SPELL);
+        Unit::AuraList const& auras = target->GetAurasByType(SPELL_AURA_PROC_TRIGGER_SPELL);
         for (Unit::AuraList::const_iterator i = auras.begin(); i != auras.end(); ++i)
             if ((*i)->GetId() == 51466 ||   //Elemental Oath rank 1
                 (*i)->GetId() == 51470)     //Elemental Oath rank 2
@@ -7163,7 +7163,7 @@ void Aura::PeriodicTick()
         case SPELL_AURA_PERIODIC_HEALTH_FUNNEL:
         {
             // don't damage target if not alive, possible death persistent effects
-            if (!m_target->IsInWorld() ||  !m_target->isAlive())
+            if (!target->IsInWorld() ||  !target->isAlive())
                 return;
 
             Unit *pCaster = GetCaster();
@@ -9130,7 +9130,7 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                 if (GetId() == 29131 && m_target->HasAura(70844))
                 {
                     int32 bp = int32(m_target->GetMaxHealth() * 20 / 100);
-                    m_target->CastCustomSpell(m_target, 70845, &bp, NULL, NULL, true, NULL, this);
+                    m_target->CastCustomSpell(m_target, 70845, &bp, NULL, NULL, true, NULL /*, need to add Aura* */);
                     return;
                 }
             }
@@ -9217,7 +9217,7 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
             else if (apply && m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000001) && m_spellProto->Mechanic == MECHANIC_SHIELD)
             {
                 Unit* caster = GetCaster();
-               if(!caster)
+				if(!caster)
                     return;
 
                 // Glyph of Power Word: Shield
