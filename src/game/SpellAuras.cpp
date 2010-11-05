@@ -4139,7 +4139,7 @@ void Aura::HandleAuraModDisarm(bool apply, bool Real)
         return;
 
     if (apply)
-        target->SetAttackTime(BASE_ATTACK,BASE_ATTACK_TIME);
+        target->SetAttackTime(attack_type,BASE_ATTACK_TIME);
     else
         ((Player *)target)->SetRegularAttackTime();
 
