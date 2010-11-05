@@ -512,6 +512,9 @@ class MANGOS_DLL_SPEC WorldObject : public Object
 
         ViewPoint& GetViewPoint() { return m_viewPoint; }
 
+        Creature* GetClosestCreatureWithEntry(WorldObject* pSource, uint32 uiEntry, float fMaxSearchRange);
+        GameObject* GetClosestGameObjectWithEntry(WorldObject* pSource, uint32 uiEntry, float fMaxSearchRange);
+
     protected:
         explicit WorldObject();
 
