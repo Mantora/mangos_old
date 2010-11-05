@@ -587,6 +587,8 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
     m_lastFallZ = 0;
 
     m_anticheat = new AntiCheat(this);
+
+    m_grid_update_timer = 0;
 }
 
 Player::~Player ()
