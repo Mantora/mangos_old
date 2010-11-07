@@ -9133,7 +9133,7 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                 if (GetId() == 29131 && m_target->HasAura(70844))
                 {
                     int32 bp = int32(m_target->GetMaxHealth() * 20 / 100);
-                    m_target->CastCustomSpell(m_target, 70845, &bp, NULL, NULL, true, NULL /*, need to add Aura* */);
+                    m_target->CastCustomSpell(m_target, 70845, &bp, NULL, NULL, true, NULL, m_target->GetAura(70844, EFFECT_INDEX_0));
                     return;
                 }
             }
