@@ -396,6 +396,30 @@
     <ClCompile Include="..\..\src\game\Vehicle.cpp">
       <Filter>Object</Filter>
     </ClCompile>
+	<ClCompile Include="..\..\src\game\OutdoorPvP.cpp">
+      <Filter>OutdoorPvP</Filter>
+    </ClCompile>
+	<ClCompile Include="..\..\src\game\OutdoorPvPEP.cpp">
+      <Filter>OutdoorPvP</Filter>
+    </ClCompile>
+	<ClCompile Include="..\..\src\game\OutdoorPvPHP.cpp">
+      <Filter>OutdoorPvP</Filter>
+    </ClCompile>
+	<ClCompile Include="..\..\src\game\OutdoorPvPMgr.cpp">
+      <Filter>OutdoorPvP</Filter>
+    </ClCompile>
+	<ClCompile Include="..\..\src\game\OutdoorPvPNA.cpp">
+      <Filter>OutdoorPvP</Filter>
+    </ClCompile>
+	<ClCompile Include="..\..\src\game\OutdoorPvPSI.cpp">
+      <Filter>OutdoorPvP</Filter>
+    </ClCompile>
+	<ClCompile Include="..\..\src\game\OutdoorPvPTF.cpp">
+      <Filter>OutdoorPvP</Filter>
+    </ClCompile>
+	<ClCompile Include="..\..\src\game\OutdoorPvPZM.cpp">	
+      <Filter>OutdoorPvP</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\game\DBCStores.cpp">
       <Filter>Server</Filter>
     </ClCompile>
@@ -789,6 +813,36 @@
     <ClInclude Include="..\..\src\game\Vehicle.h">
       <Filter>Object</Filter>
     </ClInclude>
+	<ClInclude Include="..\..\src\game\OutdoorPvP.h">
+      <Filter>OutdoorPvP</Filter>
+	</ClInclude>
+	<ClInclude Include="..\..\src\game\OutdoorPvPEP.h">
+      <Filter>OutdoorPvP</Filter>
+	</ClInclude>
+	<ClInclude Include="..\..\src\game\OutdoorPvPHP.h">
+      <Filter>OutdoorPvP</Filter>
+	</ClInclude>
+	<ClInclude Include="..\..\src\game\OutdoorPvPImpl.h">
+      <Filter>OutdoorPvP</Filter>
+	</ClInclude>
+	<ClInclude Include="..\..\src\game\OutdoorPvPMgr.h">
+      <Filter>OutdoorPvP</Filter>
+	</ClInclude>
+	<ClInclude Include="..\..\src\game\OutdoorPvPNA.h">
+      <Filter>OutdoorPvP</Filter>
+	</ClInclude>
+	<ClInclude Include="..\..\src\game\OutdoorPvPSI.h">
+      <Filter>OutdoorPvP</Filter>
+	</ClInclude>
+	<ClInclude Include="..\..\src\game\OutdoorPvPTF.h">
+      <Filter>OutdoorPvP</Filter>
+	</ClInclude>
+	<ClInclude Include="..\..\src\game\OutdoorPvPZM.h">
+      <Filter>OutdoorPvP</Filter>
+	</ClInclude>
+	<ClInclude Include="..\..\src\game\ZoneScript.h">
+      <Filter>OutdoorPvP</Filter>
+	</ClInclude>
     <ClInclude Include="..\..\src\game\DBCEnums.h">
       <Filter>Server</Filter>
     </ClInclude>
