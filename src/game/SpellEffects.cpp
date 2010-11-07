@@ -1816,6 +1816,19 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(m_caster, 54586, true);
                     return;
                 }
+                case 53475:                                 // Reputation spells
+                case 53487:
+                case 54015:
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    if (FactionEntry const* factionEntry = sFactionStore.LookupEntry(m_spellInfo->EffectBasePoints[EFFECT_INDEX_0]+1))
+                        ((Player*)unitTarget)->GetReputationMgr().ModifyReputation(factionEntry, m_spellInfo->EffectBasePoints[EFFECT_INDEX_1]+1);
+
+                    finish();
+                    return;
+                }
                 case 53808:                                 // Pygmy Oil
                 {
                     const uint32 spellShrink = 53805;
@@ -3050,6 +3063,9 @@ void Spell::EffectTriggerMissileSpell(SpellEffectIndex effect_idx)
 
     if (m_CastItem)
         DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "WORLD: cast Item spellId - %i", spellInfo->Id);
+
+    if (m_caster->GetTypeId() == TYPEID_PLAYER)
+        ((Player*)m_caster)->RemoveSpellCooldown(triggered_spell_id);
 
     m_caster->CastSpell(m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ, spellInfo, true, m_CastItem, 0, m_originalCasterGUID);
     
@@ -7259,8 +7275,13 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         //}
                     }
 
-                    if (spellId)
+                    if (spellId && m_caster->GetTypeId() == TYPEID_PLAYER && !((Player*)m_caster)->HasSpellCooldown(spellId))
+                    {
                         m_caster->CastCustomSpell(target, spellId, &basePoint, 0, 0, false);
+ 
+                        if (spellId == 53359) // Disarm from Chimera Shot should have 1 min cooldown
+                            ((Player*)m_caster)->AddSpellCooldown(spellId, 0, uint32(time(NULL) + MINUTE));
+                    }
 
                     return;
                 }
