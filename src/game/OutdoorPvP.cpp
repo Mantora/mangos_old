@@ -358,7 +358,6 @@ bool OPvPCapturePoint::Update(uint32 diff)
 
     CellPair p(MaNGOS::ComputeCellPair(m_capturePoint->GetPositionX(), m_capturePoint->GetPositionY()));
     Cell cell(p);
-    cell.data.Part.reserved = ALL_DISTRICT;
     cell.SetNoCreate();   
 
     {
@@ -368,8 +367,8 @@ bool OPvPCapturePoint::Update(uint32 diff)
     TypeContainerVisitor<MaNGOS::UnitListSearcher<MaNGOS::AnyUnitInObjectRangeCheck>, WorldTypeMapContainer > world_unit_searcher(searcher);
     TypeContainerVisitor<MaNGOS::UnitListSearcher<MaNGOS::AnyUnitInObjectRangeCheck>, GridTypeMapContainer >  grid_unit_searcher(searcher);
 
-    cell.Visit(p, world_unit_searcher, *m_capturePoint->GetMap());
-    cell.Visit(p, grid_unit_searcher, *m_capturePoint->GetMap());
+    cell.Visit(p, world_unit_searcher, *m_capturePoint->GetMap(), *m_capturePoint, radius);
+    cell.Visit(p, grid_unit_searcher, *m_capturePoint->GetMap(), *m_capturePoint, radius);
     }
 
     for( std::list<Unit *>::iterator itr = targets.begin(); itr != targets.end(); ++itr )

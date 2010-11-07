@@ -2134,7 +2134,6 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             {
                 CellPair  p(MaNGOS::ComputeCellPair(m_caster->GetPositionX(),  m_caster->GetPositionY()));
                 Cell cell(p);
-                cell.data.Part.reserved = ALL_DISTRICT;
                 cell.SetNoCreate();
                 std::list<Unit*> tempTargetUnitMap;
                 {
