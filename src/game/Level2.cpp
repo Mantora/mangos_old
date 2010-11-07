@@ -2599,7 +2599,11 @@ void ChatHandler::ShowTicket(GMTicket const* ticket)
 
     char const* response = ticket->GetResponse();
 
-    PSendSysMessage(LANG_COMMAND_TICKETVIEW, nameLink.c_str(), lastupdated.c_str(), ticket->GetText());
+	std::string assignedStr;
+	if(!sObjectMgr.GetPlayerNameByGUID(ObjectGuid(HIGHGUID_PLAYER, ticket->GetPlayerLowGuid()),assignedStr) && !ticket->GetAssignedSecLevel())
+        assignedStr = "no one";
+		
+    PSendSysMessage(LANG_COMMAND_TICKETVIEW, ticket->GetTicketId(), nameLink.c_str(), lastupdated.c_str(), assignedStr.c_str(), ticket->GetAssignedSecLevel(), ticket->GetText());
     if (strlen(response))
         PSendSysMessage(LANG_COMMAND_TICKETRESPONSE, ticket->GetResponse());
 }
@@ -2625,6 +2629,29 @@ bool ChatHandler::HandleTicketCommand(char* args)
 
         return true;
     }
+
+	bool isAssigned = false;
+	if(strncmp(px,"a",2) == 0)
+	{
+		if(!m_session)
+        {
+            SendSysMessage(LANG_PLAYER_NOT_FOUND);
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+		// use second arg
+		px = strtok(NULL, " ");
+
+		if (!px)
+		{
+			size_t count = sTicketMgr.GetAssignedTicketCount(GUID_LOPART(m_session->GetPlayer()->GetGUID()), m_session->GetSecurity());
+			bool accept = m_session->GetPlayer()->isAcceptTickets();
+			PSendSysMessage(LANG_COMMAND_TICKETCOUNT, count, accept ?  GetMangosString(LANG_ON) : GetMangosString(LANG_OFF));
+			return true;
+		}
+		isAssigned = true;
+	}
 
     // ticket on
     if (strncmp(px, "on", 3) == 0)
@@ -2708,6 +2735,92 @@ bool ChatHandler::HandleTicketCommand(char* args)
         return true;
     }
 
+	// ticket assign
+    if(strncmp(px, "assign", 7) == 0)
+	{
+		char *name = strtok(NULL, " ");
+
+        if(!name)
+        {
+            SendSysMessage(LANG_CMD_SYNTAX);
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        std::string plName = name;
+        uint64 guid = sObjectMgr.GetPlayerGUIDByName(plName);
+
+        if(!guid)
+        {
+            SendSysMessage(LANG_PLAYER_NOT_FOUND);
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        // get playerpointer
+        Player* pl = sObjectMgr.GetPlayer(guid);
+
+        // check if player is Gamemaster
+        if (pl)
+            if (!pl->isGameMaster())
+            {
+                SetSentErrorMessage(true);
+                return false;
+            }
+
+        GMTicket* ticket = sTicketMgr.GetGMTicket(GUID_LOPART(guid));
+
+        if(!ticket)
+        {
+            PSendSysMessage(LANG_COMMAND_TICKETNOTEXIST, GUID_LOPART(guid));
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+		bool hasArg = false;
+		for (int32 i = 0; i < 2; ++i)
+		{
+			char *arg = strtok(NULL, " ");
+			if (!arg)
+				break;
+			
+			if (strncmp(arg,"del",4) == 0)
+			{
+				ticket->SetAssignedGuid(0);
+				ticket->SetAssignedSecLevel(0);
+				return true;
+			}
+
+			int gm = atoi(arg);
+			if (gm > 0)
+			{
+				ticket->SetAssignedSecLevel(gm);
+				hasArg = true;
+				continue;
+			}
+
+			uint64 atarget_guid;
+			if(ExtractPlayerTarget(&arg,NULL,&atarget_guid))
+			{
+				ticket->SetAssignedGuid(GUID_LOPART(atarget_guid));
+				hasArg = true;
+			}
+		}
+
+		if(!hasArg)
+		{
+			SendSysMessage(LANG_CMD_SYNTAX);
+            SetSentErrorMessage(true);
+            return false;
+		}
+
+		// notify player
+		if(Player* pl = sObjectMgr.GetPlayer(ObjectGuid(HIGHGUID_PLAYER, guid)))
+			pl->GetSession()->SendGMTicketGetTicket(0x06, ticket, true);
+		
+		return true;
+	}
+
     // ticket #num
     uint32 num;
     if (ExtractUInt32(&px, num))
@@ -2747,24 +2860,38 @@ bool ChatHandler::HandleTicketCommand(char* args)
     return true;
 }
 
-//dell all tickets
-bool ChatHandler::HandleDelTicketCommand(char *args)
+//close all tickets
+bool ChatHandler::HandleCloseTicketCommand(char *args)
 {
     char* px = ExtractLiteralArg(&args);
     if (!px)
         return false;
 
-    // delticket all
+    // close all
     if (strncmp(px, "all", 4) == 0)
     {
-        sTicketMgr.DeleteAll();
-        SendSysMessage(LANG_COMMAND_ALLTICKETDELETED);
+        sTicketMgr.CloseAll();
+        SendSysMessage(LANG_COMMAND_ALLTICKETCLOSED);
         return true;
     }
 
+	bool isAssigned = false;
+	if(strncmp(px,"a",2) == 0)
+	{
+		if(!m_session)
+        {
+            SendSysMessage(LANG_PLAYER_NOT_FOUND);
+            SetSentErrorMessage(true);
+            return false;
+        }
+		// use second arg
+		px = strtok(NULL, " ");
+		isAssigned = true;
+	}
+
     uint32 num;
 
-    // delticket #num
+    // close #num
     if (ExtractUInt32(&px, num))
     {
         if (num ==0)
@@ -2782,16 +2909,16 @@ bool ChatHandler::HandleDelTicketCommand(char *args)
 
         uint32 lowguid = ticket->GetPlayerLowGuid();
 
-        sTicketMgr.Delete(lowguid);
+        sTicketMgr.Close(lowguid);
 
         //notify player
         if (Player* pl = sObjectMgr.GetPlayer(ObjectGuid(HIGHGUID_PLAYER, lowguid)))
         {
-            pl->GetSession()->SendGMTicketGetTicket(0x0A);
-            PSendSysMessage(LANG_COMMAND_TICKETPLAYERDEL, GetNameLink(pl).c_str());
+            pl->GetSession()->SendGMTicketGetTicket(0x0A, 0, false);
+            PSendSysMessage(LANG_COMMAND_TICKETPLAYERCLOSE, GetNameLink(pl).c_str());
         }
         else
-            PSendSysMessage(LANG_COMMAND_TICKETDEL);
+            PSendSysMessage(LANG_COMMAND_TICKETCLOSE);
 
         return true;
     }
@@ -2802,16 +2929,16 @@ bool ChatHandler::HandleDelTicketCommand(char *args)
     if (!ExtractPlayerTarget(&px, &target, &target_guid, &target_name))
         return false;
 
-    // delticket $char_name
-    sTicketMgr.Delete(GUID_LOPART(target_guid));
+    // closeticket $char_name
+    sTicketMgr.Close(GUID_LOPART(target_guid));
 
-    // notify players about ticket deleting
+    // notify players about ticket closing
     if (target)
-        target->GetSession()->SendGMTicketGetTicket(0x0A);
+        target->GetSession()->SendGMTicketGetTicket(0x0A, 0, false);
 
     std::string nameLink = playerLink(target_name);
 
-    PSendSysMessage(LANG_COMMAND_TICKETPLAYERDEL,nameLink.c_str());
+    PSendSysMessage(LANG_COMMAND_TICKETPLAYERCLOSE,nameLink.c_str());
     return true;
 }
 

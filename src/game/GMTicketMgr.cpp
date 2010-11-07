@@ -33,8 +33,8 @@ void GMTicketMgr::LoadGMTickets()
     m_GMTicketMap.clear();                                  // For reload case
 
     QueryResult *result = CharacterDatabase.Query(
-        //      0     1            2              3                                  4
-        "SELECT guid, ticket_text, response_text, UNIX_TIMESTAMP(ticket_lastchange), ticket_id FROM character_ticket ORDER BY ticket_id ASC");
+        //      0          1     2            3              4                                  5       6              7
+        "SELECT ticket_id, guid, ticket_text, response_text, UNIX_TIMESTAMP(ticket_lastchange), closed, assigned_guid, assigned_sec_level FROM character_ticket ORDER BY ticket_id ASC WHERE closed = '0'");
 
     if( !result )
     {
@@ -43,7 +43,7 @@ void GMTicketMgr::LoadGMTickets()
         bar.step();
 
         sLog.outString();
-        sLog.outString(">> Loaded `character_ticket`, table is empty.");
+        sLog.outString(">> Loaded `character_ticket`, no open tickets.");
         return;
     }
 
@@ -55,7 +55,7 @@ void GMTicketMgr::LoadGMTickets()
 
         Field* fields = result->Fetch();
 
-        uint32 guid = fields[0].GetUInt32();
+        uint32 guid = fields[1].GetUInt32();
         if (!guid)
             continue;
 
@@ -67,7 +67,7 @@ void GMTicketMgr::LoadGMTickets()
             continue;
         }
 
-        ticket.Init(guid, fields[1].GetCppString(), fields[2].GetCppString(), time_t(fields[3].GetUInt64()));
+        ticket.Init(fields[0].GetUInt32(), guid, fields[2].GetCppString(), fields[3].GetCppString(), time_t(fields[4].GetUInt64()), fields[5].GetUInt8(), fields[6].GetUInt32(), fields[7].GetUInt8());
         m_GMTicketListByCreatingOrder.push_back(&ticket);
 
     } while (result->NextRow());
@@ -77,14 +77,14 @@ void GMTicketMgr::LoadGMTickets()
     sLog.outString(">> Loaded %d GM tickets", GetTicketCount());
 }
 
-void GMTicketMgr::DeleteAll()
+void GMTicketMgr::CloseAll()
 {
     for(GMTicketMap::const_iterator itr = m_GMTicketMap.begin(); itr != m_GMTicketMap.end(); ++itr)
     {
         if(Player* owner = sObjectMgr.GetPlayer(ObjectGuid(HIGHGUID_PLAYER, itr->first)))
-            owner->GetSession()->SendGMTicketGetTicket(0x0A);
+            owner->GetSession()->SendGMTicketGetTicket(0x0A, 0, false);
     }
-    CharacterDatabase.Execute("DELETE FROM character_ticket");
+    CharacterDatabase.Execute("UPDATE character_ticket SET closed = '1'");
     m_GMTicketListByCreatingOrder.clear();
     m_GMTicketMap.clear();
 }

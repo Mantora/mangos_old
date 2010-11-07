@@ -734,7 +734,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "bank",           SEC_ADMINISTRATOR,  false, &ChatHandler::HandleBankCommand,                "", NULL },
         { "wchange",        SEC_ADMINISTRATOR,  false, &ChatHandler::HandleChangeWeatherCommand,       "", NULL },
         { "ticket",         SEC_ADMINISTRATOR,     true,  &ChatHandler::HandleTicketCommand,              "", NULL },
-        { "delticket",      SEC_ADMINISTRATOR,     true,  &ChatHandler::HandleDelTicketCommand,           "", NULL },
+        { "closeticket",    SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleCloseTicketCommand,           "", NULL },
         { "maxskill",       SEC_ADMINISTRATOR,  false, &ChatHandler::HandleMaxSkillCommand,            "", NULL },
         { "setskill",       SEC_ADMINISTRATOR,  false, &ChatHandler::HandleSetSkillCommand,            "", NULL },
         { "whispers",       SEC_ADMINISTRATOR,      false, &ChatHandler::HandleWhispersCommand,            "", NULL },

@@ -223,7 +223,7 @@ class MANGOS_DLL_SPEC WorldSession
         void SendTabardVendorActivate(ObjectGuid guid);
         void SendSpiritResurrect();
         void SendBindPoint(Creature* npc);
-        void SendGMTicketGetTicket(uint32 status, GMTicket *ticket = NULL);
+        void SendGMTicketGetTicket(uint32 status, GMTicket *ticket = NULL, bool isAssigned = false);
         void SendGMResponse(GMTicket *ticket);
 
         void SendAttackStop(Unit const* enemy);
@@ -382,7 +382,7 @@ class MANGOS_DLL_SPEC WorldSession
         void HandleGMTicketCreateOpcode(WorldPacket& recvPacket);
         void HandleGMTicketSystemStatusOpcode(WorldPacket& recvPacket);
 
-        void HandleGMTicketDeleteTicketOpcode(WorldPacket& recvPacket);
+        void HandleGMTicketCloseTicketOpcode(WorldPacket& recvPacket);
         void HandleGMTicketUpdateTextOpcode(WorldPacket& recvPacket);
 
         void HandleGMSurveySubmitOpcode(WorldPacket& recvPacket);
