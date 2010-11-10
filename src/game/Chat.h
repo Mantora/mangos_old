@@ -570,6 +570,9 @@ class ChatHandler
         bool HandleStableCommand(char* args);
         bool HandleWaterwalkCommand(char* args);
         bool HandleQuitCommand(char* args);
+        bool HandleFreezeCommand(char *args);
+        bool HandleUnFreezeCommand(char *args);
+        bool HandleListFreezeCommand(char* args);
 
         bool HandleAHBotOptionsCommand(char* args);
 

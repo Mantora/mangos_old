@@ -751,6 +751,10 @@ ChatCommand * ChatHandler::getCommandTable()
         { "stable",         SEC_ADMINISTRATOR,  false, &ChatHandler::HandleStableCommand,              "", NULL },
         { "waterwalk",      SEC_ADMINISTRATOR,     false, &ChatHandler::HandleWaterwalkCommand,           "", NULL },
         { "quit",           SEC_CONSOLE,        true,  &ChatHandler::HandleQuitCommand,                "", NULL },
+        // Custom commands
+        { "freeze",         SEC_ADMINISTRATOR,     false, &ChatHandler::HandleFreezeCommand,              "", NULL },
+        { "unfreeze",       SEC_ADMINISTRATOR,     false, &ChatHandler::HandleUnFreezeCommand,            "", NULL },
+        { "listfreeze",     SEC_ADMINISTRATOR,     false, &ChatHandler::HandleListFreezeCommand,          "", NULL },
 
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };

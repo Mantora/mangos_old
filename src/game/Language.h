@@ -916,6 +916,13 @@ enum MangosStrings
 
     // Use for not-in-offcial-sources patches
     //                                    10000-10999
+    LANG_COMMAND_FREEZE                 = 10900,
+    LANG_COMMAND_FREEZE_ERROR           = 10901,
+    LANG_COMMAND_FREEZE_WRONG           = 10902,
+    LANG_COMMAND_UNFREEZE               = 10903,
+    LANG_COMMAND_NO_FROZEN_PLAYERS      = 10904,
+    LANG_COMMAND_LIST_FREEZE            = 10905,
+    LANG_COMMAND_FROZEN_PLAYERS         = 10906,
 
     // Use for custom patches             11000-11999
     LANG_ANNOUNCE_CHEAT                 = 11000,
