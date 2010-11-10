@@ -867,6 +867,10 @@ void Spell::AddUnitTarget(Unit* pVictim, SpellEffectIndex effIndex)
     bool immuned = pVictim->IsImmuneToSpellEffect(m_spellInfo, effIndex);
 
     ObjectGuid targetGUID = pVictim->GetObjectGuid();
+    
+    //Deep Freeze dmg if immune to stun
+    if(m_spellInfo->Id == 44572 && immuned && pVictim->GetTypeId() != TYPEID_PLAYER) // hack, must be check with spell 71761 bu dunno have no idea how to to that
+        m_caster->CastSpell(pVictim, 71757, true);
 
     // Lookup target in already in list
     for(std::list<TargetInfo>::iterator ihit = m_UniqueTargetInfo.begin(); ihit != m_UniqueTargetInfo.end(); ++ihit)
