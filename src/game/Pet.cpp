@@ -3113,8 +3113,8 @@ void Pet::Regenerate(Powers power, uint32 diff)
 
     if (curValue < 0)
         curValue = 0;
-    else if (curValue > maxValue)
-        curValue = maxValue;
+    else if (curValue > int32(maxValue))
+        curValue = int32(maxValue);
 
     SetPower(power, curValue);
 }
