@@ -158,7 +158,7 @@ class MANGOS_DLL_SPEC Object
         const uint64& GetUInt64Value( uint16 index ) const
         {
             //MANGOS_ASSERT( index + 1 < m_valuesCount || PrintIndexError( index , false) );
-			if (!m_uint32Values)
+            if (!m_uint32Values)
                 return GetUInt64Value(0);
 
             return *((uint64*)&(m_uint32Values[ index ]));
@@ -352,7 +352,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
     public:
         virtual ~WorldObject ( ) {}
 
-        void UpdateCall(uint32 newtime, uint32 diff);       // tick time and tick diff in msecs, must be called instead direct call Update
+        virtual void Update ( uint32 /*time_diff*/ ) { }
 
         void _Create(ObjectGuid guid, uint32 phaseMask);
 
@@ -528,14 +528,11 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         bool isActiveObject() const { return m_isActiveObject || m_viewPoint.hasViewers(); }
 
         ViewPoint& GetViewPoint() { return m_viewPoint; }
-
         Creature* GetClosestCreatureWithEntry(WorldObject* pSource, uint32 uiEntry, float fMaxSearchRange);
         GameObject* GetClosestGameObjectWithEntry(WorldObject* pSource, uint32 uiEntry, float fMaxSearchRange);
 
     protected:
         explicit WorldObject();
-
-        virtual void Update(uint32 /*update_diff*/, uint32 /*tick_diff*/) { }
 
         //these functions are used mostly for Relocate() and Corpse/Player specific stuff...
         //use them ONLY in LoadFromDB()/Create() funcs and nowhere else!
@@ -566,8 +563,6 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         float m_orientation;
 
         ViewPoint m_viewPoint;
-
-        uint32 m_lastUpdateTime;
 };
 
 #endif

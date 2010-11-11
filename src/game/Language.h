@@ -901,8 +901,8 @@ enum MangosStrings
     // Broadcaster
     LANG_AUTO_BROADCAST                 = 1300,
 	
-    LANG_SYSTEMMESSAGE_MODERATOR          = 1301,
-    LANG_SYSTEMMESSAGE_SUPERMODERATOR     = 1302,
+    LANG_SYSTEMMESSAGE_VIP          = 1301,
+    LANG_SYSTEMMESSAGE_MODERATOR     = 1302,
     LANG_SYSTEMMESSAGE_MODERATORCHIEF     = 1303,
     LANG_SYSTEMMESSAGE_GAMEOPERATOR       = 1304,
     LANG_SYSTEMMESSAGE_SUPERGAMEOPERATOR  = 1305,
@@ -998,6 +998,13 @@ enum MangosStrings
     LANG_BG_WG_RANK1                    = 10115,
     LANG_BG_WG_RANK2                    = 10116,
 
+    LANG_COMMAND_FREEZE                 = 10900,
+    LANG_COMMAND_FREEZE_ERROR           = 10901,
+    LANG_COMMAND_FREEZE_WRONG           = 10902,
+    LANG_COMMAND_UNFREEZE               = 10903,
+    LANG_COMMAND_NO_FROZEN_PLAYERS      = 10904,
+    LANG_COMMAND_LIST_FREEZE            = 10905,
+    LANG_COMMAND_FROZEN_PLAYERS         = 10906,
 
     // Use for custom patches             11000-11999
     LANG_ANNOUNCE_CHEAT                 = 11000,

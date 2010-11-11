@@ -141,8 +141,20 @@ bool ChatHandler::HandleNameAnnounceCommand(char* args)
 
     switch(m_session->GetSecurity())
 	{
+		case SEC_VIP:
+			strid = LANG_SYSTEMMESSAGE_VIP;
+        break;
 		case SEC_MODERATOR:
 			strid = LANG_SYSTEMMESSAGE_MODERATOR;
+        break;
+		case SEC_MODERATORCHIEF:
+			strid = LANG_SYSTEMMESSAGE_MODERATORCHIEF;
+        break;
+		case SEC_GAMEOPERATOR:
+			strid = LANG_SYSTEMMESSAGE_GAMEOPERATOR;
+        break;
+		case SEC_SUPERGAMEOPERATOR:
+			strid = LANG_SYSTEMMESSAGE_SUPERGAMEOPERATOR;
         break;
 		case SEC_GAMEMASTER:
 			strid = LANG_SYSTEMMESSAGE_GAMEMASTER;
@@ -585,8 +597,16 @@ bool ChatHandler::HandleGonameCommand(char* args)
                 InstanceGroupBind *gBind = group ? group->GetBoundInstance(target->GetMapId(), target) : NULL;
                 // if no bind exists, create a solo bind
                 if (!gBind)
+                {
                     if (InstanceSave *save = target->GetMap()->GetInstanceSave())
-                        _player->BindToInstance(save, !save->CanReset());
+                    {
+                        // if player is group leader then we need add group bind
+                        if (group && group->IsLeader(_player->GetObjectGuid()))
+                            group->BindToInstance(save, !save->CanReset());
+                        else
+                            _player->BindToInstance(save, !save->CanReset());
+                    }
+                }
             }
 
             if(cMap->IsRaid())
