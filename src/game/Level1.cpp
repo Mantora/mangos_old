@@ -141,11 +141,11 @@ bool ChatHandler::HandleNameAnnounceCommand(char* args)
 
     switch(m_session->GetSecurity())
 	{
-		case SEC_VIP:
-			strid = LANG_SYSTEMMESSAGE_VIP;
-        break;
 		case SEC_MODERATOR:
 			strid = LANG_SYSTEMMESSAGE_MODERATOR;
+        break;
+		case SEC_SUPERMODERATOR:
+			strid = LANG_SYSTEMMESSAGE_SUPERMODERATOR;
         break;
 		case SEC_MODERATORCHIEF:
 			strid = LANG_SYSTEMMESSAGE_MODERATORCHIEF;
