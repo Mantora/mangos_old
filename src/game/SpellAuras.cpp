@@ -9791,34 +9791,6 @@ void Aura::HandleAuraMirrorImage(bool Apply, bool Real)
     }
 }
 
-void Aura::ApplyHasteToPeriodic()
-{
-    int32 periodic = m_modifier.periodictime;
-    int32 duration = m_origDuration;
-    if(duration == 0 || periodic == 0)
-        return;
-    
-    int32 ticks = duration / periodic;
-
-    if(!GetCaster())
-        return;
-
-    Player* modOwner = GetCaster()->GetSpellModOwner();
-
-    if(modOwner)
-        modOwner->ApplySpellMod(GetId(), SPELLMOD_ACTIVATION_TIME, periodic);
-
-    if( !(GetSpellProto()->Attributes & (SPELL_ATTR_UNK4|SPELL_ATTR_TRADESPELL)) )
-        duration = int32(duration * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
-
-    if(m_origDuration != duration)
-    {
-        periodic = int32(periodic * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
-        m_maxduration = periodic * ticks;
-    }
-    m_modifier.periodictime = periodic;
-}
-
 void Aura::HandleAuraModReflectSpells(bool Apply, bool Real)
 {
     if (!Real)
@@ -9852,4 +9824,32 @@ void Aura::HandleAuraModReflectSpells(bool Apply, bool Real)
                 break;
         }
     }
+}
+
+void Aura::ApplyHasteToPeriodic()
+{
+    int32 periodic = m_modifier.periodictime;
+    int32 duration = m_origDuration;
+    if(duration == 0 || periodic == 0)
+        return;
+    
+    int32 ticks = duration / periodic;
+
+    if(!GetCaster())
+        return;
+
+    Player* modOwner = GetCaster()->GetSpellModOwner();
+
+    if(modOwner)
+        modOwner->ApplySpellMod(GetId(), SPELLMOD_ACTIVATION_TIME, periodic);
+
+    if( !(GetSpellProto()->Attributes & (SPELL_ATTR_UNK4|SPELL_ATTR_TRADESPELL)) )
+        duration = int32(duration * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
+
+    if(m_origDuration != duration)
+    {
+        periodic = int32(periodic * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
+        m_maxduration = periodic * ticks;
+    }
+    m_modifier.periodictime = periodic;
 }

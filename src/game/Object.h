@@ -351,7 +351,7 @@ class MANGOS_DLL_SPEC WorldObject : public Object
     public:
         virtual ~WorldObject ( ) {}
 
-        virtual void Update(uint32 /*update_diff*/, uint32 /*tick_diff*/) { }
+        virtual void Update ( uint32 /*time_diff*/ ) { }
 
         void _Create(ObjectGuid guid, uint32 phaseMask);
 
@@ -514,7 +514,6 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         bool isActiveObject() const { return m_isActiveObject || m_viewPoint.hasViewers(); }
 
         ViewPoint& GetViewPoint() { return m_viewPoint; }
-
         Creature* GetClosestCreatureWithEntry(WorldObject* pSource, uint32 uiEntry, float fMaxSearchRange);
         GameObject* GetClosestGameObjectWithEntry(WorldObject* pSource, uint32 uiEntry, float fMaxSearchRange);
 

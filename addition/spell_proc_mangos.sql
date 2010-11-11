@@ -235,3 +235,18 @@ VALUES (55666, 0x00, 0x0F, 0x00000001, 0x08000000, 0x00000000, 0, 0x00000000, 0,
 DELETE FROM `spell_proc_event` WHERE entry = 50880;
 INSERT INTO `spell_proc_event` (`entry`, `SchoolMask`, `SpellFamilyName`, `SpellFamilyMaskA0`, `SpellFamilyMaskB0`, `SpellFamilyMaskC0`, `procFlags`, `procEx`, `ppmRate`, `CustomChance`, `Cooldown`)
 VALUES (50880, 0x00, 0x0F, 0x00000000, 0x04000000, 0x00000000, 0x00070000, 0x00000000, 0, 0, 0);
+
+DELETE FROM `spell_proc_event` WHERE `entry` IN (48492,48494,48495);
+INSERT INTO `spell_proc_event` (`entry`, `SchoolMask`, `SpellFamilyName`, `SpellFamilyMaskA0`, `SpellFamilyMaskA1`, `SpellFamilyMaskA2`, `SpellFamilyMaskB0`, `SpellFamilyMaskB1`, `SpellFamilyMaskB2`, `SpellFamilyMaskC0`, `SpellFamilyMaskC1`, `SpellFamilyMaskC2`, `procFlags`, `procEx`, `ppmRate`, `CustomChance`, `Cooldown`) VALUES
+(48492, 0, 7, 524288, 0, 2048, 0, 0, 0, 0, 0, 0, 16384, 0, 0, 0, 0),
+(48494, 0, 7, 524288, 0, 2048, 0, 0, 0, 0, 0, 0, 16384, 0, 0, 0, 0),
+(48495, 0, 7, 524288, 0, 2048, 0, 0, 0, 0, 0, 0, 16384, 0, 0, 0, 0);
+
+-- Killing Machine
+DELETE FROM `spell_proc_event` WHERE `entry` IN (51123, 51127, 51128, 51129, 51130);
+INSERT INTO `spell_proc_event` VALUES
+(51123, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4|16, 0, 1, 0, 0),
+(51127, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4|16, 0, 2, 0, 0),
+(51128, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4|16, 0, 3, 0, 0),
+(51129, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4|16, 0, 4, 0, 0),
+(51130, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4|16, 0, 5, 0, 0);
