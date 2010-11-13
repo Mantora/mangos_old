@@ -2837,8 +2837,25 @@ bool ChatHandler::HandleTicketCommand(char* args)
             return false;
         }
 
-        ShowTicket(ticket);
-        return true;
+        Player* pl = m_session->GetPlayer();
+
+        if (!pl)
+        {
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || (ticket->GetAssignedSecLevel() >= pl->GetSession()->GetSecurity()))
+        {
+            ShowTicket(ticket);
+            return true;
+        }
+        else
+        {
+            SendSysMessage(ERROR);
+            SetSentErrorMessage(true);
+            return false;
+        }
     }
 
     uint64 target_guid;
@@ -2909,16 +2926,35 @@ bool ChatHandler::HandleCloseTicketCommand(char *args)
 
         uint32 lowguid = ticket->GetPlayerLowGuid();
 
-        sTicketMgr.Close(lowguid);
+		Player* pl = m_session->GetPlayer();
 
-        //notify player
-        if (Player* pl = sObjectMgr.GetPlayer(ObjectGuid(HIGHGUID_PLAYER, lowguid)))
+        if(!pl)
         {
-            pl->GetSession()->SendGMTicketGetTicket(0x0A, 0, false);
-            PSendSysMessage(LANG_COMMAND_TICKETPLAYERCLOSE, GetNameLink(pl).c_str());
+            SetSentErrorMessage(true);
+            return false;
+        }
+
+        if(ticket->GetAssignedGuid() == pl->GetGUIDLow() || ticket->GetAssignedSecLevel() >= pl->GetSession()->GetSecurity())
+        {
+            sTicketMgr.Close(lowguid);
+
+			//notify player
+			if (Player* pl = sObjectMgr.GetPlayer(ObjectGuid(HIGHGUID_PLAYER, lowguid)))
+			{
+				pl->GetSession()->SendGMTicketGetTicket(0x0A, 0, false);
+				PSendSysMessage(LANG_COMMAND_TICKETPLAYERCLOSE, GetNameLink(pl).c_str());
+			}
+			else
+				PSendSysMessage(LANG_COMMAND_TICKETCLOSE);
+
+			return true;
         }
         else
-            PSendSysMessage(LANG_COMMAND_TICKETCLOSE);
+        {
+            SendSysMessage(ERROR);
+            SetSentErrorMessage(true);
+            return false;
+        }
 
         return true;
     }

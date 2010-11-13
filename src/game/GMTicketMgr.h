@@ -174,12 +174,12 @@ class GMTicketMgr
         {
             if (pos >= GetTicketCount())
                 return NULL;
-
-            GMTicketList::iterator itr = m_GMTicketListByCreatingOrder.begin();
-            std::advance(itr, pos);
-            if(itr == m_GMTicketListByCreatingOrder.end())
-                return NULL;
-            return *itr;
+			
+			GMTicketList::iterator itr = m_GMTicketListByCreatingOrder.begin();
+			std::advance(itr, pos);
+			if(itr == m_GMTicketListByCreatingOrder.end())
+				return NULL;
+			return *itr;
         }
 		
 		size_t GetAssignedTicketCount(uint32 aGuid, uint8 aLevel) const
