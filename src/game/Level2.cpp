@@ -2853,9 +2853,10 @@ bool ChatHandler::HandleTicketCommand(char* args)
             return false;
         }
 
+		isAssigned = (ticket->GetAssignedGuid() || ticket->GetAssignedSecLevel()) ? true : false;
 		if(isAssigned)
 		{
-			if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || (ticket->GetAssignedSecLevel() >= pl->GetSession()->GetSecurity()))
+			if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || (ticket->GetAssignedSecLevel() <= pl->GetSession()->GetSecurity()))
 			{
 				ShowTicket(ticket);
 				return true;
@@ -2950,6 +2951,7 @@ bool ChatHandler::HandleCloseTicketCommand(char *args)
             return false;
         }
 
+		isAssigned = (ticket->GetAssignedGuid() || ticket->GetAssignedSecLevel()) ? true : false;
 		if(isAssigned)
 		{
 			if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || (ticket->GetAssignedSecLevel() >= pl->GetSession()->GetSecurity()))
