@@ -785,11 +785,6 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                 {
                     damage += int32(m_caster->GetTotalAttackPowerValue(RANGED_ATTACK)*0.1f);
                 }
-                // Black Arrow
-                else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0800000000000080))
-                {
-                    damage += int32(m_caster->GetTotalAttackPowerValue(RANGED_ATTACK)*0.1f);
-                }
                 // Volley
                 else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x00002000))
                 {
@@ -5978,7 +5973,7 @@ void Spell::EffectInterruptCast(SpellEffectIndex eff_idx)
             // check if we can interrupt spell
             if ((curSpellInfo->InterruptFlags & SPELL_INTERRUPT_FLAG_INTERRUPT) && curSpellInfo->PreventionType == SPELL_PREVENTION_TYPE_SILENCE )
             {
-                unitTarget->ProhibitSpellSchool(GetSpellSchoolMask(curSpellInfo), unitTarget->CalculateSpellDuration(m_spellInfo, eff_idx, unitTarget));
+                unitTarget->ProhibitSpellSchool(GetSpellSchoolMask(curSpellInfo), unitTarget->CalculateSpellDuration(m_caster, GetSpellDuration(m_spellInfo), m_spellInfo, eff_idx));
                 unitTarget->InterruptSpell(CurrentSpellTypes(i),false);
             }
         }
@@ -7539,7 +7534,7 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
             }
             break;
         }
-       case SPELLFAMILY_WARRIOR:
+        case SPELLFAMILY_WARRIOR:
         {
             switch(m_spellInfo->Id)
             {
@@ -7547,9 +7542,8 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                 {
                     if (!unitTarget || !unitTarget->isAlive())
                         return;
-
                     // remove immunity effects
-                    unitTarget->RemoveAurasBySpellMechanic(MECHANIC_IMMUNE_SHIELD);
+                    m_caster->CastSpell(unitTarget, 39897, true);
                     break;
                 }
             }

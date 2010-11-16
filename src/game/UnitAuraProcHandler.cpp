@@ -1287,6 +1287,24 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                     ((Player*)this)->RemoveSpellCategoryCooldown(35, true);
                     return SPELL_AURA_PROC_OK;
                 }
+                // Glyph of Icy Veins
+                case 56374:
+                {
+                    Unit::AuraList const& hasteAuras = GetAurasByType(SPELL_AURA_MOD_CASTING_SPEED_NOT_STACK);
+                    for(Unit::AuraList::const_iterator i = hasteAuras.begin(); i != hasteAuras.end();)
+                    {
+                        if (!IsPositiveSpell((*i)->GetId()))
+                        {
+                            RemoveAurasDueToSpell((*i)->GetId());
+                            i = hasteAuras.begin();
+                        }
+                        else
+                            ++i;
+                    }
+                    RemoveSpellsCausingAura(SPELL_AURA_HASTE_SPELLS);
+                    RemoveSpellsCausingAura(SPELL_AURA_MOD_DECREASE_SPEED);
+                    return SPELL_AURA_PROC_OK;
+                }
                 // Glyph of Polymorph
                 case 56375:
                 {
@@ -1388,6 +1406,17 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                     return SPELL_AURA_PROC_FAILED;
 
                 triggered_spell_id = 26654;
+                break;
+            }
+            // Glyph of Sunder Armor
+            if (dummySpell->Id == 58387)
+            {
+                if (!procSpell)
+                    return SPELL_AURA_PROC_FAILED;
+                target = SelectRandomUnfriendlyTarget(pVictim);
+                if (!target)
+                    return SPELL_AURA_PROC_FAILED;
+                triggered_spell_id = 58567;
                 break;
             }
             break;
@@ -1985,6 +2014,10 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                     if (spellProto->SpellFamilyName == SPELLFAMILY_ROGUE &&
                         (spellProto->SpellFamilyFlags & UI64LIT(0x0000000000040000)))
                     {
+                        int32 duration = GetSpellMaxDuration(spellProto);
+                        if(GetTypeId() == TYPEID_PLAYER)
+                            static_cast<Player*>(this)->ApplySpellMod(spellProto->Id, SPELLMOD_DURATION, duration);
+                        (*itr)->SetAuraMaxDuration(duration);
                         (*itr)->GetHolder()->RefreshHolder();
                         return SPELL_AURA_PROC_OK;
                     }
@@ -4528,6 +4561,16 @@ SpellAuraProcResult Unit::HandleAddPctModifierAuraProc(Unit* /*pVictim*/, uint32
 
                 CastSpell(this, 28682, true, castItem, triggeredByAura);
                 return (procEx & PROC_EX_CRITICAL_HIT) ? SPELL_AURA_PROC_OK : SPELL_AURA_PROC_FAILED; // charge update only at crit hits, no hidden cooldowns
+            }
+            break;
+        }
+        case SPELLFAMILY_PRIEST:
+        {
+            // Serendipity
+            if (spellInfo->SpellIconID == 2900)
+            {
+                RemoveAurasDueToSpell(spellInfo->Id);
+                return SPELL_AURA_PROC_OK;
             }
             break;
         }

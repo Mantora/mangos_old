@@ -3089,6 +3089,10 @@ void Spell::cast(bool skipCheck)
         if(const SpellEntry* spellInfo = sSpellStore.LookupEntry(m_spellInfo->Id))
             const_cast<SpellEntry*>(spellInfo)->AuraInterruptFlags = 0;
 
+    if (m_spellInfo->Id == 32592)                           // Mass Dispel - immunity bypass hack
+        if(const SpellEntry* spellInfo = sSpellStore.LookupEntry(m_spellInfo->Id))
+            const_cast<SpellEntry*>(spellInfo)->Attributes |= SPELL_ATTR_UNAFFECTED_BY_INVULNERABILITY;
+
     // different triggred (for caster) and precast (casted before apply effect to target) cases
     switch(m_spellInfo->SpellFamilyName)
     {
@@ -3124,8 +3128,11 @@ void Spell::cast(bool skipCheck)
         }
         case SPELLFAMILY_WARRIOR:
         {
+            // Shattering Throw
+            if (m_spellInfo->Id == 64382)
+                AddTriggeredSpell(64380);                    // Shattering Throw
             // Shield Slam
-            if ((m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000020000000000)) && m_spellInfo->Category==1209)
+            else if ((m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000020000000000)) && m_spellInfo->Category==1209)
                 if (m_caster->HasAura(58375))               // Glyph of Blocking
                     AddTriggeredSpell(58374);               // Glyph of Blocking
             // Shattering Throw
@@ -3324,12 +3331,9 @@ void Spell::handle_immediate()
     // start channeling if applicable
     if(IsChanneledSpell(m_spellInfo))
     {
-        int32 duration = GetSpellDuration(m_spellInfo);
+        int32 duration = m_caster->CalculateBaseSpellDuration(m_spellInfo);
         if (duration)
         {
-            // Apply duration mod
-            if(Player* modOwner = m_caster->GetSpellModOwner())
-                modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_DURATION, duration);
             m_spellState = SPELL_STATE_CASTING;
             SendChannelStart(duration);
         }
@@ -4203,9 +4207,6 @@ void Spell::SendChannelStart(uint32 duration)
             }
         }
     }
-
-    //Apply haste rating
-    duration = ApplyHasteToChannelSpell(duration, m_spellInfo, this);
 
     WorldPacket data( MSG_CHANNEL_START, (8+4+4) );
     data << m_caster->GetPackGUID();
