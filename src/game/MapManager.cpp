@@ -325,9 +325,6 @@ void MapManager::UnloadAll()
 
     TerrainManager::Instance().UnloadAll();
 
-    if (m_updater.activated())
-        m_updater.deactivate();
-
 }
 
 uint32 MapManager::GetNumInstances()
