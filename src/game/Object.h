@@ -72,6 +72,7 @@ class Map;
 class UpdateMask;
 class InstanceData;
 class ZoneScript;
+class TerrainInfo;
 
 typedef UNORDERED_MAP<Player*, UpdateData> UpdateDataMapType;
 
@@ -500,8 +501,8 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         //used to check all object's GetMap() calls when object is not in world!
         void ResetMap() { m_currMap = NULL; }
 
-        //this function should be removed in nearest time...
-        Map const* GetBaseMap() const;
+        //obtain terrain data for map where this object belong...
+        TerrainInfo const* GetTerrain() const;
 
         void SetZoneScript();
         ZoneScript * GetZoneScript() const { return m_zoneScript; }
