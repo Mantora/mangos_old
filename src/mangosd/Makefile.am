@@ -40,7 +40,7 @@ mangos_worldd_SOURCES = \
 
 ## Link world daemon against the shared library
 mangos_worldd_LDADD = \
-	../bindings/ScriptDev2/libmangosscript.la \
+	../bindings/scriptdev2/libmangosscript.la \
 	../game/libmangosgame.a \
 	../shared/Database/libmangosdatabase.a \
 	../shared/Config/libmangosconfig.a \
