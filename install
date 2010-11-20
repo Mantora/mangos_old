@@ -37,10 +37,12 @@ else
 	fi
 
 	# create errorfile
+	cd ..
 	rm error.log
 	touch error.log
+	cd objdir/
 	# write errors in the file error.log
-	make -j2 2>error.log
+	make -j2 2> ../error.log
 
 	# this is only an check if there are problems with creating lib directory
 	mkdir $mangosdir$installdir/lib
