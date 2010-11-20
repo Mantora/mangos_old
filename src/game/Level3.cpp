@@ -1405,6 +1405,17 @@ bool ChatHandler::HandleReloadSpellDisabledCommand(char* /*arg*/)
     return true;
 }
 
+bool ChatHandler::HandleReloadAntiCheatCommand(char* /*arg*/)
+{
+    sLog.outString( "Re-Loading anticheat config table...");
+
+    sObjectMgr.LoadAntiCheatConfig();
+
+    SendGlobalSysMessage("Anticheat config reloaded.");
+
+    return true;
+}
+
 bool ChatHandler::HandleLoadScriptsCommand(char* args)
 {
     if (!LoadScriptingModule(args))
@@ -5088,7 +5099,7 @@ bool ChatHandler::HandleListAurasCommand (char* /*args*/)
                     aur->GetModifier()->m_auraname, aur->GetAuraDuration(), aur->GetAuraMaxDuration(),
                     ss_name.str().c_str(),
                     (holder->IsPassive() ? passiveStr : ""),(talent ? talentStr : ""),
-                    IS_PLAYER_GUID(holder->GetCasterGUID()) ? "player" : "creature",GUID_LOPART(holder->GetCasterGUID()));
+                    holder->GetCasterGuid().GetString().c_str());
             }
             else
             {
@@ -5096,7 +5107,7 @@ bool ChatHandler::HandleListAurasCommand (char* /*args*/)
                     aur->GetModifier()->m_auraname, aur->GetAuraDuration(), aur->GetAuraMaxDuration(),
                     name,
                     (holder->IsPassive() ? passiveStr : ""),(talent ? talentStr : ""),
-                    IS_PLAYER_GUID(holder->GetCasterGUID()) ? "player" : "creature",GUID_LOPART(holder->GetCasterGUID()));
+                    holder->GetCasterGuid().GetString().c_str());
             }
         }
     }
@@ -6190,8 +6201,6 @@ bool ChatHandler::HandleGMFlyCommand(char* args)
     Player *target = getSelectedPlayer();
     if (!target)
         target = m_session->GetPlayer();
-
-    target->GetAntiCheat()->SetCanFly(value ? true : false);
 
     WorldPacket data(12);
     data.SetOpcode(value ? SMSG_MOVE_SET_CAN_FLY : SMSG_MOVE_UNSET_CAN_FLY);
@@ -7388,6 +7397,171 @@ bool ChatHandler::HandleListFreezeCommand(char* args)
     } while (result->NextRow());
 
     delete result;
+    return true;
+}
+
+bool ChatHandler::HandleVipDebuffCommand(char* /*args*/)
+{   
+    Player *chr = m_session->GetPlayer();
+
+
+    //Different Checks
+    if( chr->isInCombat()		// combat check
+        || chr->InBattleGround()   // BG/Arena check
+        || chr->HasStealthAura()   // Stealth check
+        || chr->HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH)) // Feign Death check (hunter)
+    {
+        SendSysMessage(LANG_YOU_IN_COMBAT);
+        SetSentErrorMessage(true);
+        return false;
+    }
+    
+    m_session->GetPlayer()->RemoveAurasDueToSpell(SPELL_ID_PASSIVE_RESURRECTION_SICKNESS);
+    m_session->GetPlayer()->RemoveAurasDueToSpell(26013);
+
+    return true;
+}
+
+bool ChatHandler::HandleVipMapCommand(char* /*args*/)
+{
+    Player *chr = m_session->GetPlayer();
+
+    //Different Checks
+    if( chr->isInCombat()		// combat check
+        || chr->InBattleGround()   // BG/Arena check
+        || chr->HasStealthAura()   // Stealth check
+        || chr->HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH)) // Feign Death check (hunter)
+    {
+        SendSysMessage(LANG_YOU_IN_COMBAT);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    PSendSysMessage(LANG_YOU_SET_EXPLORE_ALL, GetNameLink(m_session->GetPlayer()).c_str());
+    for (uint8 i=0; i<PLAYER_EXPLORED_ZONES_SIZE; ++i)
+    {
+        m_session->GetPlayer()->SetFlag(PLAYER_EXPLORED_ZONES_1+i,0xFFFFFFFF); 
+    }
+
+    return true;
+}
+
+bool ChatHandler::HandleVipBankCommand(char* /*args*/)
+{
+    Player *chr = m_session->GetPlayer();
+
+    //Different Checks
+    if( chr->isInCombat()		// combat check
+        || chr->InBattleGround()   // BG/Arena check
+        || chr->HasStealthAura()   // Stealth check
+        || chr->HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH)) // Feign Death check (hunter)
+    {
+        SendSysMessage(LANG_YOU_IN_COMBAT);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    m_session->SendShowBank(m_session->GetPlayer()->GetObjectGuid());
+
+    return true;
+}
+
+bool ChatHandler::HandleVipRepairCommand(char* /*args*/)
+{
+    Player *chr = m_session->GetPlayer();
+
+    //Different Checks
+    if( chr->isInCombat()		// combat check
+        || chr->InBattleGround()   // BG/Arena check
+        || chr->HasStealthAura()   // Stealth check
+        || chr->HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH)) // Feign Death check (hunter)
+    {
+        SendSysMessage(LANG_YOU_IN_COMBAT);
+        SetSentErrorMessage(true);
+        return false;
+    }
+    
+    // Repair items
+    m_session->GetPlayer()->DurabilityRepairAll(false, 0, false);
+
+    PSendSysMessage(LANG_YOUR_ITEMS_REPAIRED, GetNameLink(m_session->GetPlayer()).c_str());
+    return true;
+}
+
+bool ChatHandler::HandleVipAuctionCommand(char* /*args*/)
+{
+    Player *chr = m_session->GetPlayer();
+
+    //Different Checks
+    if( chr->isInCombat()		// combat check
+        || chr->InBattleGround()   // BG/Arena check
+        || chr->HasStealthAura()   // Stealth check
+        || chr->HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH)) // Feign Death check (hunter)
+    {
+        SendSysMessage(LANG_YOU_IN_COMBAT);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    m_session->GetPlayer()->SetAuctionAccessMode(m_session->GetPlayer()->GetTeam() != ALLIANCE ? -1 : 0);
+    m_session->SendAuctionHello(m_session->GetPlayer());
+
+    return true;
+}
+
+bool ChatHandler::HandleVipResetTalentsCommand(char* /*args*/)
+{
+    Player *chr = m_session->GetPlayer();
+
+    //Different Checks
+    if( chr->isInCombat()		// combat check
+        || chr->InBattleGround()   // BG/Arena check
+        || chr->HasStealthAura()   // Stealth check
+        || chr->HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH)) // Feign Death check (hunter)
+    {
+        SendSysMessage(LANG_YOU_IN_COMBAT);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    // Reset Talents
+    m_session->GetPlayer()->resetTalents(true);
+    m_session->GetPlayer()->SendTalentsInfoData(false);
+
+    PSendSysMessage(LANG_RESET_TALENTS_ONLINE, GetNameLink(m_session->GetPlayer()).c_str());
+    return true;
+}
+
+
+bool ChatHandler::HandleVipWhispersCommand(char* args)
+{
+    if(!*args)
+    {
+        PSendSysMessage(LANG_COMMAND_WHISPERACCEPTING, m_session->GetPlayer()->isAcceptWhispers() ?  GetMangosString(LANG_ON) : GetMangosString(LANG_OFF));
+        return true;
+    }
+
+    bool value;
+    if (!ExtractOnOff(&args, value))
+    {
+        SendSysMessage(LANG_USE_BOL);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    // whisper on
+    if (value)
+    {
+        m_session->GetPlayer()->SetAcceptWhispers(true);
+        SendSysMessage(LANG_COMMAND_WHISPERON);
+    }
+    // whisper off
+    else
+    {
+        m_session->GetPlayer()->SetAcceptWhispers(false);
+        SendSysMessage(LANG_COMMAND_WHISPEROFF);
+    }
+
     return true;
 }
 

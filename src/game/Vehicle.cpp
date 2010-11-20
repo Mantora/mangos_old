@@ -139,8 +139,6 @@ bool VehicleKit::AddPassenger(Unit *passenger, int8 seatId)
     passenger->m_movementInfo.SetTransportData(m_pBase->GetGUID(),
         seatInfo->m_attachmentOffsetX, seatInfo->m_attachmentOffsetY, seatInfo->m_attachmentOffsetZ,
         seatInfo->m_passengerYaw, getMSTime(), seat->first, seatInfo);
-    passenger->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-    passenger->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
 
     if (passenger->GetTypeId() == TYPEID_PLAYER)
     {
@@ -216,8 +214,6 @@ void VehicleKit::RemovePassenger(Unit *passenger)
 
     seat->second.passenger = NULL;
     passenger->clearUnitState(UNIT_STAT_ON_VEHICLE);
-    passenger->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-    passenger->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
 
     float px, py, pz, po;
     m_pBase->GetClosePoint(px, py, pz, m_pBase->GetObjectBoundingRadius(), 2.0f, M_PI_F);
