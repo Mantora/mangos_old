@@ -134,7 +134,7 @@ bool OPvPCapturePoint::AddObject(uint32 type, uint32 entry, uint32 mapId, float 
     data.artKit         = goinfo->type == GAMEOBJECT_TYPE_CAPTURE_POINT ? 21 : 0;
     data.dbData = false;
 
-    Map * map = const_cast<Map*>(sMapMgr.CreateBaseMap(mapId));
+    Map* map = const_cast<Map*>(sMapMgr.FindMap(mapId));
     if(!map)
     {
         sLog.outError("Map (Id: %i) for AddObject cannot be initialized.", mapId);

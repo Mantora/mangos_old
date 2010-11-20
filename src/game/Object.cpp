@@ -1618,7 +1618,7 @@ bool WorldObject::IsPositionValid() const
 
 bool WorldObject::IsAtGroundLevel(float x, float y, float z) const
 {
-    float groundZ = GetBaseMap()->GetHeight(x, y, z, true);
+    float groundZ = GetTerrain()->GetHeight(x, y, z, true);
     if(groundZ <= INVALID_HEIGHT || fabs(groundZ-z) > 0.5f)
         return false;
     return true;
