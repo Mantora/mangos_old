@@ -7442,7 +7442,7 @@ bool ChatHandler::HandleVipAuctionCommand(char* /*args*/)
         return false;
     }
 
-    m_session->GetPlayer()->SetAuctionAccessMode(0);
+    m_session->GetPlayer()->SetAuctionAccessMode(m_session->GetPlayer()->GetTeam() != ALLIANCE ? -1 : 0);
     m_session->SendAuctionHello(m_session->GetPlayer());
 
     return true;
