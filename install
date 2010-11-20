@@ -1,0 +1,62 @@
+# compilescript for mangos by Berni
+# copyright inferna-server.de
+
+if [ "$1" = "" ]
+then
+	echo "Directory for Installation is needed! Use ./install INSTALLATIONDIR OPTION."
+	echo\
+	"For example ./install live-server to compile into live-server"
+elif [ "$1" = "help" ]
+then
+	echo "Directory for Installation is needed! Use ./install INSTALLATIONDIR OPTION."
+	echo\
+	"For example ./install live-server to compile into live-server"
+else
+	# define variables
+	mangosdir='/home/mangos/server/'
+	installdir=$1
+	option=$2
+
+	# give response
+	echo "Mangos will be compiled into $mangosdir$installdir"
+
+	autoreconf --install --force
+	automake --add-missing
+	automake src/bindings/scriptdev2/Makefile
+	mkdir objdir
+	cd objdir
+
+	# check if option is enabled
+	if test "$option" = "detail"
+	then
+		../configure CFLAGS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -O3 -m64 -pipe  -msse4.2 -DFD_SETSIZE=4096 -fno-delete-null-pointer-checks -fno-strength-reduce -fno-strict-aliasing -frename-registers" CXXFLAGS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -O3 -m64 -pipe  -msse4.2 -DFD_SETSIZE=4096 -fno-delete-null-pointer-checks -fno-strength-reduce -fno-strict-aliasing -frename-registers" --prefix=$mangosdir$installdir --sysconfdir=$mangosdir$installdir/etc --enable-cli --enable-ra --datadir=$mangosdir$installdir --with-debug-info
+		echo "Detail install was used!"
+	else
+		../configure --with-debug-info --prefix=$mangosdir$installdir --sysconfdir=$mangosdir$installdir/etc --enable-cli --enable-ra --datadir=$mangosdir$installdir
+		ecgi "Normal install was used!"
+	fi
+
+	# create errorfile
+	rm error.log
+	touch error.log
+	# write errors in the file error.log
+	make -j2 2>error.log
+
+	# this is only an check if there are problems with creating lib directory
+	mkdir $mangosdir$installdir/lib
+	
+	make install
+	make clean
+
+	# some cleanup
+	cd ..
+	rm -r objdir
+	
+	cd $mangosdir$installdir
+	rm -r scriptdev2 mangos
+		
+	cd $mangosdir$installdir/etc
+	rm mangosd.conf.dist realmd.conf.dist scriptdev2.conf.dist
+		
+	echo "Mangos is installed successfully!"
+fi
