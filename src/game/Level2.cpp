@@ -2863,7 +2863,7 @@ bool ChatHandler::HandleTicketCommand(char* args)
 			}
 			else
 			{
-				//SendSysMessage(ERROR);
+				SendSysMessage("ERROR");
 				SetSentErrorMessage(true);
 				return false;
 			}
@@ -2971,7 +2971,7 @@ bool ChatHandler::HandleCloseTicketCommand(char *args)
 			}
 			else
 			{
-				//SendSysMessage(ERROR);
+				SendSysMessage("ERROR");
 				SetSentErrorMessage(true);
 				return false;
 			}
