@@ -318,6 +318,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
 
         dtNavMesh* navmesh = player->GetMap()->GetNavMesh();
         dtNavMeshQuery* query = dtAllocNavMeshQuery();
+        MANGOS_ASSERT(query);
         query->init(navmesh, MESH_MAX_NODES);
 
         float extents[VERTEX_SIZE] = {2.f, 4.f, 2.f};
@@ -383,6 +384,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
         // calculate navmesh tile location
         dtNavMesh* navmesh = player->GetMap()->GetNavMesh();
         dtNavMeshQuery* query = dtAllocNavMeshQuery();
+        MANGOS_ASSERT(query);
         query->init(navmesh, MESH_MAX_NODES);
 
         const float* min = navmesh->getParams()->orig;
@@ -415,9 +417,11 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
         }
 
         // mmtile file header -> navmesh tile location
-        char path[512];
-        sprintf(path, "%smmaps/%03u%02i%02i.mmtile", sWorld.GetDataPath().c_str(), player->GetMapId(), gx, gy);
-        FILE* file = fopen(path, "rb");
+        uint32 pathLen = sWorld.GetDataPath().length() + strlen("mmaps/%03i%02i%02i.mmtile")+1;
+        char *fileName = new char[pathLen];
+        snprintf(fileName, pathLen, (char*)(sWorld.GetDataPath()+"mmaps/%03i%02i%02i.mmtile").c_str(), player->GetMapId(), gx, gy);
+
+        FILE* file = fopen(fileName, "rb");
         if(!file)
             PSendSysMessage("mmtile [??,??] (file %03u%02i%02i.mmtile not found)", player->GetMapId(), gx, gy);
         else
@@ -437,6 +441,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
             delete [] data;
         }
 
+        delete [] fileName;
         dtFreeNavMeshQuery(query);
         return true;
     }
@@ -447,6 +452,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
 
         dtNavMesh* navmesh = player->GetMap()->GetNavMesh();
         dtNavMeshQuery* query = dtAllocNavMeshQuery();
+        MANGOS_ASSERT(query);
         query->init(navmesh, MESH_MAX_NODES);
 
         float x, y, z;
@@ -472,6 +478,7 @@ bool ChatHandler::HandleDebugMoveMapCommand(char* args)
 
         dtNavMesh* navmesh = m_session->GetPlayer()->GetMap()->GetNavMesh();
         dtNavMeshQuery* query = dtAllocNavMeshQuery();
+        MANGOS_ASSERT(query);
         query->init(navmesh, MESH_MAX_NODES);
 
         for(int32 i = 0; i < navmesh->getMaxTiles(); ++i)
