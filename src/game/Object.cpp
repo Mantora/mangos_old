@@ -1331,7 +1331,7 @@ float WorldObject::GetDistanceSqr(float x, float y, float z) const
     float dx = GetPositionX() - x;
     float dy = GetPositionY() - y;
     float dz = GetPositionZ() - z;
-    float sizefactor = GetObjectSize();
+    float sizefactor = GetObjectBoundingRadius();
     float dist = dx*dx+dy*dy+dz*dz-sizefactor;
     return (dist > 0 ? dist : 0);
 }

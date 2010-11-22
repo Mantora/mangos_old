@@ -311,7 +311,7 @@ MotionMaster::MovePoint(uint32 id, float x, float y, float z, bool usePathfindin
 {
     DEBUG_FILTER_LOG(LOG_FILTER_AI_AND_MOVEGENSS, "%s targeted point (Id: %u X: %f Y: %f Z: %f)", m_owner->GetObjectGuid().GetString().c_str(), id, x, y, z );
 
-    if(i_owner->GetTypeId()==TYPEID_PLAYER)
+    if(m_owner->GetTypeId() == TYPEID_PLAYER)
         Mutate(new PointMovementGenerator<Player>(id,x,y,z,usePathfinding));
     else
         Mutate(new PointMovementGenerator<Creature>(id,x,y,z,usePathfinding));

@@ -18,7 +18,7 @@
 
 #include "GridMap.h"
 #include "Log.h"
-#include "Utilities/UnorderedMap.h"
+#include "Utilities/UnorderedMapSet.h"
 #include "World.h"
 
 uint32 packTileID(int x, int y) { return uint32(x << 16 | y); }

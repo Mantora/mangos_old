@@ -75,7 +75,7 @@ void WaypointMovementGenerator<Creature>::LoadPath(Creature &creature)
         }
     }
 
-    if (creature.canFly())
+    if (creature.CanFly())
         creature.AddSplineFlag(SPLINEFLAG_UNKNOWN7);
 
     // We have to set the destination here (for the first point), right after Initialize. Without, we may not have valid xyz for GetResetPosition
