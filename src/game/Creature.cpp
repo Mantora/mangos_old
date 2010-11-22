@@ -37,6 +37,7 @@
 #include "WaypointMovementGenerator.h"
 #include "InstanceData.h"
 #include "BattleGroundMgr.h"
+#include "OutdoorPvPMgr.h"
 #include "Spell.h"
 #include "Util.h"
 #include "GridNotifiers.h"
@@ -150,8 +151,13 @@ Creature::~Creature()
 void Creature::AddToWorld()
 {
     ///- Register the creature for guid lookup
-    if(!IsInWorld() && GetObjectGuid().IsCreatureOrVehicle())
+    if(!IsInWorld() && GetObjectGuid().GetHigh() == HIGHGUID_UNIT)
+    {
+        if(m_zoneScript)
+            m_zoneScript->OnCreatureCreate(this, true);
+
         GetMap()->GetObjectsStore().insert<Creature>(GetGUID(), (Creature*)this);
+    }
 
     Unit::AddToWorld();
 }
@@ -159,8 +165,13 @@ void Creature::AddToWorld()
 void Creature::RemoveFromWorld()
 {
     ///- Remove the creature from the accessor
-    if(IsInWorld() && GetObjectGuid().IsCreatureOrVehicle())
+    if(IsInWorld() && GetObjectGuid().GetHigh() == HIGHGUID_UNIT)
+    {
+        if(m_zoneScript)
+            m_zoneScript->OnCreatureCreate(this, false);
+
         GetMap()->GetObjectsStore().erase<Creature>(GetGUID(), (Creature*)NULL);
+    }
 
     Unit::RemoveFromWorld();
 }
@@ -1196,6 +1207,20 @@ float Creature::GetSpellDamageMod(int32 Rank)
 
 bool Creature::CreateFromProto(ObjectGuid guid, uint32 Entry, uint32 team, const CreatureData *data)
 {
+    SetZoneScript();
+    if(m_zoneScript && data)
+    {
+        Entry = m_zoneScript->GetCreatureEntry(guid, data);
+        if(!Entry)
+            return false;
+    }
+
+    CreatureInfo const *cinfo = ObjectMgr::GetCreatureTemplate(Entry);
+    if(!cinfo)
+    {
+        sLog.outErrorDb("Creature entry %u does not exist.", Entry);
+        return false;
+    }
     m_originalEntry = Entry;
 
     Object::_Create(guid);
