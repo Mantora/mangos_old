@@ -2600,7 +2600,7 @@ void ChatHandler::ShowTicket(GMTicket const* ticket)
     char const* response = ticket->GetResponse();
 
 	std::string assignedStr;
-	if(!sObjectMgr.GetPlayerNameByGUID(ObjectGuid(HIGHGUID_PLAYER, ticket->GetPlayerLowGuid()),assignedStr) && !ticket->GetAssignedSecLevel())
+	if(!sObjectMgr.GetPlayerNameByGUID(ObjectGuid(HIGHGUID_PLAYER, ticket->GetAssignedGuid()),assignedStr) && !ticket->GetAssignedSecLevel())
         assignedStr = "no one";
 		
     PSendSysMessage(LANG_COMMAND_TICKETVIEW, ticket->GetTicketId(), nameLink.c_str(), lastupdated.c_str(), assignedStr.c_str(), ticket->GetAssignedSecLevel(), ticket->GetText());
@@ -2853,7 +2853,7 @@ bool ChatHandler::HandleTicketCommand(char* args)
             return false;
         }
 
-		isAssigned = (ticket->GetAssignedGuid() || ticket->GetAssignedSecLevel()) ? true : false;
+		isAssigned = ((ticket->GetAssignedGuid() != 0) || (ticket->GetAssignedSecLevel() != 0)) ? true : false;
 		if(isAssigned)
 		{
 			if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || (ticket->GetAssignedSecLevel() <= pl->GetSession()->GetSecurity()))
@@ -2951,7 +2951,7 @@ bool ChatHandler::HandleCloseTicketCommand(char *args)
             return false;
         }
 
-		isAssigned = (ticket->GetAssignedGuid() || ticket->GetAssignedSecLevel()) ? true : false;
+		isAssigned = ((ticket->GetAssignedGuid() != 0) || (ticket->GetAssignedSecLevel() != 0)) ? true : false;
 		if(isAssigned)
 		{
 			if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || (ticket->GetAssignedSecLevel() >= pl->GetSession()->GetSecurity()))
