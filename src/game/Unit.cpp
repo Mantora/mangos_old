@@ -11613,9 +11613,20 @@ void Unit::MonsterMoveWithSpeed(float x, float y, float z, uint32 transitTime)
     }
 }
 
-void Unit::MonsterJump(float x, float y, float z, float o, uint32 transitTime, uint32 verticalSpeed)
+void Unit::MonsterMoveByPath(float x, float y, float z, uint32 speed, bool smoothPath)
 {
-    SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, SplineFlags(SPLINEFLAG_TRAJECTORY | SPLINEFLAG_WALKMODE), transitTime, NULL, double(verticalSpeed));
+    PathInfo path(this, x, y, z, !smoothPath);
+    PointPath pointPath = path.getFullPath();
+
+    uint32 traveltime = uint32(pointPath.GetTotalLength()/float(speed));
+    MonsterMoveByPath(pointPath, 1, pointPath.size(), traveltime);
+}
+
+template<typename PathElem, typename PathNode>
+void Unit::MonsterMoveByPath(Path<PathElem,PathNode> const& path, uint32 start, uint32 end, uint32 transitTime)
+{
+    SplineFlags flags = GetTypeId() == TYPEID_PLAYER ? SPLINEFLAG_WALKMODE : ((Creature*)this)->GetSplineFlags();
+    SendMonsterMoveByPath(path, start, end, flags, transitTime);
 
     if (GetTypeId() != TYPEID_PLAYER)
     {
@@ -11625,8 +11636,7 @@ void Unit::MonsterJump(float x, float y, float z, float o, uint32 transitTime, u
             if (MovementGenerator *movgen = c->GetMotionMaster()->top())
                 movgen->Interrupt(*c);
 
-        GetMap()->CreatureRelocation((Creature*)this, x, y, z, o);
-
+        GetMap()->CreatureRelocation((Creature*)this, path[end-1].x, path[end-1].y, path[end-1].z, 0.0f);
         // finished relocation, movegen can different from top before creature relocation,
         // but apply Reset expected to be safe in any case
         if (!c->GetMotionMaster()->empty())
@@ -11634,6 +11644,8 @@ void Unit::MonsterJump(float x, float y, float z, float o, uint32 transitTime, u
                 movgen->Reset(*c);
     }
 }
+
+template void Unit::MonsterMoveByPath<PathNode>(const Path<PathNode> &, uint32, uint32, uint32);
 
 struct SetPvPHelper
 {
