@@ -216,7 +216,6 @@ ChatCommand * ChatHandler::getCommandTable()
         { "spellcheck",     SEC_CONSOLE,        true,  &ChatHandler::HandleDebugSpellCheckCommand,          "", NULL },
         { "uws",            SEC_ADMINISTRATOR,  false, &ChatHandler::HandleDebugUpdateWorldStateCommand,    "", NULL },
         { "update",         SEC_ADMINISTRATOR,  false, &ChatHandler::HandleDebugUpdateCommand,              "", NULL },
-        { "mmap",           SEC_ADMINISTRATOR,  false, &ChatHandler::HandleDebugMoveMapCommand,             "", NULL },
         { NULL,             0,                  false, NULL,                                                "", NULL }
     };
 
@@ -665,6 +664,15 @@ ChatCommand * ChatHandler::getCommandTable()
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
 
+    static ChatCommand mmapCommandTable[] =
+    {
+        { "path",           SEC_GAMEMASTER,     false, &ChatHandler::HandleMmapPathCommand,            "", NULL },
+        { "loc",            SEC_GAMEMASTER,     false, &ChatHandler::HandleMmapLocCommand,             "", NULL },
+        { "loadedtiles",    SEC_GAMEMASTER,     false, &ChatHandler::HandleMmapLoadedTilesCommand,     "", NULL },
+        { "stats",          SEC_GAMEMASTER,     false, &ChatHandler::HandleMmapStatsCommand,           "", NULL },
+        { NULL,             0,                  false, NULL,                                           "", NULL }
+    };
+
     static ChatCommand commandTable[] =
     {
         { "account",        SEC_PLAYER,         true,  NULL,                                           "", accountCommandTable  },
@@ -761,7 +769,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "freeze",         SEC_ADMINISTRATOR,     false, &ChatHandler::HandleFreezeCommand,              "", NULL },
         { "unfreeze",       SEC_ADMINISTRATOR,     false, &ChatHandler::HandleUnFreezeCommand,            "", NULL },
         { "listfreeze",     SEC_ADMINISTRATOR,     false, &ChatHandler::HandleListFreezeCommand,          "", NULL },
-
+        { "mmap",           SEC_GAMEMASTER,     false, NULL,                                           "", mmapCommandTable },
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
 
