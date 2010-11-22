@@ -2027,28 +2027,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         // Movement info
         MovementInfo m_movementInfo;
 
-        // Transports
-        Transport* GetTransport() const { return m_transport; }
-        void SetTransport(Transport* pTransport) { m_transport = pTransport; }
-
-        float GetTransOffsetX() const { return m_movementInfo.GetTransportPos()->x; }
-        float GetTransOffsetY() const { return m_movementInfo.GetTransportPos()->y; }
-        float GetTransOffsetZ() const { return m_movementInfo.GetTransportPos()->z; }
-        float GetTransOffsetO() const { return m_movementInfo.GetTransportPos()->o; }
-        uint32 GetTransTime() const { return m_movementInfo.GetTransportTime(); }
-        int8 GetTransSeat() const { return m_movementInfo.GetTransportSeat(); }
-
-        // Vehicle system
-        void EnterVehicle(VehicleKit *vehicle, int8 seatId = -1);
-        void ExitVehicle();
-        void ChangeSeat(int8 seatId, bool next = true);
-        VehicleKit* GetVehicle() const { return m_pVehicle; }
-        VehicleKit* GetVehicleKit() const { return m_pVehicleKit; }
-        bool CreateVehicleKit(uint32 vehicleId);
-        void RemoveVehicleKit();
-
-        // evade code will be called next update
-        void evadeWhenCan() { m_evadeWhenCan = true; }
     protected:
         explicit Unit ();
 
@@ -2110,8 +2088,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         VehicleKit* m_pVehicleKit;
 
     private:
-        bool m_evadeWhenCan;
-
         void CleanupDeletedAuras();
 
         // player or player's pet
