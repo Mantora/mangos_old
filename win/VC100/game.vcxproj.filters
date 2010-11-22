@@ -457,6 +457,12 @@
     <ClCompile Include="..\..\src\game\AuctionHouseBot.cpp">
       <Filter>Object</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\game\PathFinder.cpp">
+      <Filter>Motion generators</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\MoveMap.cpp">
+      <Filter>World/Handlers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\game\AccountMgr.h">
@@ -854,6 +860,8 @@
     <ClInclude Include="..\..\src\game\ChatLog.h" />
     <ClInclude Include="..\..\src\game\AuctionHouseBot.h">
       <Filter>Object</Filter>
+    <ClInclude Include="..\..\src\game\PathFinder.h">
+      <Filter>Motion generators</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

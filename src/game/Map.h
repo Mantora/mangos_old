@@ -39,6 +39,8 @@
 #include <bitset>
 #include <list>
 
+#include "pathfinding/Detour/DetourNavMesh.h"
+
 class Creature;
 class Unit;
 class WorldPacket;

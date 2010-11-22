@@ -433,6 +433,7 @@
     <ClCompile Include="..\..\src\game\MapManager.cpp" />
     <ClCompile Include="..\..\src\game\MiscHandler.cpp" />
     <ClCompile Include="..\..\src\game\MotionMaster.cpp" />
+    <ClCompile Include="..\..\src\game\MoveMap.cpp" />
     <ClCompile Include="..\..\src\game\MovementGenerator.cpp" />
     <ClCompile Include="..\..\src\game\MovementHandler.cpp" />
     <ClCompile Include="..\..\src\game\NPCHandler.cpp" />
@@ -444,6 +445,7 @@
     <ClCompile Include="..\..\src\game\ObjectGuid.cpp" />
     <ClCompile Include="..\..\src\game\ObjectPosSelector.cpp" />
     <ClCompile Include="..\..\src\game\Opcodes.cpp" />
+    <ClCompile Include="..\..\src\game\PathFinder.cpp" />
     <ClCompile Include="..\..\src\game\pchdef.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pchdef.h</PrecompiledHeaderFile>
@@ -596,6 +598,7 @@
     <ClInclude Include="..\..\src\game\ObjectPosSelector.h" />
     <ClInclude Include="..\..\src\game\Opcodes.h" />
     <ClInclude Include="..\..\src\game\Path.h" />
+    <ClInclude Include="..\..\src\game\PathFinder.h" />
     <ClInclude Include="..\..\src\game\pchdef.h" />
     <ClInclude Include="..\..\src\game\Pet.h" />
     <ClInclude Include="..\..\src\game\PetAI.h" />

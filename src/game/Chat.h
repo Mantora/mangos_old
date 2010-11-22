@@ -191,6 +191,7 @@ class ChatHandler
         bool HandleDebugSpellCheckCommand(char* args);
         bool HandleDebugSpellModsCommand(char* args);
         bool HandleDebugUpdateWorldStateCommand(char* args);
+		bool HandleDebugMoveMapCommand(char* args);
         bool HandleDebugSendCalendarResultCommand(char* args);
 
         bool HandleDebugPlayCinematicCommand(char* args);
