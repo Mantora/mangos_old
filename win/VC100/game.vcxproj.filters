@@ -862,6 +862,8 @@
       <Filter>Object</Filter>
     <ClInclude Include="..\..\src\game\PathFinder.h">
       <Filter>Motion generators</Filter>
+    <ClInclude Include="..\..\src\game\MoveMap.h">
+      <Filter>World/Handlers</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
