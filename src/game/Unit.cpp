@@ -48,6 +48,7 @@
 #include "Path.h"
 #include "Traveller.h"
 #include "Vehicle.h"
+#include "PathFinder.h"
 #include "VMapFactory.h"
 #include "MovementGenerator.h"
 #include "Transports.h"
@@ -283,6 +284,7 @@ Unit::Unit()
     m_spoofSamePlayerFaction = false;
     // Frozen Mod
 
+    m_evadeWhenCan = false;
 }
 
 Unit::~Unit()
@@ -365,6 +367,12 @@ void Unit::Update( uint32 p_time )
     ModifyAuraState(AURA_STATE_HEALTHLESS_20_PERCENT, GetHealth() < GetMaxHealth()*0.20f);
     ModifyAuraState(AURA_STATE_HEALTHLESS_35_PERCENT, GetHealth() < GetMaxHealth()*0.35f);
     ModifyAuraState(AURA_STATE_HEALTH_ABOVE_75_PERCENT, GetHealth() > GetMaxHealth()*0.75f);
+
+    if (m_evadeWhenCan && GetTypeId() == TYPEID_UNIT)
+    {
+        ((Creature*)this)->AI()->EnterEvadeMode();
+        m_evadeWhenCan = false;
+    }
 
     i_motionMaster.UpdateMotion(p_time);
 }

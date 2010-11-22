@@ -2043,6 +2043,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         bool CreateVehicleKit(uint32 vehicleId);
         void RemoveVehicleKit();
 
+        // evade code will be called next update
+        void evadeWhenCan() { m_evadeWhenCan = true; }
     protected:
         explicit Unit ();
 
@@ -2104,6 +2106,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         VehicleKit* m_pVehicleKit;
 
     private:
+        bool m_evadeWhenCan;
+
         void CleanupDeletedAuras();
 
         // player or player's pet
