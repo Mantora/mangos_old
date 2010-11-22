@@ -794,7 +794,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 	{
 		size_t tCount = sTicketMgr.GetAssignedTicketCount(GUID_LOPART(pCurrChar->GetGUID()), GetSecurity());
 		if (tCount)
-			ChatHandler(this).PSendSysMessage(LANG_COMMAND_ATICKETCOUNT, tCount);
+			ChatHandler(this).PSendSysMessage(LANG_COMMAND_TICKETCOUNT, tCount);
 	}
 
     std::string IP_str = GetRemoteAddress();

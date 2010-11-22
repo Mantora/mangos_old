@@ -638,19 +638,6 @@ bool IsPositiveEffect(uint32 spellId, SpellEffectIndex effIndex)
     if (!spellproto)
         return false;
 
-    switch(spellId)
-    {
-        case 47540:                                         // Penance start dummy aura - Rank 1
-        case 53005:                                         // Penance start dummy aura - Rank 2
-        case 53006:                                         // Penance start dummy aura - Rank 3
-        case 53007:                                         // Penance start dummy aura - Rank 4
-        case 47757:                                         // Penance heal effect trigger - Rank 1
-        case 52986:                                         // Penance heal effect trigger - Rank 2
-        case 52987:                                         // Penance heal effect trigger - Rank 3
-        case 52988:                                         // Penance heal effect trigger - Rank 4
-            return true;
-    }
-	
 	switch(spellId)
     {
         case 11103: // Impact talent
@@ -1972,7 +1959,7 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     return false;
 
                 // Fingers of Frost effects
-                if( spellInfo_1->SpellIconID == 2947 && spellInfo_2->SpellIconID == 2947)
+                if (spellInfo_1->SpellIconID == 2947 && spellInfo_2->SpellIconID == 2947)
                     return false;
 
                 // Living Bomb & Ignite (Dots)

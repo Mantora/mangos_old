@@ -1442,6 +1442,48 @@ Death.Bones.World = 1
 Death.Bones.BattlegroundOrArena = 1
 
 ###################################################################################################################
+#  PREMIUM ACCOUNTS CONFIG
+#
+#   Premium account is account with 1 and higher gmlevel rank 
+#       (ofc it would be better to set config with needed level, if you wish - you can help)
+#
+#    Rate.XP.Premium.Kill
+#    Rate.XP.Premium.Explore
+#        XP rates for Premium Accounts
+#        Default: 1
+#
+#
+#    Rate.Premium.Reputation.Gain
+#        Reputation rates for Premium Accounts
+#        Default: 1
+#
+#    Rate.Premium.Honor
+#        Honor rates for Premium Accounts
+#        Default: 1
+#
+#    Rate.Premium.Drop.Money
+#        Money rates for Premium Accounts
+#        Default: 1
+#
+#    SkillGain.Premium.Crafting
+#    SkillGain.Premium.Defense
+#    SkillGain.Premium.Gathering 
+#    SkillGain.Premium.Weapon
+#        SkillGain rates for Premium Accounts
+#        Default: 1
+#
+###################################################################################################################
+Rate.XP.Premium.Kill    = 1
+Rate.XP.Premium.Explore = 1
+Rate.Premium.Reputation.Gain    = 1
+Rate.Premium.Honor   = 1
+Rate.Premium.Drop.Money = 1
+SkillGain.Premium.Crafting    = 1
+SkillGain.Premium.Defense   = 1
+SkillGain.Premium.Gathering = 1
+SkillGain.Premium.Weapon = 1
+
+###################################################################################################################
 # BATTLEGROUND CONFIG
 #
 #    Battleground.CastDeserter
