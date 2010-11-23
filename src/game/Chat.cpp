@@ -2942,6 +2942,10 @@ bool ChatHandler::ExtractLocationFromLink(char** text, uint32& mapid, float& x, 
 
             if (Player* player = sObjectMgr.GetPlayer(name.c_str()))
             {
+				// check online security
+				if (HasLowerSecurity(player, 0))
+					return false;
+
                 mapid = player->GetMapId();
                 x = player->GetPositionX();
                 y = player->GetPositionY();
@@ -2951,6 +2955,11 @@ bool ChatHandler::ExtractLocationFromLink(char** text, uint32& mapid, float& x, 
 
             if (uint64 guid = sObjectMgr.GetPlayerGUIDByName(name))
             {
+				
+				// check offline security
+				if (HasLowerSecurity(NULL, guid))
+					return false;
+
                 // to point where player stay (if loaded)
                 float o;
                 bool in_flight;
