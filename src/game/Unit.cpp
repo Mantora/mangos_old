@@ -973,18 +973,10 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
 
         // Call KilledUnit for creatures
         if (GetTypeId() == TYPEID_UNIT && ((Creature*)this)->AI())
-        {
             ((Creature*)this)->AI()->KilledUnit(pVictim);
-        }
-        else if (GetTypeId() == TYPEID_PLAYER)
-        {
-            // currently not known if other pet types (not controllable) may have some action at owner kills
-            if (Pet* pProtector = GetProtectorPet())
-            {
-                if (pProtector->AI())
-                    pProtector->AI()->OwnerKilledUnit(pVictim);
-            }
-        }
+
+        // Call AI OwnerKilledUnit (for any current summoned minipet/guardian/protector)
+        PetOwnerKilledUnit(pVictim);
 
         // achievement stuff
         if (pVictim->GetTypeId() == TYPEID_PLAYER)
@@ -1272,6 +1264,27 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
     DEBUG_FILTER_LOG(LOG_FILTER_DAMAGE,"DealDamageEnd returned %d damage", damage);
 
     return damage;
+}
+
+struct PetOwnerKilledUnitHelper
+{
+    explicit PetOwnerKilledUnitHelper(Unit* pVictim) : m_victim(pVictim) {}
+    void operator()(Unit* pTarget) const
+    {
+        if (pTarget->GetTypeId() == TYPEID_UNIT)
+        {
+            if (((Creature*)pTarget)->AI())
+                ((Creature*)pTarget)->AI()->OwnerKilledUnit(m_victim);
+        }
+    }
+
+    Unit* m_victim;
+};
+
+void Unit::PetOwnerKilledUnit(Unit* pVictim)
+{
+    // for minipet and guardians (including protector)
+    CallForAllControlledUnits(PetOwnerKilledUnitHelper(pVictim), CONTROLLED_MINIPET|CONTROLLED_GUARDIANS);
 }
 
 void Unit::CastStop(uint32 except_spellid)
@@ -8772,11 +8785,11 @@ void Unit::SetVisibility(UnitVisibility x)
 
 bool Unit::canDetectInvisibilityOf(Unit const* u) const
 {
-    if(uint32 mask = (m_detectInvisibilityMask & u->m_invisibilityMask))
+    if (uint32 mask = (m_detectInvisibilityMask & u->m_invisibilityMask))
     {
-        for(int32 i = 0; i < 10; ++i)
+        for(int32 i = 0; i < 32; ++i)
         {
-            if(((1 << i) & mask)==0)
+            if (((1 << i) & mask)==0)
                 continue;
 
             // find invisibility level
