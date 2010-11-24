@@ -643,7 +643,6 @@ bool IsPositiveEffect(uint32 spellId, SpellEffectIndex effIndex)
         case 11103: // Impact talent
         case 12357: // Impact talent
         case 12358: // Impact talent
-        case 64343: // Impact buff
         case 36032: // Arcane Blast
         case 64901: // Hymn of Hope
         case 64904: // Hymn of Hope aura
