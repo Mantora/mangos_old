@@ -638,18 +638,29 @@ bool IsPositiveEffect(uint32 spellId, SpellEffectIndex effIndex)
     if (!spellproto)
         return false;
 
-	switch(spellId)
+    switch(spellId)
     {
-        case 11103: // Impact talent
-        case 12357: // Impact talent
-        case 12358: // Impact talent
-        case 36032: // Arcane Blast
-        case 64901: // Hymn of Hope
-        case 64904: // Hymn of Hope aura
-        case 552:   // Abolish Disease
-        case 59286: // Opening
-        case 64343: // Impact
-        case 12042: // Arcane Power
+        case 37675:                                         // Chaos Blast
+        case 56266:                                         // Vortex
+            return false;
+        case 36032:                                         // Arcane Blast
+        case 47540:                                         // Penance start dummy aura
+          case 53005:                                         
+          case 53006:                                         
+          case 53007:                                         
+        case 47757:                                         // Penance heal effect trigger
+          case 52986:                                         
+          case 52987:                                         
+          case 52988:                                         
+        case 642:                                           // Divine Shield
+        case 64843:                                         // Divine Hymn
+          case 64844:                                       
+        case 64901:                                         // Hymn of Hope
+          case 64904:                                       
+        case 552:                                           // Abolish Disease
+        case 59286:                                         // Opening
+        case 64343:                                         // Impact
+        case 12042:                                         // Arcane Power
             return true;
     }
 
