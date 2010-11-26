@@ -2601,7 +2601,7 @@ void ChatHandler::ShowTicket(GMTicket const* ticket)
 
 	std::string assignedStr;
 	if(!sObjectMgr.GetPlayerNameByGUID(ObjectGuid(HIGHGUID_PLAYER, ticket->GetAssignedGuid()),assignedStr) && !ticket->GetAssignedSecLevel())
-        assignedStr = "no one";
+        assignedStr = "keinen";
 		
     PSendSysMessage(LANG_COMMAND_TICKETVIEW, ticket->GetTicketId(), nameLink.c_str(), lastupdated.c_str(), assignedStr.c_str(), ticket->GetAssignedSecLevel(), ticket->GetText());
     if (strlen(response))
@@ -2853,17 +2853,17 @@ bool ChatHandler::HandleTicketCommand(char* args)
             return false;
         }
 
-		isAssigned = ((ticket->GetAssignedGuid() != 0) || (ticket->GetAssignedSecLevel() != 0)) ? true : false;
+		isAssigned = ((ticket->GetAssignedGuid()) || (ticket->GetAssignedSecLevel())) ? true : false;
 		if(isAssigned)
 		{
-			if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || (ticket->GetAssignedSecLevel() <= pl->GetSession()->GetSecurity()))
+			if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || ((ticket->GetAssignedSecLevel() != 0) ? (ticket->GetAssignedSecLevel() <= pl->GetSession()->GetSecurity()) : false))
 			{
-				ShowTicket(ticket);
-				return true;
+					ShowTicket(ticket);
+					return true;
 			}
 			else
 			{
-				SendSysMessage("ERROR");
+				SendSysMessage("Das Ticket ist dir nicht zugewiesen.");
 				SetSentErrorMessage(true);
 				return false;
 			}
@@ -2951,10 +2951,10 @@ bool ChatHandler::HandleCloseTicketCommand(char *args)
             return false;
         }
 
-		isAssigned = ((ticket->GetAssignedGuid() != 0) || (ticket->GetAssignedSecLevel() != 0)) ? true : false;
+		isAssigned = ((ticket->GetAssignedGuid()) || (ticket->GetAssignedSecLevel())) ? true : false;
 		if(isAssigned)
 		{
-			if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || (ticket->GetAssignedSecLevel() >= pl->GetSession()->GetSecurity()))
+			if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || ((ticket->GetAssignedSecLevel() != 0) ? (ticket->GetAssignedSecLevel() <= pl->GetSession()->GetSecurity()) : false))
 			{
 				sTicketMgr.Close(lowguid);
 
@@ -2971,7 +2971,7 @@ bool ChatHandler::HandleCloseTicketCommand(char *args)
 			}
 			else
 			{
-				SendSysMessage("ERROR");
+				SendSysMessage("Das Ticket ist dir nicht zugewiesen.");
 				SetSentErrorMessage(true);
 				return false;
 			}
