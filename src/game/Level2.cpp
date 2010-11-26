@@ -2727,12 +2727,38 @@ bool ChatHandler::HandleTicketCommand(char* args)
         if (!*args)
             return false;
 
-        ticket->SetResponseText(args);
+		isAssigned = ((ticket->GetAssignedGuid()) || (ticket->GetAssignedSecLevel())) ? true : false;
+		if(isAssigned)
+		{
+			Player* pl = m_session->GetPlayer();
+			if(!pl)
+				return false;
 
-        if (Player* pl = sObjectMgr.GetPlayer(ObjectGuid(HIGHGUID_PLAYER, ticket->GetPlayerLowGuid())))
-            pl->GetSession()->SendGMResponse(ticket);
+			if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || ((ticket->GetAssignedSecLevel() != 0) ? (ticket->GetAssignedSecLevel() <= pl->GetSession()->GetSecurity()) : false))
+			{
+				ticket->SetResponseText(args);
 
-        return true;
+				if (Player* pl = sObjectMgr.GetPlayer(ObjectGuid(HIGHGUID_PLAYER, ticket->GetPlayerLowGuid())))
+					pl->GetSession()->SendGMResponse(ticket);
+
+				return true;
+			}
+			else
+			{
+				SendSysMessage("Das Ticket ist dir nicht zugewiesen.");
+				SetSentErrorMessage(true);
+				return false;
+			}
+		}
+		else
+		{
+			ticket->SetResponseText(args);
+
+			if (Player* pl = sObjectMgr.GetPlayer(ObjectGuid(HIGHGUID_PLAYER, ticket->GetPlayerLowGuid())))
+				pl->GetSession()->SendGMResponse(ticket);
+
+			return true;
+		}
     }
 
 	// ticket assign
@@ -2889,9 +2915,29 @@ bool ChatHandler::HandleTicketCommand(char* args)
         return false;
     }
 
-    ShowTicket(ticket);
-
-    return true;
+	isAssigned = ((ticket->GetAssignedGuid()) || (ticket->GetAssignedSecLevel())) ? true : false;
+	if(isAssigned)
+	{
+		Player* pl = m_session->GetPlayer();
+		if(!pl)
+			return false;
+		if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || ((ticket->GetAssignedSecLevel() != 0) ? (ticket->GetAssignedSecLevel() <= pl->GetSession()->GetSecurity()) : false))
+		{
+				ShowTicket(ticket);
+				return true;
+		}
+		else
+		{
+			SendSysMessage("Das Ticket ist dir nicht zugewiesen.");
+			SetSentErrorMessage(true);
+			return false;
+		}
+	}
+	else
+	{
+		ShowTicket(ticket);
+		return true;
+	}
 }
 
 //close all tickets
@@ -2956,6 +3002,7 @@ bool ChatHandler::HandleCloseTicketCommand(char *args)
 		{
 			if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || ((ticket->GetAssignedSecLevel() != 0) ? (ticket->GetAssignedSecLevel() <= pl->GetSession()->GetSecurity()) : false))
 			{
+				ticket->SetAssignedGuid(pl->GetGUIDLow());
 				sTicketMgr.Close(lowguid);
 
 				//notify player
@@ -2978,6 +3025,7 @@ bool ChatHandler::HandleCloseTicketCommand(char *args)
 		}
 		else
 		{
+			ticket->SetAssignedGuid(pl->GetGUIDLow());
 			sTicketMgr.Close(lowguid);
 
 			//notify player
@@ -2991,8 +3039,6 @@ bool ChatHandler::HandleCloseTicketCommand(char *args)
 
 			return true;
 		}
-
-        return true;
     }
 
     Player* target;
@@ -3001,17 +3047,58 @@ bool ChatHandler::HandleCloseTicketCommand(char *args)
     if (!ExtractPlayerTarget(&px, &target, &target_guid, &target_name))
         return false;
 
-    // closeticket $char_name
-    sTicketMgr.Close(GUID_LOPART(target_guid));
+	GMTicket* ticket = sTicketMgr.GetGMTicket(GUID_LOPART(target_guid));
+    if (!ticket)
+    {
+        PSendSysMessage(LANG_COMMAND_TICKETNOTEXIST_NAME, target_name.c_str());
+        SetSentErrorMessage(true);
+        return false;
+    }
 
-    // notify players about ticket closing
-    if (target)
-        target->GetSession()->SendGMTicketGetTicket(0x0A, 0, false);
+	Player* pl = m_session->GetPlayer();
+	if(!pl)
+		return false;
 
-    std::string nameLink = playerLink(target_name);
+	isAssigned = ((ticket->GetAssignedGuid()) || (ticket->GetAssignedSecLevel())) ? true : false;
+	if(isAssigned)
+	{
+		if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || ((ticket->GetAssignedSecLevel() != 0) ? (ticket->GetAssignedSecLevel() <= pl->GetSession()->GetSecurity()) : false))
+		{
+			ticket->SetAssignedGuid(pl->GetGUIDLow());
+			// closeticket $char_name
+			sTicketMgr.Close(GUID_LOPART(target_guid));
 
-    PSendSysMessage(LANG_COMMAND_TICKETPLAYERCLOSE,nameLink.c_str());
-    return true;
+			// notify players about ticket closing
+			if (target)
+				target->GetSession()->SendGMTicketGetTicket(0x0A, 0, false);
+
+			std::string nameLink = playerLink(target_name);
+
+			PSendSysMessage(LANG_COMMAND_TICKETPLAYERCLOSE,nameLink.c_str());
+			return true;
+		}
+		else
+		{
+			SendSysMessage("Das Ticket ist dir nicht zugewiesen.");
+			SetSentErrorMessage(true);
+			return false;
+		}
+	}
+	else
+	{
+		ticket->SetAssignedGuid(pl->GetGUIDLow());
+		// closeticket $char_name
+		sTicketMgr.Close(GUID_LOPART(target_guid));
+
+		// notify players about ticket closing
+		if (target)
+			target->GetSession()->SendGMTicketGetTicket(0x0A, 0, false);
+
+		std::string nameLink = playerLink(target_name);
+
+		PSendSysMessage(LANG_COMMAND_TICKETPLAYERCLOSE,nameLink.c_str());
+		return true;
+	}
 }
 
 /**
