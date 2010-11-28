@@ -639,6 +639,7 @@ bool ChatHandler::HandleReloadAllSpellCommand(char* /*args*/)
     HandleReloadSpellScriptTargetCommand((char*)"a");
     HandleReloadSpellTargetPositionCommand((char*)"a");
     HandleReloadSpellThreatsCommand((char*)"a");
+    HandleReloadSpellThreatMultiplicatorCommand((char*)"a");
     HandleReloadSpellPetAurasCommand((char*)"a");
     HandleReloadSpellDisabledCommand((char*)"a");
     return true;
@@ -1108,6 +1109,14 @@ bool ChatHandler::HandleReloadSpellThreatsCommand(char* /*args*/)
     sLog.outString( "Re-Loading Aggro Spells Definitions...");
     sSpellMgr.LoadSpellThreats();
     SendGlobalSysMessage("DB table `spell_threat` (spell aggro definitions) reloaded.");
+    return true;
+}
+
+bool ChatHandler::HandleReloadSpellThreatMultiplicatorCommand(char* /*args*/)
+{      
+    sLog.outString( "Re-Loading spell threat multiplicator definitions..." );
+    sSpellMgr.LoadSpellThreatMultiplicators();
+    SendGlobalSysMessage("DB table `spell_threat_multiplicator` (spell threat multiplicator definitions) reloaded.");
     return true;
 }
 
@@ -7219,7 +7228,7 @@ bool ChatHandler::HandleFreezeCommand(char *args)
     if (!TargetName) //if no #name entered use target
     {
         player = getSelectedPlayer();
-		if (player) //prevent crash with creature as target
+        if (player) //prevent crash with creature as target
         {   
            name = player->GetName();
            normalizePlayerName(name);
@@ -7241,12 +7250,12 @@ bool ChatHandler::HandleFreezeCommand(char *args)
         //stop combat + unattackable + duel block + stop some spells
         player->setFaction(35);
         player->CombatStop();
-		if(player->IsNonMeleeSpellCasted(true))
+        if(player->IsNonMeleeSpellCasted(true))
         player->InterruptNonMeleeSpells(true);
         player->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
         player->SetUInt32Value(PLAYER_DUEL_TEAM, 1);
 
-		//if player class = hunter || warlock remove pet if alive
+        //if player class = hunter || warlock remove pet if alive
         if((player->getClass() == CLASS_HUNTER) || (player->getClass() == CLASS_WARLOCK))
         {
             if(Pet* pet = player->GetPet())
@@ -7281,7 +7290,7 @@ bool ChatHandler::HandleFreezeCommand(char *args)
                         case 0: si=EFFECT_INDEX_0;break;
                         case 1: si=EFFECT_INDEX_1;break;
                         default:si=EFFECT_INDEX_2;
-					}
+                    }
                     Aura *aur = CreateAura(spellInfo, si, NULL, holder, player);
                     holder->AddAura(aur, si);
                 }
@@ -7317,7 +7326,7 @@ bool ChatHandler::HandleUnFreezeCommand(char *args)
     if (!TargetName) //if no #name entered use target
     {
         player = getSelectedPlayer();
-		if (player) //prevent crash with creature as target
+        if (player) //prevent crash with creature as target
         {   
            name = player->GetName();
         }
@@ -7352,25 +7361,25 @@ bool ChatHandler::HandleUnFreezeCommand(char *args)
         if (TargetName)
         {        
             //check for offline players
-		    QueryResult *result = CharacterDatabase.PQuery("SELECT characters.guid FROM `characters` WHERE characters.name = '%s'",name.c_str());
+            QueryResult *result = CharacterDatabase.PQuery("SELECT characters.guid FROM `characters` WHERE characters.name = '%s'",name.c_str());
             if(!result)
-		    {
-			    SendSysMessage(LANG_COMMAND_FREEZE_WRONG);
+            {
+                SendSysMessage(LANG_COMMAND_FREEZE_WRONG);
                 return true;
-		    }
-		    //if player found: delete his freeze aura
-		    Field *fields=result->Fetch();
+            }
+            //if player found: delete his freeze aura
+            Field *fields=result->Fetch();
             uint64 pguid = fields[0].GetUInt64();
-		    delete result;
+            delete result;
             CharacterDatabase.PQuery("DELETE FROM `character_aura` WHERE character_aura.spell = 9454 AND character_aura.guid = '%u'",pguid);
             PSendSysMessage(LANG_COMMAND_UNFREEZE,name.c_str());
             return true;
-		}
-		else
+        }
+        else
         {
-	        SendSysMessage(LANG_COMMAND_FREEZE_WRONG);
+            SendSysMessage(LANG_COMMAND_FREEZE_WRONG);
             return true;
-		}
+        }
     }
 
     return true;
@@ -7389,7 +7398,7 @@ bool ChatHandler::HandleListFreezeCommand(char* args)
     PSendSysMessage(LANG_COMMAND_LIST_FREEZE);
     
     //Output of the results
-	do
+    do
     {
         Field *fields = result->Fetch();
         std::string fplayers = fields[0].GetCppString();

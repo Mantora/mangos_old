@@ -260,7 +260,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "move",           SEC_ADMINISTRATOR,     false, &ChatHandler::HandleGameObjectMoveCommand,      "", NULL },
         { "near",           SEC_ADMINISTRATOR,     false, &ChatHandler::HandleGameObjectNearCommand,      "", NULL },
         { "setphase",       SEC_ADMINISTRATOR,     false, &ChatHandler::HandleGameObjectPhaseCommand,     "", NULL },
-		{ "setstate",       SEC_ADMINISTRATOR,     false, &ChatHandler::HandleGameObjectStateCommand,     "", NULL },
+        { "setstate",       SEC_ADMINISTRATOR,     false, &ChatHandler::HandleGameObjectStateCommand,     "", NULL },
         { "target",         SEC_ADMINISTRATOR,     false, &ChatHandler::HandleGameObjectTargetCommand,    "", NULL },
         { "turn",           SEC_ADMINISTRATOR,     false, &ChatHandler::HandleGameObjectTurnCommand,      "", NULL },
         { NULL,             0,                  false, NULL,                                           "", NULL }
@@ -289,7 +289,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "listbinds",      SEC_ADMINISTRATOR,  false, &ChatHandler::HandleInstanceListBindsCommand,   "", NULL },
         { "unbind",         SEC_ADMINISTRATOR,  false, &ChatHandler::HandleInstanceUnbindCommand,      "", NULL },
         { "stats",          SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleInstanceStatsCommand,       "", NULL },
-		{ "setdata",        SEC_ADMINISTRATOR,  false, &ChatHandler::HandleInstanceSetDataCommand,     "", NULL },
+        { "setdata",        SEC_ADMINISTRATOR,  false, &ChatHandler::HandleInstanceSetDataCommand,     "", NULL },
         { "getdata",        SEC_ADMINISTRATOR,  false, &ChatHandler::HandleInstanceGetDataCommand,     "", NULL },
         { "savedata",       SEC_ADMINISTRATOR,  false, &ChatHandler::HandleInstanceSaveDataCommand,    "", NULL },
         { NULL,             0,                  false, NULL,                                           "", NULL }
@@ -533,6 +533,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "spell_scripts",               SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadSpellScriptsCommand,            "", NULL },
         { "spell_target_position",       SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadSpellTargetPositionCommand,     "", NULL },
         { "spell_threats",               SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadSpellThreatsCommand,            "", NULL },
+        { "spell_threat_multiplicator",  SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadSpellThreatMultiplicatorCommand,"", NULL },
         { "spell_disabled",              SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadSpellDisabledCommand,           "", NULL },
         { "anticheat",                   SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadAntiCheatCommand,               "", NULL },
 
@@ -2942,9 +2943,9 @@ bool ChatHandler::ExtractLocationFromLink(char** text, uint32& mapid, float& x, 
 
             if (Player* player = sObjectMgr.GetPlayer(name.c_str()))
             {
-				// check online security
-				if (HasLowerSecurity(player, 0))
-					return false;
+                // check online security
+                if (HasLowerSecurity(player, 0))
+                    return false;
 
                 mapid = player->GetMapId();
                 x = player->GetPositionX();
@@ -2955,10 +2956,10 @@ bool ChatHandler::ExtractLocationFromLink(char** text, uint32& mapid, float& x, 
 
             if (uint64 guid = sObjectMgr.GetPlayerGUIDByName(name))
             {
-				
-				// check offline security
-				if (HasLowerSecurity(NULL, guid))
-					return false;
+                
+                // check offline security
+                if (HasLowerSecurity(NULL, guid))
+                    return false;
 
                 // to point where player stay (if loaded)
                 float o;

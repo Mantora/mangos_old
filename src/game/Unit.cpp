@@ -1139,10 +1139,8 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         }
         if (pVictim->GetTypeId() != TYPEID_PLAYER)
         {
-            if(spellProto && IsDamageToThreatSpell(spellProto))
-                pVictim->AddThreat(this, float((damage + (cleanDamage ? cleanDamage->absorb : 0))*2), (cleanDamage && cleanDamage->hitOutCome == MELEE_HIT_CRIT), damageSchoolMask, spellProto);
-            else
-                pVictim->AddThreat(this, float(damage + (cleanDamage ? cleanDamage->absorb : 0)), (cleanDamage && cleanDamage->hitOutCome == MELEE_HIT_CRIT), damageSchoolMask, spellProto);
+            if(spellProto)
+               pVictim->AddThreat(this, float(damage*getSpellThreatMultiplicator(spellProto)), (cleanDamage && cleanDamage->hitOutCome == MELEE_HIT_CRIT), damageSchoolMask, spellProto);
         }
         else                                                // victim is a player
         {
@@ -1433,7 +1431,7 @@ void Unit::CastSpell(float x, float y, float z, SpellEntry const *spellInfo, boo
             sLog.outError("CastSpell(x,y,z): unknown spell by caster: %s", GetObjectGuid().GetString().c_str());
         return;
     }
-	
+    
     if(sObjectMgr.IsSpellDisabled(spellInfo->Id))
         return;
 
@@ -5376,10 +5374,10 @@ Aura* Unit::GetAura(AuraType type, uint32 family, uint64 familyFlag, uint32 fami
     for(AuraList::const_iterator i = auras.begin();i != auras.end(); ++i)
     {
         SpellEntry const *spell = (*i)->GetSpellProto();
-		
+        
         if (!spell)
             continue;
-		
+        
         if (spell->SpellFamilyName == family && (spell->SpellFamilyFlags & familyFlag || spell->SpellFamilyFlags2 & familyFlag2))
         {
             if (casterGUID && (*i)->GetCasterGUID()!=casterGUID)
@@ -6609,13 +6607,13 @@ Unit* Unit::SelectMagnetTarget(Unit *victim, SpellEntry const *spellInfo)
         for(Unit::AuraList::const_iterator itr = magnetAuras.begin(); itr != magnetAuras.end(); ++itr)
             if(Unit* magnet = (*itr)->GetCaster())
                 if(magnet->IsWithinLOSInMap(this) && magnet->isAlive())
-				{
+                {
                     //Destroy totem...
                     if( ((Creature*)magnet)->IsTotem())
                          magnet->CastSpell(magnet, 5, true);
                 
                     return magnet;
-				}
+                }
     }
     // Normal case
     else
@@ -7779,20 +7777,17 @@ bool Unit::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex i
     return false;
 }
 
-bool Unit::IsDamageToThreatSpell(SpellEntry const * spellInfo) const
+float Unit::getSpellThreatMultiplicator(SpellEntry const * spellInfo) const
 {
     if (!spellInfo)
-        return false;
+        return 1.0f;
+    
+    float fSpellThreatMultiplicator = sSpellMgr.GetSpellThreatMultiplicator(spellInfo->Id);
 
-    uint32 family = spellInfo->SpellFamilyName;
-    uint64 flags = spellInfo->SpellFamilyFlags;
-
-    if ((family == 5 && flags == 256) ||                    //Searing Pain
-        (family == 6 && flags == 8192) ||                   //Mind Blast
-        (family == 11 && flags == 1048576))                 //Earth Shock
-        return true;
-
-    return false;
+    if(!fSpellThreatMultiplicator)
+        return 1.0f;
+    
+    return fSpellThreatMultiplicator;
 }
 
 /**
@@ -8609,11 +8604,11 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
     {
         invisible = false;
     }
-	
+    
     // Arena preparation hack
     if (HasAura(SPELL_ARENA_PREPARATION) && IsHostileTo(u))
         invisible = true;
-			
+            
     // Buff in DK starting location provides invisibility for each faction players
     if(GetMapId() == 609)
     {
@@ -9241,7 +9236,7 @@ float Unit::ApplyTotalThreatModifier(float threat, SpellSchoolMask schoolMask)
 
 void Unit::AddThreat(Unit* pVictim, float threat /*= 0.0f*/, bool crit /*= false*/, SpellSchoolMask schoolMask /*= SPELL_SCHOOL_MASK_NONE*/, SpellEntry const *threatSpell /*= NULL*/)
 {
-	if(!pVictim || !pVictim->isAlive())
+    if(!pVictim || !pVictim->isAlive())
         return;
 
     // Only mobs can manage threat lists
