@@ -1219,7 +1219,7 @@ void WorldSession::HandleCharFactionOrRaceChangeOpcode(WorldPacket& recv_data)
         CharacterDatabase.PExecute("DELETE FROM `character_spell` WHERE `spell` IN (668, 7340, 671, 672, 814, 29932, 17737, 816, 7341, 669, 813, 670) AND guid ='%u'", guid.GetCounter());
 
         // Search each faction is targeted
-        BattleGroundTeamId team = BG_TEAM_ALLIANCE;
+        BattleGroundTeamIndex team = BG_TEAM_ALLIANCE;
         switch(race)
         {
             case RACE_ORC:
