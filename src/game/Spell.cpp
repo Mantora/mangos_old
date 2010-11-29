@@ -1137,6 +1137,11 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         if (m_canTrigger && missInfo != SPELL_MISS_REFLECT)
             caster->ProcDamageAndSpell(unitTarget, real_caster ? procAttacker : PROC_FLAG_NONE, procVictim, procEx, damageInfo.damage, m_attackType, m_spellInfo);
 
+        // trigger weapon enchants for weapon based spells; exclude spells that stop attack, because may break CC
+        if (m_caster->GetTypeId() == TYPEID_PLAYER && m_spellInfo->EquippedItemClass == ITEM_CLASS_WEAPON &&
+            !(m_spellInfo->Attributes & SPELL_ATTR_STOP_ATTACK_TARGET))
+            ((Player*)m_caster)->CastItemCombatSpell(unitTarget, m_attackType);
+
         // Haunt (NOTE: for avoid use additional field damage stored in dummy value (replace unused 100%)
         // apply before deal damage because aura can be removed at target kill
         if (m_spellInfo->SpellFamilyName == SPELLFAMILY_WARLOCK && m_spellInfo->SpellIconID == 3172 &&
@@ -1727,7 +1732,40 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             break;
         case TARGET_AREAEFFECT_CUSTOM_2:
         {
-            // Only "Hated" gameobjects TYPE 33 can be here. Not implemented yet...
+            // Only "Hated" gameobjects TYPE 33 can be here.
+            float x, y, z;
+            if (targetMode == TARGET_OBJECT_AREA_SRC)
+            {
+                if (m_targets.m_targetMask & TARGET_FLAG_SOURCE_LOCATION)
+                {
+                    x = m_targets.m_srcX;
+                    y = m_targets.m_srcY;
+                    z = m_targets.m_srcZ;
+                }
+                else
+                    break;
+            }
+            else if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
+            {
+                x = m_targets.m_destX;
+                y = m_targets.m_destY;
+                z = m_targets.m_destZ;
+            }
+            else
+                break;
+
+            MaNGOS::GameObjectInRangeCheck check(m_caster, x, y, z, radius + 15.0f);
+            std::list<GameObject*> goList;
+            MaNGOS::GameObjectListSearcher<MaNGOS::GameObjectInRangeCheck> searcher(goList, check);
+            Cell::VisitAllObjects(m_caster, searcher, radius);
+            for (std::list<GameObject*>::const_iterator itr = goList.begin(); itr != goList.end(); ++itr)
+            {
+//                FactionTemplateEntry const* caster_faction = m_caster->getFactionTemplateEntry();
+//                FactionTemplateEntry const* go_faction     = sFactionTemplateStore.LookupEntry((*itr)->GetUInt32Value(GAMEOBJECT_FACTION));
+//                if (!caster_faction || !go_faction || caster_faction->IsFriendlyTo(*go_faction))
+//                    continue;
+                AddGOTarget(*itr, effIndex);
+            }
             break;
         }
         case TARGET_RANDOM_ENEMY_CHAIN_IN_AREA:
@@ -4640,7 +4678,7 @@ SpellCastResult Spell::CheckCast(bool strict)
         }
         else if (m_caster == target)
         {
-            if (m_caster->GetTypeId() == TYPEID_PLAYER && m_caster->IsInWorld())     
+            if (m_caster->GetTypeId() == TYPEID_PLAYER && m_caster->IsInWorld())
             {
                 // Additional check for some spells
                 // If 0 spell effect empty - client not send target data (need use selection)
