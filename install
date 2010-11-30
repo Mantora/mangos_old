@@ -37,10 +37,12 @@ else
 	fi
 
 	# create errorfile
+	cd ..
 	rm error.log
 	touch error.log
+	cd objdir/
 	# write errors in the file error.log
-	make -j2 2>error.log
+	make -j2 2> ../error.log
 
 	# this is only an check if there are problems with creating lib directory
 	mkdir $mangosdir$installdir/lib
@@ -53,10 +55,13 @@ else
 	rm -r objdir
 	
 	cd $mangosdir$installdir
-	rm -r scriptdev2 mangos
+	rm -r scriptdev2 mangos include
 		
 	cd $mangosdir$installdir/etc
 	rm mangosd.conf.dist realmd.conf.dist scriptdev2.conf.dist
+	
+	cd $mangosdir$installdir/lib
+	rm -r pkgconfig
 		
 	echo "Mangos is installed successfully!"
 fi
