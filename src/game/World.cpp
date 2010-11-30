@@ -780,6 +780,21 @@ void World::LoadConfigSettings(bool reload)
 	// External Mail
 	setConfig(CONFIG_UINT32_EXTERNAL_MAIL, "ExternalMail.Enabled", 0);
 	setConfig(CONFIG_UINT32_EXTERNAL_MAIL_INTERVAL, "ExternalMail.Interval", 600);
+    
+    //Premium Accounts
+    setConfig(CONFIG_BOOL_PREMIUM_ENABLE,                       "Premuim.Account.Enable", true);
+    setConfigPos(CONFIG_UINT32_PREMIUM_GMLEVEL,                 "Premuim.Account.GmLevel", 1);
+    setConfig(CONFIG_FLOAT_RATE_XP_PREMIUM_KILL,                "Premium.Rate.XP.Kill", 1.0f);
+    setConfig(CONFIG_FLOAT_RATE_XP_PREMIUM_QUEST,               "Premium.Rate.XP.Quest", 1.0f);
+    setConfig(CONFIG_FLOAT_RATE_XP_PREMIUM_EXPLORE,             "Premium.Rate.XP.Explore", 1.0f);
+    setConfig(CONFIG_FLOAT_RATE_PREMIUM_REPUTATION_GAIN,        "Premium.Rate.Reputation.Gain", 1.0f);
+    setConfig(CONFIG_FLOAT_RATE_PREMIUM_HONOR,                  "Premium.Rate.Honor", 1.0f);
+    setConfigPos(CONFIG_FLOAT_RATE_PREMIUM_DROP_MONEY,          "Premium.Rate.Drop.Money", 1.0f);
+    setConfig(CONFIG_UINT32_SKILL_PREMIUM_GAIN_WEAPON,          "Premium.SkillGain.Weapon", 1);
+    setConfigPos(CONFIG_UINT32_SKILL_PREMIUM_GAIN_DEFENSE,      "Premium.SkillGain.Defense", 1);
+    setConfigPos(CONFIG_UINT32_SKILL_PREMIUM_GAIN_CRAFTING,     "Premium.SkillGain.Crafting", 1);
+    setConfigPos(CONFIG_UINT32_SKILL_PREMIUM_GAIN_GATHERING,    "Premium.SkillGain.Gathering", 1);
+
 
     m_VisibleUnitGreyDistance = sConfig.GetFloatDefault("Visibility.Distance.Grey.Unit", 1);
     if(m_VisibleUnitGreyDistance >  MAX_VISIBILITY_DISTANCE)

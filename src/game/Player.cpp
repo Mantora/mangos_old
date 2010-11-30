@@ -5041,7 +5041,7 @@ void Player::LeaveLFGChannel()
 
 void Player::UpdateDefense()
 {
-    uint32 defense_skill_gain = sWorld.getConfig(CONFIG_UINT32_SKILL_GAIN_DEFENSE);
+    uint32 defense_skill_gain = (GetSession()->IsPremium() != 0 ? sWorld.getConfig(CONFIG_UINT32_SKILL_PREMIUM_GAIN_DEFENSE) : sWorld.getConfig(CONFIG_UINT32_SKILL_GAIN_DEFENSE));
 
     if(UpdateSkill(SKILL_DEFENSE,defense_skill_gain))
     {
@@ -5480,8 +5480,8 @@ bool Player::UpdateCraftSkill(uint32 spellid)
                     learnSpell(discoveredSpell, false);
             }
 
-            uint32 craft_skill_gain = sWorld.getConfig(CONFIG_UINT32_SKILL_GAIN_CRAFTING);
-
+            uint32 craft_skill_gain = (GetSession()->IsPremium() != 0 ? sWorld.getConfig(CONFIG_UINT32_SKILL_PREMIUM_GAIN_CRAFTING) : sWorld.getConfig(CONFIG_UINT32_SKILL_GAIN_CRAFTING));
+            
             return UpdateSkillPro(_spell_idx->second->skillId, SkillGainChance(SkillValue,
                 _spell_idx->second->max_value,
                 (_spell_idx->second->max_value + _spell_idx->second->min_value)/2,
@@ -5496,8 +5496,8 @@ bool Player::UpdateGatherSkill(uint32 SkillId, uint32 SkillValue, uint32 RedLeve
 {
     DEBUG_LOG("UpdateGatherSkill(SkillId %d SkillLevel %d RedLevel %d)", SkillId, SkillValue, RedLevel);
 
-    uint32 gathering_skill_gain = sWorld.getConfig(CONFIG_UINT32_SKILL_GAIN_GATHERING);
-
+    uint32 gathering_skill_gain = (GetSession()->IsPremium() != 0 ? sWorld.getConfig(CONFIG_UINT32_SKILL_PREMIUM_GAIN_GATHERING) : sWorld.getConfig(CONFIG_UINT32_SKILL_GAIN_GATHERING));
+    
     // For skinning and Mining chance decrease with level. 1-74 - no decrease, 75-149 - 2 times, 225-299 - 8 times
     switch (SkillId)
     {
@@ -5528,7 +5528,7 @@ bool Player::UpdateFishingSkill()
 
     int32 chance = SkillValue < 75 ? 100 : 2500/(SkillValue-50);
 
-    uint32 gathering_skill_gain = sWorld.getConfig(CONFIG_UINT32_SKILL_GAIN_GATHERING);
+    uint32 gathering_skill_gain = (GetSession()->IsPremium() != 0 ? sWorld.getConfig(CONFIG_UINT32_SKILL_PREMIUM_GAIN_GATHERING) : sWorld.getConfig(CONFIG_UINT32_SKILL_GAIN_GATHERING));
 
     return UpdateSkillPro(SKILL_FISHING,chance*10,gathering_skill_gain);
 }
@@ -5631,7 +5631,8 @@ void Player::UpdateWeaponSkill (WeaponAttackType attType)
     if(m_form == FORM_TREE)
         return;                                             // use weapon but not skill up
 
-    uint32 weapon_skill_gain = sWorld.getConfig(CONFIG_UINT32_SKILL_GAIN_WEAPON);
+    uint32 weapon_skill_gain = (GetSession()->IsPremium() != 0 ? sWorld.getConfig(CONFIG_UINT32_SKILL_PREMIUM_GAIN_WEAPON) : sWorld.getConfig(CONFIG_UINT32_SKILL_GAIN_WEAPON));
+
 
     switch(attType)
     {
@@ -6350,7 +6351,14 @@ void Player::CheckAreaExploreAndOutdoor()
                 uint32 XP = 0;
                 if (diff < -5)
                 {
-                    XP = uint32(sObjectMgr.GetBaseXP(getLevel()+5)*sWorld.getConfig(CONFIG_FLOAT_RATE_XP_EXPLORE));
+                    if(GetSession()->IsPremium())
+                    {
+                        XP = uint32(sObjectMgr.GetBaseXP(getLevel()+5)*sWorld.getConfig(CONFIG_FLOAT_RATE_XP_PREMIUM_EXPLORE));
+                    } 
+                    else 
+                    {
+                        XP = uint32(sObjectMgr.GetBaseXP(getLevel()+5)*sWorld.getConfig(CONFIG_FLOAT_RATE_XP_EXPLORE));
+                    }
                 }
                 else if (diff > 5)
                 {
@@ -6360,11 +6368,25 @@ void Player::CheckAreaExploreAndOutdoor()
                     else if (exploration_percent < 0)
                         exploration_percent = 0;
 
-                    XP = uint32(sObjectMgr.GetBaseXP(p->area_level)*exploration_percent/100*sWorld.getConfig(CONFIG_FLOAT_RATE_XP_EXPLORE));
+                    if(GetSession()->IsPremium())
+                    {
+                        XP = uint32(sObjectMgr.GetBaseXP(p->area_level)*exploration_percent/100*sWorld.getConfig(CONFIG_FLOAT_RATE_XP_PREMIUM_EXPLORE));
+                    } 
+                    else 
+                    {
+                        XP = uint32(sObjectMgr.GetBaseXP(p->area_level)*exploration_percent/100*sWorld.getConfig(CONFIG_FLOAT_RATE_XP_EXPLORE));
+                    }
                 }
                 else
                 {
-                    XP = uint32(sObjectMgr.GetBaseXP(p->area_level)*sWorld.getConfig(CONFIG_FLOAT_RATE_XP_EXPLORE));
+                    if(GetSession()->IsPremium())
+                    {
+                        XP = uint32(sObjectMgr.GetBaseXP(p->area_level)*sWorld.getConfig(CONFIG_FLOAT_RATE_XP_PREMIUM_EXPLORE));
+                    } 
+                    else 
+                    {
+                        XP = uint32(sObjectMgr.GetBaseXP(p->area_level)*sWorld.getConfig(CONFIG_FLOAT_RATE_XP_EXPLORE));
+                    }
                 }
 
                 GiveXP( XP, NULL );
@@ -6475,8 +6497,15 @@ int32 Player::CalculateReputationGain(ReputationSource source, int32 rep, int32 
 
         percent *= repRate;
     }
-
-    return int32(sWorld.getConfig(CONFIG_FLOAT_RATE_REPUTATION_GAIN)*rep*percent/100.0f);
+    
+    if(GetSession()->IsPremium())
+    {
+        return int32(sWorld.getConfig(CONFIG_FLOAT_RATE_PREMIUM_REPUTATION_GAIN)*rep*percent/100.0f);
+    }
+    else
+    {
+        return int32(sWorld.getConfig(CONFIG_FLOAT_RATE_REPUTATION_GAIN)*rep*percent/100.0f);
+    }
 }
 
 //Calculates how many reputation points player gains in victim's enemy factions
@@ -6797,7 +6826,14 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor)
 
     if (uVictim != NULL)
     {
-        honor *= sWorld.getConfig(CONFIG_FLOAT_RATE_HONOR);
+        if (GetSession()->IsPremium())
+        {
+            honor *= sWorld.getConfig(CONFIG_FLOAT_RATE_PREMIUM_HONOR);
+        }
+        else
+        {
+            honor *= sWorld.getConfig(CONFIG_FLOAT_RATE_HONOR);
+        }
         honor *= (GetMaxPositiveAuraModifier(SPELL_AURA_MOD_HONOR_GAIN) + 100.0f)/100.0f;
 
         if(groupsize > 1)
@@ -8269,7 +8305,14 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
                     loot->FillLoot(0, LootTemplates_Creature, this, false);
                 // It may need a better formula
                 // Now it works like this: lvl10: ~6copper, lvl70: ~9silver
-                bones->loot.gold = (uint32)( urand(50, 150) * 0.016f * pow( ((float)pLevel)/5.76f, 2.5f) * sWorld.getConfig(CONFIG_FLOAT_RATE_DROP_MONEY) );
+                if (GetSession()->IsPremium())
+                {
+                    bones->loot.gold = (uint32)( urand(50, 150) * 0.016f * pow( ((float)pLevel)/5.76f, 2.5f) * sWorld.getConfig(CONFIG_FLOAT_RATE_PREMIUM_DROP_MONEY) );
+                }
+                else
+                {
+                    bones->loot.gold = (uint32)( urand(50, 150) * 0.016f * pow( ((float)pLevel)/5.76f, 2.5f) * sWorld.getConfig(CONFIG_FLOAT_RATE_DROP_MONEY) );
+                }
             }
 
             if (bones->lootRecipient != this)
@@ -8309,7 +8352,14 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type)
                     // Generate extra money for pick pocket loot
                     const uint32 a = urand(0, creature->getLevel()/2);
                     const uint32 b = urand(0, getLevel()/2);
-                    loot->gold = uint32(10 * (a + b) * sWorld.getConfig(CONFIG_FLOAT_RATE_DROP_MONEY));
+                    if (GetSession()->IsPremium())
+                    {
+                        loot->gold = uint32(10 * (a + b) * sWorld.getConfig(CONFIG_FLOAT_RATE_PREMIUM_DROP_MONEY));
+                    }
+                    else
+                    {
+                        loot->gold = uint32(10 * (a + b) * sWorld.getConfig(CONFIG_FLOAT_RATE_DROP_MONEY));
+                    }
                 }
             }
             else
@@ -14076,13 +14126,15 @@ void Player::RewardQuest(Quest const *pQuest, uint32 reward, Object* questGiver,
     QuestStatusData& q_status = mQuestStatus[quest_id];
 
     // Not give XP in case already completed once repeatable quest
-    uint32 XP = q_status.m_rewarded ? 0 : uint32(pQuest->XPValue(this)*sWorld.getConfig(CONFIG_FLOAT_RATE_XP_QUEST));
-
+    uint32 XP = q_status.m_rewarded ? 0 : (GetSession()->IsPremium() != 0 ? uint32(pQuest->XPValue( this )*sWorld.getConfig(CONFIG_FLOAT_RATE_XP_PREMIUM_QUEST)) : uint32(pQuest->XPValue( this )*sWorld.getConfig(CONFIG_FLOAT_RATE_XP_QUEST)));
+ 
+    
     if (getLevel() < sWorld.getConfig(CONFIG_UINT32_MAX_PLAYER_LEVEL))
         GiveXP(XP , NULL);
     else
     {
-        uint32 money = uint32(pQuest->GetRewMoneyMaxLevel() * sWorld.getConfig(CONFIG_FLOAT_RATE_DROP_MONEY));
+        uint32 money = (GetSession()->IsPremium() != 0 ? uint32(pQuest->GetRewMoneyMaxLevel() * sWorld.getConfig(CONFIG_FLOAT_RATE_PREMIUM_DROP_MONEY)) : uint32(pQuest->GetRewMoneyMaxLevel() * sWorld.getConfig(CONFIG_FLOAT_RATE_DROP_MONEY)));
+
         ModifyMoney( money );
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_MONEY_FROM_QUEST_REWARD, money);
     }

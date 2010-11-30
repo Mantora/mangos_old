@@ -1442,6 +1442,60 @@ Death.Bones.World = 1
 Death.Bones.BattlegroundOrArena = 1
 
 ###################################################################################################################
+#  PREMIUM ACCOUNTS CONFIG
+#  author: Selector
+#  made special for: stcore
+#
+#    Premuim.Account.Enable
+#        Enable Premium Account System
+#        Default: 0 - off
+#                 1 - on
+#
+#    Premuim.Account.GmLevel
+#        Only accounts that are above this gm-level or exact at the same, are premium.
+#        Default: 1
+#
+#    Premium.Rate.XP.Kill
+#    Premium.Rate.XP.Quest 
+#    Premium.Rate.XP.Explore
+#        XP rates for Premium Accounts (can be fractional 1.5, 2.7, 3.5, etc.)
+#        Default: 1
+#
+#
+#    Premium.Rate.Reputation.Gain
+#        Reputation rates for Premium Accounts (can be fractional 1.5, 2.7, 3.5, etc.)
+#        Default: 1
+#
+#    Premium.Rate.Honor
+#        Honor rates for Premium Accounts (can be fractional 1.5, 2.7, 3.5, etc.)
+#        Default: 1
+#
+#    Premium.Rate.Drop.Money 
+#        Money rates for Premium Accounts (can be fractional 1.5, 2.7, 3.5, etc.)
+#        Default: 1
+#
+#    Premium.SkillGain.Crafting
+#    Premium.SkillGain.Defense
+#    Premium.SkillGain.Gathering 
+#    Premium.SkillGain.Weapon
+#        SkillGain rates for Premium Accounts (can be only integral 2, 5, 10, etc.)
+#        Default: 1
+#
+###################################################################################################################
+Premuim.Account.Enable = 0
+Premuim.Account.GmLevel = 1
+Premium.Rate.XP.Kill    = 1
+Premium.Rate.XP.Quest = 1
+Premium.Rate.XP.Explore = 1
+Premium.Rate.Reputation.Gain    = 1
+Premium.Rate.Honor   = 1
+Premium.Rate.Drop.Money = 1
+Premium.SkillGain.Weapon = 1
+Premium.SkillGain.Defense   = 1
+Premium.SkillGain.Crafting    = 1
+Premium.SkillGain.Gathering = 1
+
+###################################################################################################################
 # BATTLEGROUND CONFIG
 #
 #    Battleground.CastDeserter
