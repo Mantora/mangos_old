@@ -780,17 +780,6 @@ void World::LoadConfigSettings(bool reload)
 	// External Mail
 	setConfig(CONFIG_UINT32_EXTERNAL_MAIL, "ExternalMail.Enabled", 0);
 	setConfig(CONFIG_UINT32_EXTERNAL_MAIL_INTERVAL, "ExternalMail.Interval", 600);
-    
-    //Premium Accounts
-    setConfig(CONFIG_FLOAT_RATE_XP_PREMIUM_KILL,    "Rate.XP.Premium.Kill",    1.0f);
-    setConfig(CONFIG_FLOAT_RATE_XP_PREMIUM_EXPLORE, "Rate.XP.Premium.Explore", 1.0f);
-    setConfig(CONFIG_FLOAT_RATE_PREMIUM_REPUTATION_GAIN,           "Rate.Premium.Reputation.Gain", 1.0f);
-    setConfig(CONFIG_FLOAT_RATE_PREMIUM_HONOR, "Rate.Premium.Honor", 1.0f);
-    setConfigPos(CONFIG_FLOAT_RATE_PREMIUM_DROP_MONEY,           "Rate.Premium.Drop.Money", 1.0f);
-    setConfigPos(CONFIG_UINT32_SKILL_PREMIUM_GAIN_CRAFTING,  "SkillGain.Premium.Crafting",  1);
-    setConfigPos(CONFIG_UINT32_SKILL_PREMIUM_GAIN_DEFENSE,   "SkillGain.Premium.Defense",   1);
-    setConfigPos(CONFIG_UINT32_SKILL_PREMIUM_GAIN_GATHERING, "SkillGain.Premium.Gathering", 1);
-    setConfig(CONFIG_UINT32_SKILL_PREMIUM_GAIN_WEAPON,       "SkillGain.Premium.Weapon",    1);
 
     m_VisibleUnitGreyDistance = sConfig.GetFloatDefault("Visibility.Distance.Grey.Unit", 1);
     if(m_VisibleUnitGreyDistance >  MAX_VISIBILITY_DISTANCE)
