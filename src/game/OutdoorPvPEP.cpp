@@ -65,7 +65,7 @@ OPvPCapturePointEP::OPvPCapturePointEP(OutdoorPvP *pvp,OutdoorPvPEPTowerType typ
             EPTowerFlags[type+EP_TOWER_NUM*i].rot2,
             EPTowerFlags[type+EP_TOWER_NUM*i].rot3);
 
-    EP_TOWER_EVENT_TEAM[type] = 0;
+    EP_TOWER_EVENT_TEAM[type] = TEAM_NONE;
 }
 
 OutdoorPvPEP::OutdoorPvPEP()
@@ -342,7 +342,7 @@ void OPvPCapturePointEP::UpdateTowerEvents()
 {
     if (m_State == OBJECTIVESTATE_ALLIANCE || m_State == OBJECTIVESTATE_HORDE)
     {
-        uint32 team = (m_State == OBJECTIVESTATE_ALLIANCE) ? ALLIANCE : HORDE;
+        Team team = (m_State == OBJECTIVESTATE_ALLIANCE) ? ALLIANCE : HORDE;
         switch (m_TowerType)
         {
         case EP_TOWER_CROWNGUARD:
@@ -379,7 +379,7 @@ void OPvPCapturePointEP::UpdateTowerEvents()
     }
 }
 
-void OPvPCapturePointEP::LinkGraveYard(uint32 team)
+void OPvPCapturePointEP::LinkGraveYard(Team team)
 {
     if (EP_TOWER_EVENT_TEAM[EP_TOWER_CROWNGUARD] != team)
     {
@@ -392,10 +392,10 @@ void OPvPCapturePointEP::LinkGraveYard(uint32 team)
 void OPvPCapturePointEP::UnlinkGraveYard()
 {
     sObjectMgr.RemoveGraveYardLink(EP_GraveYardId,EP_GraveYardZone,EP_TOWER_EVENT_TEAM[EP_TOWER_CROWNGUARD],false);
-    EP_TOWER_EVENT_TEAM[EP_TOWER_CROWNGUARD] = 0;
+    EP_TOWER_EVENT_TEAM[EP_TOWER_CROWNGUARD] = TEAM_NONE;
 }
 
-void OPvPCapturePointEP::SummonSupportUnits(uint32 team)
+void OPvPCapturePointEP::SummonSupportUnits(Team team)
 {
     if (EP_TOWER_EVENT_TEAM[EP_TOWER_EASTWALL] != team)
     {
@@ -418,10 +418,10 @@ void OPvPCapturePointEP::UnsummonSupportUnits()
 {
     for (uint8 i = 0; i < EP_EWT_NUM_CREATURES; ++i)
         DelCreature(i);
-    EP_TOWER_EVENT_TEAM[EP_TOWER_EASTWALL] = 0;
+    EP_TOWER_EVENT_TEAM[EP_TOWER_EASTWALL] = TEAM_NONE;
 }
 
-void OPvPCapturePointEP::SummonShrine(uint32 team)
+void OPvPCapturePointEP::SummonShrine(Team team)
 {
     if (EP_TOWER_EVENT_TEAM[EP_TOWER_NORTHPASS] != team)
     {
@@ -442,10 +442,10 @@ void OPvPCapturePointEP::UnsummonShrine()
 {
     DelObject(EP_NPT_SHRINE);
     DelObject(EP_NPT_SHRINE_AURA);
-    EP_TOWER_EVENT_TEAM[EP_TOWER_NORTHPASS] = 0;
+    EP_TOWER_EVENT_TEAM[EP_TOWER_NORTHPASS] = TEAM_NONE;
 }
 
-void OPvPCapturePointEP::SummonFlightMaster(uint32 team)
+void OPvPCapturePointEP::SummonFlightMaster(Team team)
 {
     if (EP_TOWER_EVENT_TEAM[EP_TOWER_PLAGUEWOOD] != team)
     {
@@ -466,5 +466,5 @@ void OPvPCapturePointEP::SummonFlightMaster(uint32 team)
 void OPvPCapturePointEP::UnsummonFlightMaster()
 {
     DelCreature(EP_PWT_FLIGHTMASTER);
-    EP_TOWER_EVENT_TEAM[EP_TOWER_PLAGUEWOOD] = 0;
+    EP_TOWER_EVENT_TEAM[EP_TOWER_PLAGUEWOOD] = TEAM_NONE;
 }

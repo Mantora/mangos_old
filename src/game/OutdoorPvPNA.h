@@ -254,7 +254,7 @@ public:
     uint32 GetAliveGuardsCount();
 protected:
     // called when a faction takes control
-    void FactionTakeOver(uint32 team);
+    void FactionTakeOver(Team team);
 
     void DeSpawnNPCs();
     void DeSpawnGOs();
@@ -267,7 +267,7 @@ protected:
 private:
     bool m_capturable;
     uint32 m_GuardsAlive;
-    uint32 m_ControllingFaction;
+    Team m_ControllingFaction;
     uint32 m_WyvernStateNorth;
     uint32 m_WyvernStateSouth;
     uint32 m_WyvernStateEast;

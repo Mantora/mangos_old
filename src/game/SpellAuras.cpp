@@ -367,7 +367,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleNULL,                                      //313 0 spells in 3.3
     &Aura::HandleNULL,                                      //314 1 test spell (reduce duration of silince/magic)
     &Aura::HandleNULL,                                      //315 underwater walking
-    &Aura::HandleNoImmediateEffect                          //316 SPELL_AURA_MOD_PERIODIC_HASTE makes haste affect HOT/DOT ticks
+    &Aura::HandleNoImmediateEffect,                         //316 SPELL_AURA_APPLY_HASTE_TO_AURA makes haste affect HOT/DOT ticks
 };
 
 static AuraType const frozenAuraTypes[] = { SPELL_AURA_MOD_ROOT, SPELL_AURA_MOD_STUN, SPELL_AURA_NONE };
@@ -394,10 +394,12 @@ m_isPersistent(false), m_in_use(0), m_spellAuraHolder(holder)
     if (!caster)
     {
         damage = m_currentBasePoints;
+        m_maxduration = target->CalculateSpellDuration(spellproto, m_effIndex, target);
     }
     else
     {
         damage        = caster->CalculateSpellDamage(target, spellproto, m_effIndex, &m_currentBasePoints);
+        m_maxduration = caster->CalculateSpellDuration(spellproto, m_effIndex, target);
 
         if (!damage && castItem && castItem->GetItemSuffixFactor())
         {
@@ -426,28 +428,46 @@ m_isPersistent(false), m_in_use(0), m_spellAuraHolder(holder)
         }
     }
 
-    SetModifier(AuraType(spellproto->EffectApplyAuraName[eff]), damage, spellproto->EffectAmplitude[eff], spellproto->EffectMiscValue[eff]);
-
-    if (caster)
-        m_maxduration = caster->CalculateBaseSpellDuration(spellproto, &m_modifier.periodictime);
-    else
-        m_maxduration = GetSpellDuration(spellproto);
-
     if (m_maxduration == -1 || (isPassive && spellproto->DurationIndex == 0))
         isPermanent = true;
+        
+    m_origDuration = m_maxduration;
 
-    if (!isPermanent)
+    Player* modOwner = caster ? caster->GetSpellModOwner() : NULL;
+
+    if (!isPermanent && modOwner)
     {
-        m_maxduration = target->CalculateSpellDuration(caster, m_maxduration, spellproto, m_effIndex);
+        modOwner->ApplySpellMod(spellproto->Id, SPELLMOD_DURATION, m_maxduration);
         // Get zero duration aura after - need set m_maxduration > 0 for apply/remove aura work
         if (m_maxduration<=0)
             m_maxduration = 1;
     }
     
-    m_duration = m_maxduration;
-
     DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Aura: construct Spellid : %u, Aura : %u Duration : %d Target : %d Damage : %d", spellproto->Id, spellproto->EffectApplyAuraName[eff], m_maxduration, spellproto->EffectImplicitTargetA[eff],damage);
 
+    SetModifier(AuraType(spellproto->EffectApplyAuraName[eff]), damage, spellproto->EffectAmplitude[eff], spellproto->EffectMiscValue[eff]);
+    
+    //Apply haste to channeled spells and some DoT/HoT auras
+    uint32 spellfamily = GetSpellProto()->SpellFamilyName;
+    uint64 spellfamilyflag = GetSpellProto()->SpellFamilyFlags;
+    if(caster && ((GetSpellProto()->AttributesEx & (SPELL_ATTR_EX_CHANNELED_1 | SPELL_ATTR_EX_CHANNELED_2))
+        || (GetSpellProto()->AttributesEx5 & SPELL_ATTR_EX5_AFFECTED_BY_HASTE)
+        || (spellfamily == SPELLFAMILY_WARLOCK && (spellfamilyflag & UI64LIT(0x00000002))&& caster->HasAura(70947))//Glyph of Quick Decay
+        || (spellfamily == SPELLFAMILY_PRIEST && (spellfamilyflag & UI64LIT(0x02000000))&& caster->HasAura(15473))//Devouring Plague in Shadow Form
+        || (spellfamily == SPELLFAMILY_PRIEST && (spellfamilyflag & UI64LIT(0x0000040000000000))&& caster->HasAura(15473))//Vampiric Touch in Shadow Formaa
+        || (spellfamily == SPELLFAMILY_DRUID && (spellfamilyflag & UI64LIT(0x00000010))&& caster->HasAura(71013))))//Glyph of Rapid Rejuvenation
+        if (m_modifier.periodictime)
+            ApplyHasteToPeriodic();
+        else//This case for nonperiodic effect of periodic spells
+        {
+            if( !(GetSpellProto()->Attributes & (SPELL_ATTR_UNK4|SPELL_ATTR_TRADESPELL)) )
+	            m_maxduration = int32(m_origDuration * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
+        }
+
+    // Apply periodic time mod
+    else if(modOwner && m_modifier.periodictime)
+        modOwner->ApplySpellMod(spellproto->Id, SPELLMOD_ACTIVATION_TIME, m_modifier.periodictime);
+        
     m_duration = m_maxduration;
 
     // Start periodic on next tick or at aura apply
@@ -1131,6 +1151,8 @@ void Aura::ReapplyAffectedPassiveAuras()
                 if (member != GetTarget() && member->IsInMap(GetTarget()))
                     ReapplyAffectedPassiveAuras(member, false);
 }
+
+
 
 /*********************************************************/
 /***               BASIC AURA FUNCTION                 ***/
@@ -9723,6 +9745,34 @@ void SpellAuraHolder::UnregisterSingleCastHolder()
 
         m_isSingleTarget = false;
     }
+}
+
+void Aura::ApplyHasteToPeriodic()
+{
+    int32 periodic = m_modifier.periodictime;
+    int32 duration = m_origDuration;
+    if(duration == 0 || periodic == 0)
+        return;
+    
+    int32 ticks = duration / periodic;
+
+    if(!GetCaster())
+        return;
+
+    Player* modOwner = GetCaster()->GetSpellModOwner();
+
+    if(modOwner)
+        modOwner->ApplySpellMod(GetId(), SPELLMOD_ACTIVATION_TIME, periodic);
+
+    if( !(GetSpellProto()->Attributes & (SPELL_ATTR_UNK4|SPELL_ATTR_TRADESPELL)) )
+        duration = int32(duration * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
+
+    if(m_origDuration != duration)
+    {
+        periodic = int32(periodic * GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
+        m_maxduration = periodic * ticks;
+    }
+    m_modifier.periodictime = periodic;
 }
 
 void Aura::HandleAuraMirrorImage(bool Apply, bool Real)

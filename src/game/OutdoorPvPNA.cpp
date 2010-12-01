@@ -134,7 +134,7 @@ void OPvPCapturePointNA::DeSpawnGOs()
     }
 }
 
-void OPvPCapturePointNA::FactionTakeOver(uint32 team)
+void OPvPCapturePointNA::FactionTakeOver(Team team)
 {
     if(m_ControllingFaction)
         sObjectMgr.RemoveGraveYardLink(NA_HALAA_GRAVEYARD,NA_HALAA_GRAVEYARD_ZONE,m_ControllingFaction,false);
@@ -203,7 +203,7 @@ void OPvPCapturePointNA::HandlePlayerLeave(Player *plr)
 }
 
 OPvPCapturePointNA::OPvPCapturePointNA(OutdoorPvP *pvp) :
-OPvPCapturePoint(pvp), m_capturable(true), m_GuardsAlive(0), m_ControllingFaction(0),
+OPvPCapturePoint(pvp), m_capturable(true), m_GuardsAlive(0), m_ControllingFaction(TEAM_NONE),
 m_HalaaState(HALAA_N), m_WyvernStateSouth(0), m_WyvernStateNorth(0), m_WyvernStateWest(0),
 m_WyvernStateEast(0), m_RespawnTimer(NA_RESPAWN_TIME), m_GuardCheckTimer(NA_GUARD_CHECK_TIME)
 {
