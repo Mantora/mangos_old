@@ -55,10 +55,13 @@ else
 	rm -r objdir
 	
 	cd $mangosdir$installdir
-	rm -r scriptdev2 mangos
+	rm -r scriptdev2 mangos include
 		
 	cd $mangosdir$installdir/etc
 	rm mangosd.conf.dist realmd.conf.dist scriptdev2.conf.dist
+	
+	cd $mangosdir$installdir/lib
+	rm -r pkgconfig
 		
 	echo "Mangos is installed successfully!"
 fi

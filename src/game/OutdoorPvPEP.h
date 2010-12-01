@@ -151,13 +151,13 @@ class OPvPCapturePointEP : public OPvPCapturePoint
 
         void UpdateTowerEvents();
 
-        void LinkGraveYard(uint32 team);
+        void LinkGraveYard(Team team);
 
-        void SummonShrine(uint32 team);
+        void SummonShrine(Team team);
 
-        void SummonSupportUnits(uint32 team);
+        void SummonSupportUnits(Team team);
 
-        void SummonFlightMaster(uint32 team);
+        void SummonFlightMaster(Team team);
 
         void UnlinkGraveYard();
 
@@ -168,7 +168,7 @@ class OPvPCapturePointEP : public OPvPCapturePoint
         void UnsummonFlightMaster();
 
 
-        uint32 EP_TOWER_EVENT_TEAM[EP_TOWER_NUM];
+        Team EP_TOWER_EVENT_TEAM[EP_TOWER_NUM];
 
     private:
 

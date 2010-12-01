@@ -589,7 +589,7 @@ bool Unit::canReachWithAttack(Unit *pVictim) const
     return IsWithinDistInMap(pVictim, reach);
 }
 
-void Unit::RemoveSpellsCausingAura(AuraType auraType)
+void Unit::RemoveSpellsCausingAura(AuraType auraType, bool negative, bool positive)
 {
     if (auraType >= TOTAL_AURAS) return;
     AuraList::const_iterator iter, next;
@@ -598,7 +598,7 @@ void Unit::RemoveSpellsCausingAura(AuraType auraType)
         next = iter;
         ++next;
 
-        if (*iter)
+        if (*iter && ((negative && !(*iter)->IsPositive()) || (positive && (*iter)->IsPositive())) )
         {
             RemoveAurasDueToSpell((*iter)->GetId());
             if (!m_modAuras[auraType].empty())
@@ -964,18 +964,10 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
 
         // Call KilledUnit for creatures
         if (GetTypeId() == TYPEID_UNIT && ((Creature*)this)->AI())
-        {
             ((Creature*)this)->AI()->KilledUnit(pVictim);
-        }
-        else if (GetTypeId() == TYPEID_PLAYER)
-        {
-            // currently not known if other pet types (not controllable) may have some action at owner kills
-            if (Pet* pProtector = GetProtectorPet())
-            {
-                if (pProtector->AI())
-                    pProtector->AI()->OwnerKilledUnit(pVictim);
-            }
-        }
+
+        // Call AI OwnerKilledUnit (for any current summoned minipet/guardian/protector)
+        PetOwnerKilledUnit(pVictim);
 
         // achievement stuff
         if (pVictim->GetTypeId() == TYPEID_PLAYER)
@@ -1138,10 +1130,8 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         }
         if (pVictim->GetTypeId() != TYPEID_PLAYER)
         {
-            if(spellProto && IsDamageToThreatSpell(spellProto))
-                pVictim->AddThreat(this, float((damage + (cleanDamage ? cleanDamage->absorb : 0))*2), (cleanDamage && cleanDamage->hitOutCome == MELEE_HIT_CRIT), damageSchoolMask, spellProto);
-            else
-                pVictim->AddThreat(this, float(damage + (cleanDamage ? cleanDamage->absorb : 0)), (cleanDamage && cleanDamage->hitOutCome == MELEE_HIT_CRIT), damageSchoolMask, spellProto);
+            if(spellProto)
+               pVictim->AddThreat(this, float(damage*getSpellThreatMultiplicator(spellProto)), (cleanDamage && cleanDamage->hitOutCome == MELEE_HIT_CRIT), damageSchoolMask, spellProto);
         }
         else                                                // victim is a player
         {
@@ -1263,6 +1253,27 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
     DEBUG_FILTER_LOG(LOG_FILTER_DAMAGE,"DealDamageEnd returned %d damage", damage);
 
     return damage;
+}
+
+struct PetOwnerKilledUnitHelper
+{
+    explicit PetOwnerKilledUnitHelper(Unit* pVictim) : m_victim(pVictim) {}
+    void operator()(Unit* pTarget) const
+    {
+        if (pTarget->GetTypeId() == TYPEID_UNIT)
+        {
+            if (((Creature*)pTarget)->AI())
+                ((Creature*)pTarget)->AI()->OwnerKilledUnit(m_victim);
+        }
+    }
+
+    Unit* m_victim;
+};
+
+void Unit::PetOwnerKilledUnit(Unit* pVictim)
+{
+    // for minipet and guardians (including protector)
+    CallForAllControlledUnits(PetOwnerKilledUnitHelper(pVictim), CONTROLLED_MINIPET|CONTROLLED_GUARDIANS);
 }
 
 void Unit::CastStop(uint32 except_spellid)
@@ -1411,7 +1422,7 @@ void Unit::CastSpell(float x, float y, float z, SpellEntry const *spellInfo, boo
             sLog.outError("CastSpell(x,y,z): unknown spell by caster: %s", GetObjectGuid().GetString().c_str());
         return;
     }
-	
+    
     if(sObjectMgr.IsSpellDisabled(spellInfo->Id))
         return;
 
@@ -5354,10 +5365,10 @@ Aura* Unit::GetAura(AuraType type, uint32 family, uint64 familyFlag, uint32 fami
     for(AuraList::const_iterator i = auras.begin();i != auras.end(); ++i)
     {
         SpellEntry const *spell = (*i)->GetSpellProto();
-		
+        
         if (!spell)
             continue;
-		
+        
         if (spell->SpellFamilyName == family && (spell->SpellFamilyFlags & familyFlag || spell->SpellFamilyFlags2 & familyFlag2))
         {
             if (casterGUID && (*i)->GetCasterGUID()!=casterGUID)
@@ -6587,13 +6598,13 @@ Unit* Unit::SelectMagnetTarget(Unit *victim, SpellEntry const *spellInfo)
         for(Unit::AuraList::const_iterator itr = magnetAuras.begin(); itr != magnetAuras.end(); ++itr)
             if(Unit* magnet = (*itr)->GetCaster())
                 if(magnet->IsWithinLOSInMap(this) && magnet->isAlive())
-				{
+                {
                     //Destroy totem...
                     if( ((Creature*)magnet)->IsTotem())
                          magnet->CastSpell(magnet, 5, true);
                 
                     return magnet;
-				}
+                }
     }
     // Normal case
     else
@@ -7757,20 +7768,17 @@ bool Unit::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex i
     return false;
 }
 
-bool Unit::IsDamageToThreatSpell(SpellEntry const * spellInfo) const
+float Unit::getSpellThreatMultiplicator(SpellEntry const * spellInfo) const
 {
     if (!spellInfo)
-        return false;
+        return 1.0f;
+    
+    float fSpellThreatMultiplicator = sSpellMgr.GetSpellThreatMultiplicator(spellInfo->Id);
 
-    uint32 family = spellInfo->SpellFamilyName;
-    uint64 flags = spellInfo->SpellFamilyFlags;
-
-    if ((family == 5 && flags == 256) ||                    //Searing Pain
-        (family == 6 && flags == 8192) ||                   //Mind Blast
-        (family == 11 && flags == 1048576))                 //Earth Shock
-        return true;
-
-    return false;
+    if(!fSpellThreatMultiplicator)
+        return 1.0f;
+    
+    return fSpellThreatMultiplicator;
 }
 
 /**
@@ -8587,11 +8595,11 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
     {
         invisible = false;
     }
-	
+    
     // Arena preparation hack
     if (HasAura(SPELL_ARENA_PREPARATION) && IsHostileTo(u))
         invisible = true;
-			
+            
     // Buff in DK starting location provides invisibility for each faction players
     if(GetMapId() == 609)
     {
@@ -8763,11 +8771,11 @@ void Unit::SetVisibility(UnitVisibility x)
 
 bool Unit::canDetectInvisibilityOf(Unit const* u) const
 {
-    if(uint32 mask = (m_detectInvisibilityMask & u->m_invisibilityMask))
+    if (uint32 mask = (m_detectInvisibilityMask & u->m_invisibilityMask))
     {
-        for(int32 i = 0; i < 10; ++i)
+        for(int32 i = 0; i < 32; ++i)
         {
-            if(((1 << i) & mask)==0)
+            if (((1 << i) & mask)==0)
                 continue;
 
             // find invisibility level
@@ -9219,7 +9227,7 @@ float Unit::ApplyTotalThreatModifier(float threat, SpellSchoolMask schoolMask)
 
 void Unit::AddThreat(Unit* pVictim, float threat /*= 0.0f*/, bool crit /*= false*/, SpellSchoolMask schoolMask /*= SPELL_SCHOOL_MASK_NONE*/, SpellEntry const *threatSpell /*= NULL*/)
 {
-	if(!pVictim || !pVictim->isAlive())
+    if(!pVictim || !pVictim->isAlive())
         return;
 
     // Only mobs can manage threat lists
@@ -9480,104 +9488,39 @@ int32 Unit::CalculateSpellDamage(Unit const* target, SpellEntry const* spellProt
     return value;
 }
 
-int32 Unit::CalculateBaseSpellDuration(SpellEntry const* spellProto, uint32* periodicTime)
+int32 Unit::CalculateSpellDuration(SpellEntry const* spellProto, SpellEffectIndex effect_index, Unit const* target)
 {
-    int32 duration = GetSpellDuration(spellProto);
+    Player* unitPlayer = (GetTypeId() == TYPEID_PLAYER) ? (Player*)this : NULL;
 
-    if (duration < 0)
-        return duration;
+    uint8 comboPoints = unitPlayer ? unitPlayer->GetComboPoints() : 0;
 
-    if (GetTypeId() == TYPEID_PLAYER)
-    {
-        int32 maxduration = GetSpellMaxDuration(spellProto);
+    int32 minduration = GetSpellDuration(spellProto);
+    int32 maxduration = GetSpellMaxDuration(spellProto);
 
-        if (duration != maxduration)
-            duration += int32((maxduration - duration) * ((Player*)this)->GetComboPoints() / 5);
-    }
+    int32 duration;
 
-    Player* modOwner = GetSpellModOwner();
-
-    if (modOwner)
-    {
-        modOwner->ApplySpellMod(spellProto->Id, SPELLMOD_DURATION, duration);
-
-        if (duration <= 0)
-            return 0;
-    }
-
-    bool applyHaste = (spellProto->AttributesEx5 & SPELL_ATTR_EX5_AFFECTED_BY_HASTE) != 0;
-
-    if (!applyHaste)
-    {
-        Unit::AuraList const& mModByHaste = GetAurasByType(SPELL_AURA_MOD_PERIODIC_HASTE);
-        for (Unit::AuraList::const_iterator itr = mModByHaste.begin(); itr != mModByHaste.end(); ++itr)
-        {
-            if ((*itr)->isAffectedOnSpell(spellProto))
-            {
-                applyHaste = true;
-                break;
-            }
-        }
-    }
-
-    uint32 oldDuration = duration;
-
-    // Apply haste to duration
-    if (applyHaste)
-        duration = int32(duration * GetFloatValue(UNIT_MOD_CAST_SPEED));
-
-    uint32 _periodicTime = periodicTime ? *periodicTime : 0;
-
-    if (_periodicTime)
-    {
-        if (modOwner)
-            modOwner->ApplySpellMod(spellProto->Id, SPELLMOD_ACTIVATION_TIME, _periodicTime);
-
-        // Calculate new periodic timer
-        if (applyHaste)
-        {
-            int32 ticks = oldDuration / _periodicTime;
-            _periodicTime = duration / ticks;
-        }
-
-        *periodicTime = _periodicTime;
-    }
-
-    return duration;
-}
-
-uint32 Unit::CalculateSpellDuration(Unit const* caster, uint32 baseDuration, SpellEntry const* spellProto, SpellEffectIndex effect_index)
-{
-    int32 mechanic = GetEffectMechanic(spellProto, effect_index);
-    // Find total mod value (negative bonus)
-    int32 durationMod_always = GetTotalAuraModifierByMiscValue(SPELL_AURA_MECHANIC_DURATION_MOD, mechanic);
-    // Modify from SPELL_AURA_MOD_DURATION_OF_EFFECTS_BY_DISPEL aura for negative effects (stack always ?)
-    if (!IsPositiveEffect(spellProto->Id, effect_index))
-        durationMod_always += GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_DURATION_OF_EFFECTS_BY_DISPEL, spellProto->Dispel);
-    // Find max mod (negative bonus)
-    int32 durationMod_not_stack = GetMaxNegativeAuraModifierByMiscValue(SPELL_AURA_MECHANIC_DURATION_MOD_NOT_STACK, mechanic);
-
-    if (!IsPositiveSpell(spellProto->Id))
-        durationMod_always += GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_DURATION_OF_MAGIC_EFFECTS, spellProto->Dispel);
-
-    int32 durationMod = 0;
-
-    // Select strongest negative mod
-    if (durationMod_always > durationMod_not_stack)
-        durationMod = durationMod_not_stack;
+    if( minduration != -1 && minduration != maxduration )
+        duration = minduration + int32((maxduration - minduration) * comboPoints / 5);
     else
-        durationMod = durationMod_always;
-
-    if (caster == this)
+        duration = minduration;
+        
+    if (unitPlayer && target == this)
     {
         switch(spellProto->SpellFamilyName)
         {
+            case SPELLFAMILY_POTION:
+                {
+                    // Mixology
+                    if (HasAura(53042))
+                        duration *= 2;
+                }
+                break;
             case SPELLFAMILY_DRUID:
                 if (spellProto->SpellFamilyFlags & UI64LIT(0x100))
                 {
                     // Glyph of Thorns
                     if (Aura *aur = GetAura(57862, EFFECT_INDEX_0))
-                        baseDuration += aur->GetModifier()->m_amount * MINUTE * IN_MILLISECONDS;
+                        duration += aur->GetModifier()->m_amount * MINUTE * IN_MILLISECONDS;
                 }
                 break;
             case SPELLFAMILY_PALADIN:
@@ -9585,13 +9528,13 @@ uint32 Unit::CalculateSpellDuration(Unit const* caster, uint32 baseDuration, Spe
                 {
                     // Glyph of Blessing of Might
                     if (Aura *aur = GetAura(57958, EFFECT_INDEX_0))
-                        baseDuration += aur->GetModifier()->m_amount * MINUTE * IN_MILLISECONDS;
+                        duration += aur->GetModifier()->m_amount * MINUTE * IN_MILLISECONDS;
                 }
                 else if (spellProto->SpellIconID == 306 && spellProto->SpellFamilyFlags & UI64LIT(0x00010000))
                 {
                     // Glyph of Blessing of Wisdom
                     if (Aura *aur = GetAura(57979, EFFECT_INDEX_0))
-                        baseDuration += aur->GetModifier()->m_amount * MINUTE * IN_MILLISECONDS;
+                        duration += aur->GetModifier()->m_amount * MINUTE * IN_MILLISECONDS;
                 }
                 break;
             default:
@@ -9599,13 +9542,34 @@ uint32 Unit::CalculateSpellDuration(Unit const* caster, uint32 baseDuration, Spe
         }
     }
 
-    if (durationMod != 0)
+    if (duration > 0)
     {
-        int32 duration = int32(int64(baseDuration) * (100+durationMod) / 100);
-        return duration < 0 ? 0 : duration;
+        int32 mechanic = GetEffectMechanic(spellProto, effect_index);
+        // Find total mod value (negative bonus)
+        int32 durationMod_always = target->GetTotalAuraModifierByMiscValue(SPELL_AURA_MECHANIC_DURATION_MOD, mechanic);
+        // Modify from SPELL_AURA_MOD_DURATION_OF_EFFECTS_BY_DISPEL aura for negative effects (stack always ?)
+        if (!IsPositiveEffect(spellProto->Id, effect_index))
+            durationMod_always+=target->GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_DURATION_OF_EFFECTS_BY_DISPEL, spellProto->Dispel);
+        // Find max mod (negative bonus)
+        int32 durationMod_not_stack = target->GetMaxNegativeAuraModifierByMiscValue(SPELL_AURA_MECHANIC_DURATION_MOD_NOT_STACK, mechanic);
+
+        if (!IsPositiveSpell(spellProto->Id))
+            durationMod_always += target->GetTotalAuraModifierByMiscValue(SPELL_AURA_MOD_DURATION_OF_MAGIC_EFFECTS, spellProto->Dispel);
+
+        int32 durationMod = 0;
+        // Select strongest negative mod
+        if (durationMod_always > durationMod_not_stack)
+            durationMod = durationMod_not_stack;
+        else
+            durationMod = durationMod_always;
+
+        if (durationMod != 0)
+            duration = int32(int64(duration) * (100+durationMod) /100);
+
+        if (duration < 0) duration = 0;
     }
 
-    return baseDuration;
+    return duration;
 }
 
 DiminishingLevels Unit::GetDiminishing(DiminishingGroup group)

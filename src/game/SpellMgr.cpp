@@ -278,6 +278,22 @@ WeaponAttackType GetWeaponAttackType(SpellEntry const *spellInfo)
     }
 }
 
+
+
+int32 ApplyHasteToChannelSpell(int32 orginalDuration, SpellEntry const* spellInfo, Spell const* spell)
+{
+    if (!spell)
+        return orginalDuration;
+
+    if(Player* modOwner = spell->GetCaster()->GetSpellModOwner())
+        modOwner->ApplySpellMod(spellInfo->Id, SPELLMOD_CASTING_TIME, orginalDuration, spell);
+
+    if( !(spellInfo->Attributes & (SPELL_ATTR_UNK4|SPELL_ATTR_TRADESPELL)) )
+        orginalDuration = int32(orginalDuration * spell->GetCaster()->GetFloatValue(UNIT_MOD_CAST_SPEED));
+
+    return orginalDuration;
+}
+
 bool IsPassiveSpell(uint32 spellId)
 {
     SpellEntry const *spellInfo = sSpellStore.LookupEntry(spellId);
@@ -638,12 +654,29 @@ bool IsPositiveEffect(uint32 spellId, SpellEffectIndex effIndex)
     if (!spellproto)
         return false;
 
-	switch(spellId)
+    switch(spellId)
     {
-        case 11103: // Impact talent
-        case 12357: // Impact talent
-        case 12358: // Impact talent
-        case 64343: // Impact buff
+        case 37675:                                         // Chaos Blast
+        case 56266:                                         // Vortex
+            return false;
+        case 36032:                                         // Arcane Blast
+        case 47540:                                         // Penance start dummy aura
+          case 53005:                                         
+          case 53006:                                         
+          case 53007:                                         
+        case 47757:                                         // Penance heal effect trigger
+          case 52986:                                         
+          case 52987:                                         
+          case 52988:                                         
+        case 642:                                           // Divine Shield
+        case 64843:                                         // Divine Hymn
+          case 64844:                                       
+        case 64901:                                         // Hymn of Hope
+          case 64904:                                       
+        case 552:                                           // Abolish Disease
+        case 59286:                                         // Opening
+        case 64343:                                         // Impact
+        case 12042:                                         // Arcane Power
             return true;
     }
 
@@ -1678,6 +1711,52 @@ void SpellMgr::LoadSpellThreats()
     sLog.outString( ">> Loaded %u aggro generating spells", count );
 }
 
+void SpellMgr::LoadSpellThreatMultiplicators()
+{
+    mSpellThreatMultiplicatorMap.clear();
+
+    uint32 count = 0;
+
+    QueryResult* result = WorldDatabase.Query("SELECT entry, threat_multiplicator FROM spell_threat_multiplicator");
+
+    if(!result)
+    {
+        barGoLink bar(1);
+        bar.step();
+
+        sLog.outString();
+        sLog.outString(">> Loaded %u aggro multiplicating spells", count);
+        return;
+    }
+
+    barGoLink bar((int)result->GetRowCount());
+
+    do
+    {
+        Field *fields = result->Fetch();
+        bar.step();
+
+        uint32 entry = fields[0].GetUInt32();
+
+        float threat_multiplicator = fields[1].GetFloat();
+
+        if(!sSpellStore.LookupEntry(entry))
+        {
+            sLog.outErrorDb("Spell %u listed in `spell_threat_multiplier` does not exist", entry);
+            continue;
+        }
+
+        mSpellThreatMultiplicatorMap[entry] = threat_multiplicator;
+
+        ++count;
+    } while (result->NextRow());
+
+    delete result;
+
+    sLog.outString();
+    sLog.outString(">> Loaded %u aggro multiplicating spells", count);
+}
+
 bool SpellMgr::IsRankSpellDueToSpell(SpellEntry const *spellInfo_1,uint32 spellId_2) const
 {
     SpellEntry const *spellInfo_2 = sSpellStore.LookupEntry(spellId_2);
@@ -1853,12 +1932,12 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                         (spellInfo_2->Id == 23170 && spellInfo_1->Id == 23171))
                         return false;
 
-					// Fury of Frostmourne
-					if( spellInfo_1->SpellIconID == 2702 && spellInfo_2->SpellIconID == 2702 || 
-						spellInfo_2->SpellIconID == 2702 && spellInfo_1->SpellIconID == 2702 )
-						return false;
+                    // Fury of Frostmourne
+                    if( spellInfo_1->SpellIconID == 2702 && spellInfo_2->SpellIconID == 2702 || 
+                        spellInfo_2->SpellIconID == 2702 && spellInfo_1->SpellIconID == 2702 )
+                        return false;
 
-					// Cool Down (See PeriodicAuraTick())
+                    // Cool Down (See PeriodicAuraTick())
                     if ((spellInfo_1->Id == 52441 && spellInfo_2->Id == 52443) ||
                         (spellInfo_2->Id == 52441 && spellInfo_1->Id == 52443))
                         return false;
@@ -2017,7 +2096,7 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 // Metamorphosis, diff effects
                 if (spellInfo_1->SpellIconID == 3314 && spellInfo_2->SpellIconID == 3314)
                     return false;
-					
+                    
                 // Shadowflame and Corruption
                 if (((spellInfo_1->SpellFamilyFlags2 & 0x2) && spellInfo_2->SpellIconID == 313) ||
                     ((spellInfo_2->SpellFamilyFlags2 & 0x2) && spellInfo_1->SpellIconID == 313))
@@ -3807,8 +3886,8 @@ SpellCastResult SpellMgr::GetSpellAllowedInLocationError(SpellEntry const *spell
             groupEntry = sAreaGroupStore.LookupEntry(groupEntry->nextGroup);
         }
 
-		if (spellInfo->AreaGroupId == 723 && zone_id == 4812)
-			found = true;
+        if (spellInfo->AreaGroupId == 723 && zone_id == 4812)
+            found = true;
 
         if (!found)
             return SPELL_FAILED_INCORRECT_AREA;

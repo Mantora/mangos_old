@@ -1616,10 +1616,6 @@ bool ChatHandler::HandleNpcAddCommand(char* args)
     if (!ExtractUint32KeyFromLink(&args, "Hcreature_entry", id))
         return false;
 
-    uint32 team;
-    if (!ExtractOptUInt32(&args, team, 0))
-        return false;
-
     Player *chr = m_session->GetPlayer();
     float x = chr->GetPositionX();
     float y = chr->GetPositionY();
@@ -1628,7 +1624,7 @@ bool ChatHandler::HandleNpcAddCommand(char* args)
     Map *map = chr->GetMap();
 
     Creature* pCreature = new Creature;
-    if (!pCreature->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT), map, chr->GetPhaseMaskForSpawn(), id, team))
+    if (!pCreature->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT), map, chr->GetPhaseMaskForSpawn(), id))
     {
         delete pCreature;
         return false;
@@ -2602,7 +2598,7 @@ void ChatHandler::ShowTicket(GMTicket const* ticket)
 
 	std::string assignedStr;
 	if(!sObjectMgr.GetPlayerNameByGUID(ObjectGuid(HIGHGUID_PLAYER, ticket->GetAssignedGuid()),assignedStr) && !ticket->GetAssignedSecLevel())
-        assignedStr = "no one";
+        assignedStr = "keinen";
 		
     PSendSysMessage(LANG_COMMAND_TICKETVIEW, ticket->GetTicketId(), nameLink.c_str(), lastupdated.c_str(), assignedStr.c_str(), ticket->GetAssignedSecLevel(), ticket->GetText());
     if (strlen(response))
@@ -2728,12 +2724,38 @@ bool ChatHandler::HandleTicketCommand(char* args)
         if (!*args)
             return false;
 
-        ticket->SetResponseText(args);
+		isAssigned = ((ticket->GetAssignedGuid()) || (ticket->GetAssignedSecLevel())) ? true : false;
+		if(isAssigned)
+		{
+			Player* pl = m_session->GetPlayer();
+			if(!pl)
+				return false;
 
-        if (Player* pl = sObjectMgr.GetPlayer(ObjectGuid(HIGHGUID_PLAYER, ticket->GetPlayerLowGuid())))
-            pl->GetSession()->SendGMResponse(ticket);
+			if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || ((ticket->GetAssignedSecLevel() != 0) ? (ticket->GetAssignedSecLevel() <= pl->GetSession()->GetSecurity()) : false))
+			{
+				ticket->SetResponseText(args);
 
-        return true;
+				if (Player* pl = sObjectMgr.GetPlayer(ObjectGuid(HIGHGUID_PLAYER, ticket->GetPlayerLowGuid())))
+					pl->GetSession()->SendGMResponse(ticket);
+
+				return true;
+			}
+			else
+			{
+				SendSysMessage("Das Ticket ist dir nicht zugewiesen.");
+				SetSentErrorMessage(true);
+				return false;
+			}
+		}
+		else
+		{
+			ticket->SetResponseText(args);
+
+			if (Player* pl = sObjectMgr.GetPlayer(ObjectGuid(HIGHGUID_PLAYER, ticket->GetPlayerLowGuid())))
+				pl->GetSession()->SendGMResponse(ticket);
+
+			return true;
+		}
     }
 
 	// ticket assign
@@ -2854,17 +2876,17 @@ bool ChatHandler::HandleTicketCommand(char* args)
             return false;
         }
 
-		isAssigned = ((ticket->GetAssignedGuid() != 0) || (ticket->GetAssignedSecLevel() != 0)) ? true : false;
+		isAssigned = ((ticket->GetAssignedGuid()) || (ticket->GetAssignedSecLevel())) ? true : false;
 		if(isAssigned)
 		{
-			if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || (ticket->GetAssignedSecLevel() <= pl->GetSession()->GetSecurity()))
+			if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || ((ticket->GetAssignedSecLevel() != 0) ? (ticket->GetAssignedSecLevel() <= pl->GetSession()->GetSecurity()) : false))
 			{
-				ShowTicket(ticket);
-				return true;
+					ShowTicket(ticket);
+					return true;
 			}
 			else
 			{
-				SendSysMessage("ERROR");
+				SendSysMessage("Das Ticket ist dir nicht zugewiesen.");
 				SetSentErrorMessage(true);
 				return false;
 			}
@@ -2890,9 +2912,29 @@ bool ChatHandler::HandleTicketCommand(char* args)
         return false;
     }
 
-    ShowTicket(ticket);
-
-    return true;
+	isAssigned = ((ticket->GetAssignedGuid()) || (ticket->GetAssignedSecLevel())) ? true : false;
+	if(isAssigned)
+	{
+		Player* pl = m_session->GetPlayer();
+		if(!pl)
+			return false;
+		if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || ((ticket->GetAssignedSecLevel() != 0) ? (ticket->GetAssignedSecLevel() <= pl->GetSession()->GetSecurity()) : false))
+		{
+				ShowTicket(ticket);
+				return true;
+		}
+		else
+		{
+			SendSysMessage("Das Ticket ist dir nicht zugewiesen.");
+			SetSentErrorMessage(true);
+			return false;
+		}
+	}
+	else
+	{
+		ShowTicket(ticket);
+		return true;
+	}
 }
 
 //close all tickets
@@ -2952,11 +2994,12 @@ bool ChatHandler::HandleCloseTicketCommand(char *args)
             return false;
         }
 
-		isAssigned = ((ticket->GetAssignedGuid() != 0) || (ticket->GetAssignedSecLevel() != 0)) ? true : false;
+		isAssigned = ((ticket->GetAssignedGuid()) || (ticket->GetAssignedSecLevel())) ? true : false;
 		if(isAssigned)
 		{
-			if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || (ticket->GetAssignedSecLevel() >= pl->GetSession()->GetSecurity()))
+			if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || ((ticket->GetAssignedSecLevel() != 0) ? (ticket->GetAssignedSecLevel() <= pl->GetSession()->GetSecurity()) : false))
 			{
+				ticket->SetAssignedGuid(pl->GetGUIDLow());
 				sTicketMgr.Close(lowguid);
 
 				//notify player
@@ -2972,13 +3015,14 @@ bool ChatHandler::HandleCloseTicketCommand(char *args)
 			}
 			else
 			{
-				SendSysMessage("ERROR");
+				SendSysMessage("Das Ticket ist dir nicht zugewiesen.");
 				SetSentErrorMessage(true);
 				return false;
 			}
 		}
 		else
 		{
+			ticket->SetAssignedGuid(pl->GetGUIDLow());
 			sTicketMgr.Close(lowguid);
 
 			//notify player
@@ -2992,8 +3036,6 @@ bool ChatHandler::HandleCloseTicketCommand(char *args)
 
 			return true;
 		}
-
-        return true;
     }
 
     Player* target;
@@ -3002,17 +3044,58 @@ bool ChatHandler::HandleCloseTicketCommand(char *args)
     if (!ExtractPlayerTarget(&px, &target, &target_guid, &target_name))
         return false;
 
-    // closeticket $char_name
-    sTicketMgr.Close(GUID_LOPART(target_guid));
+	GMTicket* ticket = sTicketMgr.GetGMTicket(GUID_LOPART(target_guid));
+    if (!ticket)
+    {
+        PSendSysMessage(LANG_COMMAND_TICKETNOTEXIST_NAME, target_name.c_str());
+        SetSentErrorMessage(true);
+        return false;
+    }
 
-    // notify players about ticket closing
-    if (target)
-        target->GetSession()->SendGMTicketGetTicket(0x0A, 0, false);
+	Player* pl = m_session->GetPlayer();
+	if(!pl)
+		return false;
 
-    std::string nameLink = playerLink(target_name);
+	isAssigned = ((ticket->GetAssignedGuid()) || (ticket->GetAssignedSecLevel())) ? true : false;
+	if(isAssigned)
+	{
+		if((ticket->GetAssignedGuid() == pl->GetGUIDLow()) || ((ticket->GetAssignedSecLevel() != 0) ? (ticket->GetAssignedSecLevel() <= pl->GetSession()->GetSecurity()) : false))
+		{
+			ticket->SetAssignedGuid(pl->GetGUIDLow());
+			// closeticket $char_name
+			sTicketMgr.Close(GUID_LOPART(target_guid));
 
-    PSendSysMessage(LANG_COMMAND_TICKETPLAYERCLOSE,nameLink.c_str());
-    return true;
+			// notify players about ticket closing
+			if (target)
+				target->GetSession()->SendGMTicketGetTicket(0x0A, 0, false);
+
+			std::string nameLink = playerLink(target_name);
+
+			PSendSysMessage(LANG_COMMAND_TICKETPLAYERCLOSE,nameLink.c_str());
+			return true;
+		}
+		else
+		{
+			SendSysMessage("Das Ticket ist dir nicht zugewiesen.");
+			SetSentErrorMessage(true);
+			return false;
+		}
+	}
+	else
+	{
+		ticket->SetAssignedGuid(pl->GetGUIDLow());
+		// closeticket $char_name
+		sTicketMgr.Close(GUID_LOPART(target_guid));
+
+		// notify players about ticket closing
+		if (target)
+			target->GetSession()->SendGMTicketGetTicket(0x0A, 0, false);
+
+		std::string nameLink = playerLink(target_name);
+
+		PSendSysMessage(LANG_COMMAND_TICKETPLAYERCLOSE,nameLink.c_str());
+		return true;
+	}
 }
 
 /**
@@ -3390,7 +3473,7 @@ bool ChatHandler::HandleWpModifyCommand(char* args)
         // create the waypoint creature
         wpGuid = 0;
         Creature* wpCreature = new Creature;
-        if (!wpCreature->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT), map, chr->GetPhaseMaskForSpawn(), VISUAL_WAYPOINT,0))
+        if (!wpCreature->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT), map, chr->GetPhaseMaskForSpawn(), VISUAL_WAYPOINT))
         {
             PSendSysMessage(LANG_WAYPOINT_VP_NOTCREATED, VISUAL_WAYPOINT);
             delete wpCreature;
@@ -3510,7 +3593,7 @@ bool ChatHandler::HandleWpModifyCommand(char* args)
                 wpCreature->AddObjectToRemoveList();
                 // re-create
                 Creature* wpCreature2 = new Creature;
-                if (!wpCreature2->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT), map, chr->GetPhaseMaskForSpawn(), VISUAL_WAYPOINT, 0))
+                if (!wpCreature2->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT), map, chr->GetPhaseMaskForSpawn(), VISUAL_WAYPOINT))
                 {
                     PSendSysMessage(LANG_WAYPOINT_VP_NOTCREATED, VISUAL_WAYPOINT);
                     delete wpCreature2;
@@ -3814,7 +3897,7 @@ bool ChatHandler::HandleWpShowCommand(char* args)
             float o = chr->GetOrientation();
 
             Creature* wpCreature = new Creature;
-            if (!wpCreature->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT), map, chr->GetPhaseMaskForSpawn(), id, 0))
+            if (!wpCreature->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT), map, chr->GetPhaseMaskForSpawn(), id))
             {
                 PSendSysMessage(LANG_WAYPOINT_VP_NOTCREATED, id);
                 delete wpCreature;
@@ -3872,7 +3955,7 @@ bool ChatHandler::HandleWpShowCommand(char* args)
         Map *map = chr->GetMap();
 
         Creature* pCreature = new Creature;
-        if (!pCreature->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT),map, chr->GetPhaseMaskForSpawn(), id, 0))
+        if (!pCreature->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT),map, chr->GetPhaseMaskForSpawn(), id))
         {
             PSendSysMessage(LANG_WAYPOINT_VP_NOTCREATED, id);
             delete pCreature;
@@ -3932,7 +4015,7 @@ bool ChatHandler::HandleWpShowCommand(char* args)
         Map *map = chr->GetMap();
 
         Creature* pCreature = new Creature;
-        if (!pCreature->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT), map, chr->GetPhaseMaskForSpawn(), id, 0))
+        if (!pCreature->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_UNIT), map, chr->GetPhaseMaskForSpawn(), id))
         {
             PSendSysMessage(LANG_WAYPOINT_NOTCREATED, id);
             delete pCreature;
