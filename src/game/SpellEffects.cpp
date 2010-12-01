@@ -4744,6 +4744,11 @@ void Spell::EffectDispel(SpellEffectIndex eff_idx)
                 data << uint32(dispelledHolder->GetId());   // Spell Id
                 data << uint8(0);                           // 0 - dispelled !=0 cleansed
                 unitTarget->RemoveAuraHolderDueToSpellByDispel(dispelledHolder->GetId(), j->second, dispelledHolder->GetCasterGUID(), m_caster);
+                if(m_caster->IsHostileTo(unitTarget))
+                {
+                    m_caster->SetInCombatWith(unitTarget);
+                    unitTarget->SetInCombatWith(m_caster);
+                }
             }
             m_caster->SendMessageToSet(&data, true);
 
@@ -8903,7 +8908,22 @@ void Spell::EffectStealBeneficialBuff(SpellEffectIndex eff_idx)
             SpellAuraHolder *holder = steal_list[urand(0, list_size-1)];
             // Not use chance for steal
             // TODO possible need do it
-            success_list.push_back( std::pair<uint32,uint64>(holder->GetId(),holder->GetCasterGUID()));
+
+            int32 miss_chance = 0;
+            // Apply dispel mod from aura caster
+            if (Unit *caster = holder->GetCaster())
+            {
+                if (Player* modOwner = caster->GetSpellModOwner())
+                {
+                    modOwner->ApplySpellMod(holder->GetSpellProto()->Id, SPELLMOD_RESIST_DISPEL_CHANCE, miss_chance, this);
+                    miss_chance += modOwner->GetTotalAuraModifier(SPELL_AURA_MOD_DISPEL_RESIST);
+                }
+            }
+
+            // Try dispel
+            if (!roll_chance_i(miss_chance))
+                success_list.push_back( std::pair<uint32,uint64>(holder->GetId(),holder->GetCasterGUID()));
+            else m_caster->SendSpellMiss(unitTarget, holder->GetSpellProto()->Id, SPELL_MISS_RESIST);
 
             // Remove buff from list for prevent doubles
             for (std::vector<SpellAuraHolder *>::iterator j = steal_list.begin(); j != steal_list.end(); )
