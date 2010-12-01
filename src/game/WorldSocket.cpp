@@ -882,15 +882,6 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
         sLog.outError ("WorldSocket::HandleAuthSession: Sent Auth Response (Account banned).");
         return -1;
     }
-    
-    // Check Premium Account
-    uint32 premlvl = sWorld.getConfig (CONFIG_UINT32_PREMIUM_GMLEVEL);
-    QueryResult *premresult =
-        LoginDatabase.PQuery ("SELECT 1 FROM account WHERE id = '%u' AND gmlevel >= '%u'", id, premlvl); 
-    if (premresult && sWorld.getConfig(CONFIG_BOOL_PREMIUM_ENABLE)) // if account premium and system enable
-    {
-        isPremium = true; 
-    }
 
     // Check locked state for server
     AccountTypes allowedAccountType = sWorld.GetPlayerSecurityLimit ();
