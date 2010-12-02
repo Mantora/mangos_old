@@ -279,6 +279,7 @@ bool DatabaseMysql::Execute(const char *sql)
     // don't use queued execution if it has not been initialized
     if (!m_threadBody) return DirectExecute(sql);
 
+    nMutex.acquire();
     tranThread = ACE_Based::Thread::current();              // owner of this transaction
     TransactionQueues::iterator i = m_tranQueues.find(tranThread);
     if (i != m_tranQueues.end() && i->second != NULL)
@@ -290,7 +291,7 @@ bool DatabaseMysql::Execute(const char *sql)
         // Simple sql statement
         m_threadBody->Delay(new SqlStatement(sql));
     }
-
+    nMutex.release();
     return true;
 }
 
@@ -356,6 +357,7 @@ bool DatabaseMysql::BeginTransaction()
         return true;                                        // transaction started
     }
 
+    nMutex.acquire();
     tranThread = ACE_Based::Thread::current();              // owner of this transaction
     TransactionQueues::iterator i = m_tranQueues.find(tranThread);
     if (i != m_tranQueues.end() && i->second != NULL)
@@ -365,6 +367,7 @@ bool DatabaseMysql::BeginTransaction()
 
     m_tranQueues[tranThread] = new SqlTransaction();
 
+    nMutex.release();
     return true;
 }
 
@@ -373,27 +376,30 @@ bool DatabaseMysql::CommitTransaction()
     if (!mMysql)
         return false;
 
+    bool _res = false;
+
     // don't use queued execution if it has not been initialized
     if (!m_threadBody)
     {
         if (tranThread != ACE_Based::Thread::current())
             return false;
-        bool _res = _TransactionCmd("COMMIT");
+        _res = _TransactionCmd("COMMIT");
         tranThread = NULL;
         mMutex.release();
         return _res;
     }
 
+    nMutex.acquire();
     tranThread = ACE_Based::Thread::current();
     TransactionQueues::iterator i = m_tranQueues.find(tranThread);
     if (i != m_tranQueues.end() && i->second != NULL)
     {
         m_threadBody->Delay(i->second);
-        i->second = NULL;
-        return true;
+        m_tranQueues.erase(i);
+        _res = true;
     }
-    else
-        return false;
+    nMutex.release();
+    return _res;
 }
 
 bool DatabaseMysql::RollbackTransaction()
@@ -412,13 +418,16 @@ bool DatabaseMysql::RollbackTransaction()
         return _res;
     }
 
+    nMutex.acquire();
     tranThread = ACE_Based::Thread::current();
     TransactionQueues::iterator i = m_tranQueues.find(tranThread);
     if (i != m_tranQueues.end() && i->second != NULL)
     {
         delete i->second;
         i->second = NULL;
+        m_tranQueues.erase(i);
     }
+    nMutex.release();
     return true;
 }
 
