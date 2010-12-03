@@ -3,10 +3,12 @@
 */
 
 -- del GOs
+-- DELETE FROM gameobject_respawn WHERE guid IN (SELECT guid FROM gameobject WHERE id IN (182267, 182280,182281,182282,182222,182272,182273,182274,182266,182275,182276,182277,182301,182302,182303,182304,182305,182306,182307,182308,182297,182298,182299,182300));
 DELETE FROM gameobject WHERE id IN (182267, 182280,182281,182282,182222,182272,182273,182274,182266,182275,182276,182277,182301,182302,182303,182304,182305,182306,182307,182308,182297,182298,182299,182300);
 
 -- del NPCs
 DELETE FROM creature_addon WHERE guid IN (select guid from creature WHERE id IN (18816,18821,21474,21484,21483,18192,18817,18822,21485,21487,21488,18256));
+-- DELETE FROM creature_respawn WHERE guid IN (select guid from creature WHERE id IN (18816,18821,21474,21484,21483,18192,18817,18822,21485,21487,21488,18256));
 DELETE FROM creature WHERE id IN (18816,18821,21474,21484,21483,18192,18817,18822,21485,21487,21488,18256);
 DELETE FROM creature where id in (27748, 27708, 29253, 27730, 29251, 27758, 27759, 29252,27760, 29250);
 
@@ -49,12 +51,8 @@ UPDATE quest_template SET reqspellcast1 = 0, reqspellcast2 = 0, reqspellcast3 = 
 DELETE FROM gameobject WHERE id IN (181899, 182096, 182097, 182173, 182174, 182175, 182210, 182522, 182523, 183104, 183411, 183412, 183413, 183414, 182098);
 DELETE FROM creature WHERE id IN (18564, 18581);
 
-Delete from gossip_menu_option where menu_id = 40000;
-insert into gossip_menu_option (menu_id, id, option_icon, option_text, option_id)
-values (40000, 0, 0, 'Take Flag!', 19);
-delete from gossip_menu where entry = 40000;
-insert into gossip_menu (entry, text_id)
-values (40000, 0);
+-- DELETE FROM npc_option WHERE id = 51;
+-- INSERT INTO npc_option(id, gossip_id, npcflag, icon, action, option_text) VALUES (51,0,536870912,0,18,"UNIT_NPC_FLAG_OUTDOORPVP");
 
 
 DELETE FROM `mangos_string` WHERE `entry` BETWEEN 10001 AND 10055;
