@@ -216,25 +216,6 @@ libmangosgame_a_SOURCES = \
 	ObjectPosSelector.h \
 	Opcodes.cpp \
 	Opcodes.h \
-	OutdoorPvP.cpp \
-	OutdoorPvP.h \
-	OutdoorPvPEP.cpp \
-	OutdoorPvPEP.h \
-	OutdoorPvPGH.cpp \
-	OutdoorPvPGH.h \
-	OutdoorPvPHP.cpp \
-	OutdoorPvPHP.h \
-	OutdoorPvPImpl.h \
-	OutdoorPvPMgr.cpp \
-	OutdoorPvPMgr.h \
-	OutdoorPvPNA.cpp \
-	OutdoorPvPNA.h \
-	OutdoorPvPSI.cpp \
-	OutdoorPvPSI.h \
-	OutdoorPvPTF.cpp \
-	OutdoorPvPTF.h \
-	OutdoorPvPZM.cpp \
-	OutdoorPvPZM.h \
 	Path.h \
 	PetAI.cpp \
 	PetAI.h \
@@ -326,8 +307,7 @@ libmangosgame_a_SOURCES = \
 	FollowerRefManager.h \
 	GroupReference.cpp \
 	GroupReference.h \
-	GroupRefManager.h \
-	ZoneScript.h
+	GroupRefManager.h
 
 ## Additional files to include when running 'make dist'
 #  Precompiled Headers for WIN
