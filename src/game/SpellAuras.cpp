@@ -859,7 +859,7 @@ void AreaAura::Update(uint32 diff)
                             if (sSpellMgr.GetSpellElixirSpecific((*i)->GetSpellProto()->Id) ||
                                 sSpellMgr.GetSpellElixirSpecific(actualSpellInfo->Id))
                                 continue;
-                            if (holder->GetCastItemGUID() || (*i)->GetCastItemGUID())
+                            if (!holder->GetCastItemGuid().IsEmpty() || !(*i)->GetCastItemGuid().IsEmpty())
                                 continue;
 
                             switch (aurName)

@@ -4464,7 +4464,7 @@ bool Unit::AddSpellAuraHolder(SpellAuraHolder *holder)
             if (sSpellMgr.GetSpellElixirSpecific((*i)->GetSpellProto()->Id) ||
                 sSpellMgr.GetSpellElixirSpecific(aurSpellInfo->Id))
                 continue;
-            if (holder->GetCastItemGUID() || (*i)->GetCastItemGUID())
+            if (!holder->GetCastItemGuid().IsEmpty() || !(*i)->GetCastItemGuid().IsEmpty())
                 continue;
 
             switch (aurName)
@@ -4544,7 +4544,7 @@ void Unit::ReapplyModifers(Aura *Aur)
         if (sSpellMgr.GetSpellElixirSpecific((*i)->GetSpellProto()->Id) ||
             sSpellMgr.GetSpellElixirSpecific(Aur->GetSpellProto()->Id))
             continue;
-        if (Aur->GetCastItemGUID() || (*i)->GetCastItemGUID())
+        if (!Aur->GetCastItemGuid().IsEmpty() || !(*i)->GetCastItemGuid().IsEmpty())
             continue;
 
         switch (aurName)

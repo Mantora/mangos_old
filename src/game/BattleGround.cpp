@@ -674,7 +674,7 @@ void BattleGround::RewardXpToTeam(uint32 Xp, float percentOfLevel, Team teamId)
 
         if (!plr)
         {
-            sLog.outError("BattleGround:RewardXpToTeam: Player (GUID: %u) not found!", GUID_LOPART(itr->first));
+            sLog.outError("BattleGround:RewardXpToTeam: Player (GUID: %s) not found!", itr->first.GetString().c_str());
             continue;
         }
 

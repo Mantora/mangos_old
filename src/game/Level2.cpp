@@ -3976,7 +3976,7 @@ bool ChatHandler::HandleCharacterCustomizeCommand(char* args)
 bool ChatHandler::HandleCharacterChangeFactionCommand(char* args)
 {
     Player* target;
-    uint64 target_guid;
+    ObjectGuid target_guid;
     std::string target_name;
     if(!ExtractPlayerTarget(&args,&target,&target_guid,&target_name))
         return false;
@@ -3993,8 +3993,8 @@ bool ChatHandler::HandleCharacterChangeFactionCommand(char* args)
         std::string oldNameLink = playerLink(target_name);
 
         // TODO : add text into database
-        PSendSysMessage(LANG_CUSTOMIZE_PLAYER_GUID, oldNameLink.c_str(), GUID_LOPART(target_guid));
-        CharacterDatabase.PExecute("UPDATE characters SET at_login = at_login | '64' WHERE guid = '%u'", GUID_LOPART(target_guid));
+        PSendSysMessage(LANG_CUSTOMIZE_PLAYER_GUID, oldNameLink.c_str(), target_guid.GetCounter());
+        CharacterDatabase.PExecute("UPDATE characters SET at_login = at_login | '64' WHERE guid = '%u'", target_guid.GetCounter());
     }
 
     return true;
@@ -4004,7 +4004,7 @@ bool ChatHandler::HandleCharacterChangeFactionCommand(char* args)
 bool ChatHandler::HandleCharacterChangeRaceCommand(char* args)
 {
     Player* target;
-    uint64 target_guid;
+    ObjectGuid target_guid;
     std::string target_name;
     if(!ExtractPlayerTarget(&args,&target,&target_guid,&target_name))
         return false;
@@ -4021,8 +4021,8 @@ bool ChatHandler::HandleCharacterChangeRaceCommand(char* args)
         std::string oldNameLink = playerLink(target_name);
 
         // TODO : add text into database
-        PSendSysMessage(LANG_CUSTOMIZE_PLAYER_GUID, oldNameLink.c_str(), GUID_LOPART(target_guid));
-        CharacterDatabase.PExecute("UPDATE characters SET at_login = at_login | '128' WHERE guid = '%u'", GUID_LOPART(target_guid));
+        PSendSysMessage(LANG_CUSTOMIZE_PLAYER_GUID, oldNameLink.c_str(), target_guid.GetCounter());
+        CharacterDatabase.PExecute("UPDATE characters SET at_login = at_login | '128' WHERE guid = '%u'", target_guid.GetCounter());
     }
 
     return true;
