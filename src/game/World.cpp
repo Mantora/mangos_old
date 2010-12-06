@@ -777,10 +777,6 @@ void World::LoadConfigSettings(bool reload)
 
     setConfig(CONFIG_BOOL_ALLOW_FLIGHT_ON_OLD_MAPS, "AllowFlightOnOldMaps", false);
 
-	// External Mail
-	setConfig(CONFIG_UINT32_EXTERNAL_MAIL, "ExternalMail.Enabled", 0);
-	setConfig(CONFIG_UINT32_EXTERNAL_MAIL_INTERVAL, "ExternalMail.Interval", 600);
-    
     //Premium Accounts
     setConfig(CONFIG_BOOL_PREMIUM_ENABLE,                       "Premuim.Account.Enable", true);
     setConfigPos(CONFIG_UINT32_PREMIUM_GMLEVEL,                 "Premuim.Account.GmLevel", 1);
@@ -1330,8 +1326,6 @@ void World::SetInitialWorldSettings()
     m_timers[WUPDATE_DELETECHARS].SetInterval(DAY*IN_MILLISECONDS); // check for chars to delete every day
     m_timers[WUPDATE_AUTOBROADCAST].SetInterval(abtimer);
 
-	m_timers[WUPDATE_EXT_MAIL].SetInterval(m_configUint32Values[CONFIG_UINT32_EXTERNAL_MAIL_INTERVAL] * MINUTE * IN_MILLISECONDS);
-
     //to set mailtimer to return mails every day between 4 and 5 am
     //mailtimer is increased when updating auctions
     //one second is 1000 -(tested on win system)
@@ -1569,13 +1563,6 @@ void World::Update(uint32 diff)
             SendBroadcast();
         }
     }
-
-	// External Mail
-	if(m_configUint32Values[CONFIG_UINT32_EXTERNAL_MAIL] != 0 && m_timers[WUPDATE_EXT_MAIL].Passed())
-	{
-		WorldSession::SendExternalMails();
-		m_timers[WUPDATE_EXT_MAIL].Reset();
-	}
 
     /// </ul>
     ///- Move all creatures with "delayed move" and remove and delete all objects with "delayed remove"
