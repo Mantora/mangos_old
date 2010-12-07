@@ -1,6 +1,6 @@
 -- WARNING these are custom features use it carefully!!
 -- read description and chouse what you need
--- used with 569 YTDB + 1845 ScriptDev2
+-- used with 575 YTDB + 1891 ScriptDev2
 -- author Selector
 
 
@@ -26,13 +26,6 @@ DELETE FROM `game_event_creature` WHERE `guid` NOT IN (SELECT `guid` FROM `creat
 UPDATE `creature_template` SET `npcflag`=`npcflag`|2 WHERE `entry` IN (SELECT `id` FROM `creature_questrelation`);
 UPDATE `creature_template` SET `npcflag`=`npcflag`|2 WHERE `entry` IN (SELECT `id` FROM `creature_involvedrelation`);
 
-
-
--- #########################################
--- close some instances (not supported in repo)
--- Pit of Saron (not supported)
-UPDATE `areatrigger_teleport` SET `required_level`='100' WHERE (`id`='5683');
-UPDATE `areatrigger_teleport` SET `required_level`='100' WHERE (`id`='5637');
 
 
 -- #########################################
@@ -68,26 +61,26 @@ DELETE FROM gameobject_battleground WHERE guid = '1695';
 
 -- move Horde/ally npc to different sides near Vault of Archavon
 -- Horde
-UPDATE creature SET position_x = '5366.803711', position_y = '2787.187988', position_z = '409.265015', orientation = '1.661112' WHERE guid = '116002';
-UPDATE creature SET position_x = '5362.441895', position_y = '2787.222412', position_z = '409.227692', orientation = '1.562937' WHERE guid = '121119';
-UPDATE creature SET position_x = '5356.366699', position_y = '2787.270020', position_z = '409.234436', orientation = '1.562937' WHERE guid = '86519';
-UPDATE creature SET position_x = '5351.321777', position_y = '2787.309570', position_z = '409.234528', orientation = '1.562937' WHERE guid = '88691';
-UPDATE creature SET position_x = '5346.116699', position_y = '2787.350586', position_z = '409.197693', orientation = '1.562937' WHERE guid = '86771';
-UPDATE creature SET position_x = '5367.033203', position_y = '2794.176758', position_z = '409.283417', orientation = '1.464758' WHERE guid = '89930';
-UPDATE creature SET position_x = '5358.395508', position_y = '2793.972656', position_z = '409.239685', orientation = '1.464759' WHERE guid = '89931';
-UPDATE creature SET position_x = '5349.074219', position_y = '2793.756592', position_z = '409.240204', orientation = '1.472608' WHERE guid = '89935';
-UPDATE creature SET position_x = '5348.568359', position_y = '2778.840088', position_z = '409.172424', orientation = '1.543290' WHERE guid = '89940';
+UPDATE creature SET position_x = '5366.803711', position_y = '2787.187988', position_z = '409.265015', orientation = '1.66' WHERE guid = '116002';
+UPDATE creature SET position_x = '5362.441895', position_y = '2787.222412', position_z = '409.227692', orientation = '1.66' WHERE guid = '121119';
+UPDATE creature SET position_x = '5356.366699', position_y = '2787.270020', position_z = '409.234436', orientation = '1.66' WHERE guid = '86519';
+UPDATE creature SET position_x = '5351.321777', position_y = '2787.309570', position_z = '409.234528', orientation = '1.66' WHERE guid = '88691';
+UPDATE creature SET position_x = '5346.116699', position_y = '2787.350586', position_z = '409.197693', orientation = '1.66' WHERE guid = '86771';
+UPDATE creature SET position_x = '5367.033203', position_y = '2794.176758', position_z = '409.283417', orientation = '1.66' WHERE guid = '89930';
+UPDATE creature SET position_x = '5358.395508', position_y = '2793.972656', position_z = '409.239685', orientation = '1.66' WHERE guid = '89931';
+UPDATE creature SET position_x = '5349.074219', position_y = '2793.756592', position_z = '409.240204', orientation = '1.66' WHERE guid = '89935';
+UPDATE creature SET position_x = '5348.568359', position_y = '2778.840088', position_z = '409.172424', orientation = '1.66' WHERE guid = '89940';
 -- Alliance
-UPDATE creature SET position_x = '5370.759766', position_y = '2892.460693', position_z = '409.239380', orientation = '4.688800' WHERE guid = '116248';
-UPDATE creature SET position_x = '5366.251953', position_y = '2892.340576', position_z = '409.239380', orientation = '4.669168' WHERE guid = '121120';
-UPDATE creature SET position_x = '5360.242676', position_y = '2891.757080', position_z = '409.239380', orientation = '4.810539' WHERE guid = '120646';
-UPDATE creature SET position_x = '5357.095215', position_y = '2891.447266', position_z = '409.239380', orientation = '4.810539' WHERE guid = '119735';
-UPDATE creature SET position_x = '5353.868164', position_y = '2891.129395', position_z = '409.239380', orientation = '4.810539' WHERE guid = '119736';
-UPDATE creature SET position_x = '5349.865234', position_y = '2890.735107', position_z = '409.239380', orientation = '4.810539' WHERE guid = '98393';
-UPDATE creature SET position_x = '5368.989746', position_y = '2885.547607', position_z = '409.239471', orientation = '4.767334' WHERE guid = '56555';
-UPDATE creature SET position_x = '5358.486328', position_y = '2885.573242', position_z = '409.239471', orientation = '4.767334' WHERE guid = '56551';
-UPDATE creature SET position_x = '5350.228027', position_y = '2901.961670', position_z = '409.197754', orientation = '4.759478' WHERE guid = '56553';
-UPDATE creature SET position_x = '5349.912109', position_y = '2885.746094', position_z = '409.238556', orientation = '4.786967' WHERE guid = '56550';
+UPDATE creature SET position_x = '5370.759766', position_y = '2892.460693', position_z = '409.239380', orientation = '4.81' WHERE guid = '116248';
+UPDATE creature SET position_x = '5366.251953', position_y = '2892.340576', position_z = '409.239380', orientation = '4.81' WHERE guid = '121120';
+UPDATE creature SET position_x = '5360.242676', position_y = '2891.757080', position_z = '409.239380', orientation = '4.81' WHERE guid = '120646';
+UPDATE creature SET position_x = '5357.095215', position_y = '2891.447266', position_z = '409.239380', orientation = '4.81' WHERE guid = '119735';
+UPDATE creature SET position_x = '5353.868164', position_y = '2891.129395', position_z = '409.239380', orientation = '4.81' WHERE guid = '119736';
+UPDATE creature SET position_x = '5349.865234', position_y = '2890.735107', position_z = '409.239380', orientation = '4.81' WHERE guid = '98393';
+UPDATE creature SET position_x = '5368.989746', position_y = '2885.547607', position_z = '409.239471', orientation = '4.81' WHERE guid = '56555';
+UPDATE creature SET position_x = '5358.486328', position_y = '2885.573242', position_z = '409.239471', orientation = '4.81' WHERE guid = '56551';
+UPDATE creature SET position_x = '5350.228027', position_y = '2901.961670', position_z = '409.197754', orientation = '4.81' WHERE guid = '56553';
+UPDATE creature SET position_x = '5349.912109', position_y = '2885.746094', position_z = '409.238556', orientation = '4.81' WHERE guid = '56550';
 --
 
 -- Delete Guards near Vault of Archavon
@@ -204,6 +197,10 @@ DELETE FROM game_event_model_equip WHERE guid = '51015';
 DELETE FROM creature_battleground WHERE guid = '51015';
 
 
+-- #########################################
+-- Remove Drop Emblem of Triumph form Non-heroic bosses in Icecrown Down Dungeons
+DELETE FROM `creature_loot_template` WHERE `item`='47241' AND `entry` IN (38113, 38112, 36502, 36497, 36476, 36658, 36494, 36477);
+
 
 -- #########################################
 -- delete chests from ICC(ship battle)
@@ -285,17 +282,6 @@ DELETE FROM `gameobject_involvedrelation` WHERE `quest` = 12698;
 INSERT INTO `creature_involvedrelation` (`id`, `quest`) VALUES (28658, 12698);
 UPDATE `creature_template` SET `npcflag`=`npcflag`|2 WHERE `entry`=28658;
 UPDATE `quest_template` SET `Method` = 0 WHERE `entry` = 12698;
--- hack for quest http://ru.wowhead.com/quest=12779 (An End To All Things...)
-DELETE FROM `creature_questrelation` WHERE `quest` = 12779;
-DELETE FROM `gameobject_questrelation` WHERE `quest` = 12779;
-UPDATE `item_template` SET `StartQuest`=0 WHERE `StartQuest` = 12779;
-INSERT INTO `creature_questrelation` (`id`, `quest`) VALUES (29110, 12779);
-UPDATE `creature_template` SET `npcflag`=`npcflag`|2 WHERE `entry` = 29110;
-DELETE FROM `creature_involvedrelation` WHERE `quest` = 12779;
-DELETE FROM `gameobject_involvedrelation` WHERE `quest` = 12779;
-INSERT INTO `creature_involvedrelation` (`id`, `quest`) VALUES (29110, 12779);
-UPDATE `creature_template` SET `npcflag`=`npcflag`|2 WHERE `entry`=29110;
-UPDATE `quest_template` SET `Method` = 0 WHERE `entry` = 12779;
 -- hack for quest http://ru.wowhead.com/quest=12801 (The Light of Dawn)
 DELETE FROM `creature_questrelation` WHERE `quest` = 12801;
 DELETE FROM `gameobject_questrelation` WHERE `quest` = 12801;
