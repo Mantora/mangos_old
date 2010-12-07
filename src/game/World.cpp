@@ -1566,7 +1566,6 @@ void World::Update(uint32 diff)
         WorldSession::SendExternalMails();
         m_timers[WUPDATE_EXT_MAIL].Reset();
     }
-
     /// </ul>
     ///- Move all creatures with "delayed move" and remove and delete all objects with "delayed remove"
     sMapMgr.RemoveAllObjectsInRemoveList();

@@ -83,7 +83,8 @@ enum WorldTimers
     WUPDATE_EVENTS      = 6,
     WUPDATE_DELETECHARS = 7,
     WUPDATE_AUTOBROADCAST = 8,
-    WUPDATE_COUNT       = 9
+	WUPDATE_EXT_MAIL    = 9,
+    WUPDATE_COUNT       = 10
 };
 
 /// Configuration elements
