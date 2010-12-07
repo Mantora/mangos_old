@@ -441,7 +441,7 @@ class MANGOS_DLL_SPEC Aura
 
         uint32 const *getAuraSpellClassMask() const { return  m_spellAuraHolder->GetSpellProto()->GetEffectSpellClassMask(m_effIndex); }
         bool isAffectedOnSpell(SpellEntry const *spell) const;
-        bool CanProcFrom(SpellEntry const *spell, uint32 EventProcEx, uint32 procEx, bool active) const;
+        bool CanProcFrom(SpellEntry const *spell, uint32 EventProcEx, uint32 procEx, bool active, bool useClassMask) const;
         
         void ApplyHasteToPeriodic();
 
@@ -479,7 +479,7 @@ class MANGOS_DLL_SPEC Aura
         AuraRemoveMode m_removeMode:8;                      // Store info for know remove aura reason
 
         SpellEffectIndex m_effIndex :8;                     // Aura effect index in spell
-      
+
         bool m_positive:1;
         bool m_isPeriodic:1;
         bool m_isAreaAura:1;
