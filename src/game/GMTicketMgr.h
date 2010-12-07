@@ -22,6 +22,7 @@
 #include "Policies/Singleton.h"
 #include "Database/DatabaseEnv.h"
 #include "Util.h"
+#include "ObjectGuid.h"
 #include <map>
 
 class GMTicket
@@ -43,7 +44,7 @@ class GMTicket
 			m_assignedSecLevel = assignedSecLevel;
         }
 
-        uint32 GetPlayerLowGuid() const
+        ObjectGuid const& GetPlayerGuid() const
         {
             return m_guid;
         }
@@ -119,7 +120,7 @@ class GMTicket
 
 		void DeleteFromDB() const
         {
-            CharacterDatabase.PExecute("DELETE FROM character_ticket WHERE guid = '%u' LIMIT 1", m_guid);
+            CharacterDatabase.PExecute("DELETE FROM character_ticket WHERE guid = '%u' LIMIT 1", m_guid.GetCounter());
         }
 
         void SaveToDB() const
@@ -146,7 +147,7 @@ class GMTicket
 		uint32 m_assignedGuid;
 		uint8 m_assignedSecLevel;
 };
-typedef std::map<uint32, GMTicket> GMTicketMap;
+typedef std::map<ObjectGuid, GMTicket> GMTicketMap;
 typedef std::list<GMTicket*> GMTicketList;                  // for creating order access
 
 class GMTicketMgr
@@ -157,7 +158,7 @@ class GMTicketMgr
 
         void LoadGMTickets();
 
-        GMTicket* GetGMTicket(uint32 guid)
+        GMTicket* GetGMTicket(ObjectGuid guid)
         {
             GMTicketMap::iterator itr = m_GMTicketMap.find(guid);
             if(itr == m_GMTicketMap.end())
@@ -203,10 +204,10 @@ class GMTicketMgr
 
         void CloseAll();
 
-        void Create(uint32 guid, const char* text)
+        void Create(ObjectGuid guid, const char* text)
         {
             GMTicket& ticket = m_GMTicketMap[guid];
-            if (ticket.GetPlayerLowGuid() != 0)             // overwrite ticket
+            if (!ticket.GetPlayerGuid().IsEmpty())          // overwrite ticket
             {
                 ticket.DeleteFromDB();
                 m_GMTicketListByCreatingOrder.remove(&ticket);

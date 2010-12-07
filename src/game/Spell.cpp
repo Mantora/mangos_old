@@ -468,7 +468,7 @@ bool Spell::FillCustomTargetMap(SpellEffectIndex i, UnitList &targetUnitMap)
                             break;
                         case TYPEID_CORPSE:
                             m_targets.setCorpseTarget((Corpse*)result);
-                            if (Player* owner = ObjectAccessor::FindPlayer(((Corpse*)result)->GetOwnerGUID()))
+                            if (Player* owner = ObjectAccessor::FindPlayer(((Corpse*)result)->GetOwnerGuid()))
                                 targetUnitMap.push_back(owner);
                             break;
                         default:
@@ -1067,7 +1067,20 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         // mark effects that were already handled in Spell::HandleDelayedSpellLaunch on spell launch as processed
         for (int32 i = 0; i < MAX_EFFECT_INDEX; ++i)
             if (IsEffectHandledOnDelayedSpellLaunch(m_spellInfo, SpellEffectIndex(i)))
-                mask &= ~(1<<i);
+            {
+                if(missInfo == SPELL_MISS_REFLECT)
+                {
+                    // Fill base damage struct (unitTarget - is real spell target)
+                    SpellNonMeleeDamage damageInfo(caster, unitTarget, m_spellInfo->Id, m_spellSchoolMask);
+                    caster->CalculateSpellDamage(&damageInfo, m_damage, m_spellInfo, m_attackType);
+                    unitTarget->CalculateAbsorbResistBlock(caster, &damageInfo, m_spellInfo);
+                    caster->DealDamageMods(damageInfo.target, damageInfo.damage, &damageInfo.absorb);
+                     m_damage += damageInfo.damage;
+                    
+                }
+                else
+                    mask &= ~(1<<i);
+            }
 
         // maybe used in effects that are handled on hit
         m_damage += target->damage;
@@ -1262,13 +1275,7 @@ void Spell::DoSpellHitOnUnit(Unit *unit, const uint32 effectMask)
             }
 
             // not break stealth by cast targeting
-            if (!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NOT_BREAK_STEALTH) && m_spellInfo->Id != 51690 && m_spellInfo->Id != 53055 && 
-                m_spellInfo->Id != 3600 && m_spellInfo->Id != 44416 && m_spellInfo->SpellIconID != 1954 && m_spellInfo->SpellIconID != 2267)
-                unit->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
-
-            // Rogue sap and Mass dispel, etc. 
-            if (!(m_spellInfo->Id == 39897 || m_spellInfo->Id == 32592 || m_spellInfo->Id == 32375|| m_spellInfo->Id == 1725
-                || m_spellInfo->Id == 1038 || (m_spellInfo->SpellFamilyFlags2 & UI64LIT(0x00000100))) || m_spellInfo->SpellFamilyFlags == SPELLFAMILYFLAG_ROGUE_SAP)
+            if ((!(m_spellInfo->AttributesEx & SPELL_ATTR_EX_NOT_BREAK_STEALTH) && m_spellInfo->Id != 51690 && m_spellInfo->Id != 53198 && m_spellInfo->Id != 3600 ) || (m_spellInfo->SpellFamilyName == SPELLFAMILY_ROGUE && m_spellInfo->SpellFamilyFlags == SPELLFAMILYFLAG_ROGUE_SAP))
                 unit->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
 
             // can cause back attack (if detected), stealth removed at Spell::cast if spell break it
@@ -2173,6 +2180,11 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 if( target->GetTypeId() == TYPEID_UNIT && ((Creature*)target)->IsPet() && ((Pet*)target)->getPetType() == MINI_PET)
                     targetUnitMap.push_back(target);
             break;
+        case TARGET_OWNED_VEHICLE:
+            if (VehicleKit* vehicle = m_caster->GetVehicle())
+                if (Unit* target = vehicle->GetBase())
+                    targetUnitMap.push_back(target);
+            break;
         case TARGET_CASTER_COORDINATES:
         {
             // Check original caster is GO - set its coordinates as dst cast
@@ -2768,7 +2780,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                                         break;
                                     case TYPEID_CORPSE:
                                         m_targets.setCorpseTarget((Corpse*)result);
-                                        if (Player* owner = ObjectAccessor::FindPlayer(((Corpse*)result)->GetOwnerGUID()))
+                                        if (Player* owner = ObjectAccessor::FindPlayer(((Corpse*)result)->GetOwnerGuid()))
                                             targetUnitMap.push_back(owner);
                                         break;
                                 }
@@ -2823,7 +2835,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                         Corpse *corpse = m_caster->GetMap()->GetCorpse(m_targets.getCorpseTargetGUID());
                         if(corpse)
                         {
-                            Player* owner = ObjectAccessor::FindPlayer(corpse->GetOwnerGUID());
+                            Player* owner = ObjectAccessor::FindPlayer(corpse->GetOwnerGuid());
                             if(owner)
                                 targetUnitMap.push_back(owner);
                         }
@@ -2879,7 +2891,7 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                     else if (m_targets.getCorpseTargetGUID())
                     {
                         if (Corpse *corpse = m_caster->GetMap()->GetCorpse(m_targets.getCorpseTargetGUID()))
-                            if (Player* owner = ObjectAccessor::FindPlayer(corpse->GetOwnerGUID()))
+                            if (Player* owner = ObjectAccessor::FindPlayer(corpse->GetOwnerGuid()))
                                 targetUnitMap.push_back(owner);
                     }
                     break;
@@ -4323,7 +4335,7 @@ void Spell::TakeCastItem()
     {
         // This code is to avoid a crash
         // I'm not sure, if this is really an error, but I guess every item needs a prototype
-        sLog.outError("Cast item (%s) has no item prototype", m_CastItem->GetObjectGuid().GetString().c_str());
+        sLog.outError("Cast item (%s) has no item prototype", m_CastItem->GetGuidStr().c_str());
         return;
     }
 
@@ -4784,6 +4796,23 @@ SpellCastResult Spell::CheckCast(bool strict)
             // Bloodlust and Sated 
             if (m_spellInfo->Id == 32182 && target->HasAura(57723)) 
                 return SPELL_FAILED_CASTER_AURASTATE; 
+        }
+
+        if(IsDispelSpell(m_spellInfo) && target->IsFriendlyTo(m_caster))
+        {
+            bool foundNeg = false;
+            Unit::SpellAuraHolderMap const& auras = target->GetSpellAuraHolderMap();
+            for(Unit::SpellAuraHolderMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
+            {
+                SpellAuraHolder *holder = itr->second;
+                if (!holder->IsPositive())
+                {
+                    foundNeg = true;
+                    break;
+                }
+            }
+            if (!foundNeg)
+                return SPELL_FAILED_NOTHING_TO_DISPEL;
         }
 
         bool non_caster_target = target != m_caster && !IsSpellWithCasterSourceTargetsOnly(m_spellInfo);
@@ -5850,7 +5879,10 @@ SpellCastResult Spell::CheckPetCast(Unit* target)
             {
                 need = true;
                 if(!target)
+                {
                     return SPELL_FAILED_BAD_IMPLICIT_TARGETS;
+                    DEBUG_LOG("Charmed creature attempt to cast spell %d, but no required target",m_spellInfo->Id);
+                }
                 break;
             }
         }
@@ -5861,13 +5893,19 @@ SpellCastResult Spell::CheckPetCast(Unit* target)
 
         if(_target)                                         //for target dead/target not valid
         {
-            if (!_target->isTargetableForAttack())
-                return SPELL_FAILED_BAD_TARGETS;            // guessed error
 
             if(IsPositiveSpell(m_spellInfo->Id) && !IsDispelSpell(m_spellInfo))
             {
                 if(m_caster->IsHostileTo(_target))
+                {
+                    DEBUG_LOG("Charmed creature attempt to cast positive spell %d, but target is hostile",m_spellInfo->Id);
                     return SPELL_FAILED_BAD_TARGETS;
+                }
+            }
+            else if (!_target->isTargetableForAttack())
+            {
+                DEBUG_LOG("Charmed creature attempt to cast spell %d, but target is not targetable",m_spellInfo->Id);
+                return SPELL_FAILED_BAD_TARGETS;            // guessed error
             }
             else
             {
@@ -5878,11 +5916,13 @@ SpellCastResult Spell::CheckPetCast(Unit* target)
                     dualEffect |= (m_spellInfo->EffectImplicitTargetA[j] == TARGET_DUELVSPLAYER
                                    || m_spellInfo->EffectImplicitTargetA[j] == TARGET_IN_FRONT_OF_CASTER_30
                                    || m_spellInfo->EffectImplicitTargetA[j] == TARGET_MASTER
+                                   || m_spellInfo->EffectImplicitTargetA[j] == TARGET_IN_FRONT_OF_CASTER
                                    || m_spellInfo->EffectImplicitTargetA[j] == TARGET_CASTER_COORDINATES);
                 }
-                if (m_caster->IsFriendlyTo(target) && !dualEffect && !IsDispelSpell(m_spellInfo))
+                if (m_caster->IsFriendlyTo(target) && !(!m_caster->GetCharmerOrOwner() || !m_caster->GetCharmerOrOwner()->IsFriendlyTo(target))
+                     && !dualEffect && !IsDispelSpell(m_spellInfo))
                 {
-                    DEBUG_LOG("Charmed creature attempt to cast spell %d, byt target is not valid",m_spellInfo->Id);
+                    DEBUG_LOG("Charmed creature attempt to cast spell %d, but target is not valid",m_spellInfo->Id);
                     return SPELL_FAILED_BAD_TARGETS;
                 }
             }
@@ -6903,7 +6943,7 @@ bool Spell::CheckTarget( Unit* target, SpellEffectIndex eff )
                 if(!corpse)
                     return false;
 
-                if(target->GetGUID() != corpse->GetOwnerGUID())
+                if(target->GetObjectGuid() != corpse->GetOwnerGuid())
                     return false;
 
                 if(!corpse->IsWithinLOSInMap(m_caster))

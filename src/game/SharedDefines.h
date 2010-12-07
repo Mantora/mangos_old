@@ -316,7 +316,7 @@ const uint32 ItemQualityColors[MAX_ITEM_QUALITY] = {
 #define SPELL_ATTR_EX2_UNK14                      0x00004000            // 14
 #define SPELL_ATTR_EX2_UNK15                      0x00008000            // 15 not set in 3.0.3
 #define SPELL_ATTR_EX2_UNK16                      0x00010000            // 16
-#define SPELL_ATTR_EX2_UNK17                      0x00020000            // 17 suspend weapon timer instead of resetting it, (?Hunters Shot and Stings only have this flag?)
+#define SPELL_ATTR_EX2_NOT_RESET_AUTOSHOT         0x00020000            // 17 Hunters Shot and Stings only have this flag
 #define SPELL_ATTR_EX2_UNK18                      0x00040000            // 18 Only Revive pet - possible req dead pet
 #define SPELL_ATTR_EX2_NOT_NEED_SHAPESHIFT        0x00080000            // 19 does not necessarly need shapeshift
 #define SPELL_ATTR_EX2_UNK20                      0x00100000            // 20
@@ -1116,6 +1116,7 @@ enum Targets
     TARGET_SELF2                       = 87,
     TARGET_DIRECTLY_FORWARD            = 89,
     TARGET_NONCOMBAT_PET               = 90,
+    TARGET_OWNED_VEHICLE               = 94,
     TARGET_IN_FRONT_OF_CASTER_30       = 104,
 };
 

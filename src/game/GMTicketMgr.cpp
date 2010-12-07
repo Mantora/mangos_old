@@ -18,7 +18,7 @@
 
 #include "Common.h"
 #include "Database/DatabaseEnv.h"
-#include "Database/SQLStorage.h"
+#include "SQLStorages.h"
 #include "GMTicketMgr.h"
 #include "ObjectMgr.h"
 #include "ObjectGuid.h"
@@ -59,9 +59,11 @@ void GMTicketMgr::LoadGMTickets()
         if (!guid)
             continue;
 
+        ObjectGuid guid = ObjectGuid(HIGHGUID_PLAYER, guidlow);
+
         GMTicket& ticket = m_GMTicketMap[guid];
 
-        if (ticket.GetPlayerLowGuid() != 0)                 // already exist
+        if (!ticket.GetPlayerGuid().IsEmpty())              // already exist
         {
             CharacterDatabase.PExecute("DELETE FROM character_ticket WHERE ticket_id = '%u'", fields[4].GetUInt32());
             continue;
