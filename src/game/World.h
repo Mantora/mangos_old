@@ -83,8 +83,7 @@ enum WorldTimers
     WUPDATE_EVENTS      = 6,
     WUPDATE_DELETECHARS = 7,
     WUPDATE_AUTOBROADCAST = 8,
-	WUPDATE_EXT_MAIL    = 9,
-    WUPDATE_COUNT       = 10
+    WUPDATE_COUNT       = 9
 };
 
 /// Configuration elements
@@ -197,9 +196,6 @@ enum eConfigUInt32Values
     CONFIG_UINT32_ANTICHEAT_GMLEVEL,
     CONFIG_UINT32_ANTICHEAT_ACTION_DELAY,
     CONFIG_UINT32_RANDOM_BG_RESET_HOUR,
-    CONFIG_UINT32_NUMTHREADS,
-	CONFIG_UINT32_EXTERNAL_MAIL,
-	CONFIG_UINT32_EXTERNAL_MAIL_INTERVAL,
     CONFIG_UINT32_VALUE_COUNT
 };
 
@@ -461,8 +457,8 @@ class World
         /// Get the number of current active sessions
         void UpdateMaxSessionCounters();
         uint32 GetActiveAndQueuedSessionCount() const { return m_sessions.size(); }
-        uint32 GetActiveSessionCount() const { return m_sessions.size() - m_QueuedPlayer.size(); }
-        uint32 GetQueuedSessionCount() const { return m_QueuedPlayer.size(); }
+        uint32 GetActiveSessionCount() const { return m_sessions.size() - m_QueuedSessions.size(); }
+        uint32 GetQueuedSessionCount() const { return m_QueuedSessions.size(); }
         /// Get the maximum number of parallel sessions on the server since last reboot
         uint32 GetMaxQueuedSessionCount() const { return m_maxQueuedSessionCount; }
         uint32 GetMaxActiveSessionCount() const { return m_maxActiveSessionCount; }
@@ -481,10 +477,9 @@ class World
 
         //player Queue
         typedef std::list<WorldSession*> Queue;
-        void AddQueuedPlayer(WorldSession*);
-        bool RemoveQueuedPlayer(WorldSession* session);
-        int32 GetQueuePos(WorldSession*);
-        uint32 GetQueueSize() const { return m_QueuedPlayer.size(); }
+        void AddQueuedSession(WorldSession*);
+        bool RemoveQueuedSession(WorldSession* session);
+        int32 GetQueuedSessionPos(WorldSession*);
 
         /// \todo Actions on m_allowMovement still to be implemented
         /// Is movement allowed?
@@ -698,7 +693,7 @@ class World
         time_t m_NextRandomBGReset;
 
         //Player Queue
-        Queue m_QueuedPlayer;
+        Queue m_QueuedSessions;
 
         //sessions that are added async
         void AddSession_(WorldSession* s);
