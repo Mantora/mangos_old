@@ -788,7 +788,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 
 	if(pCurrChar->isAcceptTickets())
 	{
-		size_t tCount = sTicketMgr.GetAssignedTicketCount(GUID_LOPART(pCurrChar->GetGUID()), GetSecurity());
+		size_t tCount = sTicketMgr.GetAssignedTicketCount(pCurrChar->GetObjectGuid(), GetSecurity());
 		if (tCount)
 			ChatHandler(this).PSendSysMessage(LANG_COMMAND_TICKETCOUNT, tCount);
 	}

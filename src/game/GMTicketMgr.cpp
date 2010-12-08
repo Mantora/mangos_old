@@ -55,8 +55,8 @@ void GMTicketMgr::LoadGMTickets()
 
         Field* fields = result->Fetch();
 
-        uint32 guid = fields[1].GetUInt32();
-        if (!guid)
+        uint32 guidlow = fields[0].GetUInt32();
+        if (!guidlow)
             continue;
 
         ObjectGuid guid = ObjectGuid(HIGHGUID_PLAYER, guidlow);
@@ -69,7 +69,7 @@ void GMTicketMgr::LoadGMTickets()
             continue;
         }
 
-        ticket.Init(fields[0].GetUInt32(), guid, fields[2].GetCppString(), fields[3].GetCppString(), time_t(fields[4].GetUInt64()), fields[5].GetUInt8(), fields[6].GetUInt32(), fields[7].GetUInt8());
+        ticket.Init(fields[0].GetUInt32(), guid, fields[2].GetCppString(), fields[3].GetCppString(), time_t(fields[4].GetUInt64()), fields[5].GetUInt8(), ObjectGuid(HIGHGUID_PLAYER, fields[6].GetUInt32()), fields[7].GetUInt8());
         m_GMTicketListByCreatingOrder.push_back(&ticket);
 
     } while (result->NextRow());
@@ -83,7 +83,7 @@ void GMTicketMgr::CloseAll()
 {
     for(GMTicketMap::const_iterator itr = m_GMTicketMap.begin(); itr != m_GMTicketMap.end(); ++itr)
     {
-        if(Player* owner = sObjectMgr.GetPlayer(ObjectGuid(HIGHGUID_PLAYER, itr->first)))
+        if(Player* owner = sObjectMgr.GetPlayer(itr->first))
             owner->GetSession()->SendGMTicketGetTicket(0x0A, 0, false);
     }
     CharacterDatabase.Execute("UPDATE character_ticket SET closed = '1'");

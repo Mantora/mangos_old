@@ -2944,7 +2944,7 @@ bool ChatHandler::ExtractLocationFromLink(char** text, uint32& mapid, float& x, 
             if (Player* player = sObjectMgr.GetPlayer(name.c_str()))
             {
                 // check online security
-                if (HasLowerSecurity(player, 0))
+                if (HasLowerSecurity(player))
                     return false;
 
                 mapid = player->GetMapId();

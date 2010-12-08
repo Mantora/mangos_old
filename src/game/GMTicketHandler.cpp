@@ -95,7 +95,7 @@ void WorldSession::HandleGMTicketUpdateTextOpcode( WorldPacket & recv_data )
 
 void WorldSession::HandleGMTicketCloseTicketOpcode( WorldPacket & /*recv_data*/ )
 {
-    sTicketMgr.Close(GetPlayer()->GetGUIDLow());
+    sTicketMgr.Close(GetPlayer()->GetObjectGuid());
 
     WorldPacket data( SMSG_GMTICKET_CLOSETICKET, 4 );
     data << uint32(9);
@@ -130,7 +130,7 @@ void WorldSession::HandleGMTicketCreateOpcode( WorldPacket & recv_data )
     }
 
     if(isFollowup)
-        sTicketMgr.Close(_player->GetGUIDLow());
+        sTicketMgr.Close(_player->GetObjectGuid());
 
     sTicketMgr.Create(_player->GetObjectGuid(), ticketText.c_str());
 
@@ -194,7 +194,7 @@ void WorldSession::HandleGMResponseResolveOpcode(WorldPacket & recv_data)
     // empty opcode
     DEBUG_LOG("WORLD: %s", LookupOpcodeName(recv_data.GetOpcode()));
 
-    sTicketMgr.Close(GetPlayer()->GetGUIDLow());
+    sTicketMgr.Close(GetPlayer()->GetObjectGuid());
 
     WorldPacket data(SMSG_GMRESPONSE_STATUS_UPDATE, 1);
     data << uint8(0);                                       // ask to fill out gm survey = 1

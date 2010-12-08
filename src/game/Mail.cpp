@@ -1091,15 +1091,15 @@ void WorldSession::SendExternalMails()
 		{
 			Field *fields = result->Fetch();
 			uint32 id = fields[0].GetUInt32();
-			uint64 senderGUID = fields[1].GetUInt64();
-			uint64 receiverGUID = fields[2].GetUInt64();
+			ObjectGuid senderGuid = ObjectGuid(fields[1].GetUInt64());
+			ObjectGuid receiverGuid = ObjectGuid(fields[2].GetUInt64());
 			std::string subject = fields[3].GetString();
 			std::string message = fields[4].GetString();
 			uint32 money = fields[5].GetUInt32();
 
-			if (Player* Receiver = sObjectMgr.GetPlayer(receiverGUID))
+			if (Player* Receiver = sObjectMgr.GetPlayer(receiverGuid))
 			{
-				sLog.outString("EXTERNAL MAIL> Send Mail %u to Player %u...", id, receiverGUID);
+				sLog.outString("EXTERNAL MAIL> Send Mail %u to Player %u...", id, receiverGuid);
 
 				message = !message.empty() ? message : "Support Message";
 				MailDraft draft(subject, message);
@@ -1125,11 +1125,11 @@ void WorldSession::SendExternalMails()
 				if (money)
 					draft.AddMoney(money);
 
-				draft.SendMailTo(MailReceiver(Receiver), MailSender(MAIL_NORMAL, senderGUID, MAIL_STATIONERY_DEFAULT), MAIL_CHECK_MASK_RETURNED);
+				draft.SendMailTo(MailReceiver(Receiver), MailSender(MAIL_NORMAL, senderGuid.GetCounter(), MAIL_STATIONERY_DEFAULT), MAIL_CHECK_MASK_RETURNED);
 				CharacterDatabase.PExecute("UPDATE mail_external SET sent='1' WHERE id='%u'", id);
 			}
 			else
-				sLog.outString("EXTERNAL MAIL> Player %u not in game, skip Mail!", receiverGUID);
+				sLog.outString("EXTERNAL MAIL> Player %u not in game, skip Mail!", receiverGuid);
 		}while(result->NextRow());
 	}
 	delete result;
