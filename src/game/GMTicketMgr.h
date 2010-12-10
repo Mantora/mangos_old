@@ -59,7 +59,7 @@ class GMTicket
 		void SetAssignedGuid(uint32 guid)
 		{
 			m_assignedGuid = guid;
-			CharacterDatabase.PExecute("UPDATE character_ticket SET assigned_guid = '%u' WHERE guid = '%u'", m_assignedGuid, m_guid);
+			CharacterDatabase.PExecute("UPDATE character_ticket SET assigned_guid = '%u' WHERE (guid = '%u' AND closed = '0')", m_assignedGuid, m_guid);
 		}
 
 		const uint8 GetAssignedSecLevel() const
@@ -70,7 +70,7 @@ class GMTicket
 		void SetAssignedSecLevel(uint8 secLevel)
 		{
 			m_assignedSecLevel = secLevel;
-			CharacterDatabase.PExecute("UPDATE character_ticket SET assigned_sec_level = '%i' WHERE guid = '%u'", m_assignedSecLevel, m_guid);
+			CharacterDatabase.PExecute("UPDATE character_ticket SET assigned_sec_level = '%i' WHERE (guid = '%u' AND closed = '0')", m_assignedSecLevel, m_guid);
 		}
 
         uint64 GetLastUpdate() const
@@ -85,7 +85,7 @@ class GMTicket
 
             std::string escapedString = m_text;
             CharacterDatabase.escape_string(escapedString);
-            CharacterDatabase.PExecute("UPDATE character_ticket SET ticket_text = '%s' WHERE guid = '%u'", escapedString.c_str(), m_guid);
+            CharacterDatabase.PExecute("UPDATE character_ticket SET ticket_text = '%s' WHERE (guid = '%u' AND closed = '0')", escapedString.c_str(), m_guid);
         }
 
         void SetResponseText(const char* text)
@@ -95,7 +95,7 @@ class GMTicket
 
             std::string escapedString = m_responseText;
             CharacterDatabase.escape_string(escapedString);
-            CharacterDatabase.PExecute("UPDATE character_ticket SET response_text = '%s' WHERE guid = '%u'", escapedString.c_str(), m_guid);
+            CharacterDatabase.PExecute("UPDATE character_ticket SET response_text = '%s' WHERE (guid = '%u' AND closed = '0')", escapedString.c_str(), m_guid);
         }
 
         bool HasResponse() { return !m_responseText.empty(); }
