@@ -1285,9 +1285,9 @@ void Unit::CastSpell(Unit* Victim, uint32 spellId, bool triggered, Item *castIte
     if(!spellInfo)
     {
         if (triggeredByAura)
-            sLog.outError("CastSpell: unknown spell id %i by caster: %s triggered by aura %u (eff %u)", spellId, GetObjectGuid().GetString().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
+            sLog.outError("CastSpell: unknown spell id %i by caster: %s triggered by aura %u (eff %u)", spellId, GetGuidStr().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
         else
-            sLog.outError("CastSpell: unknown spell id %i by caster: %s", spellId, GetObjectGuid().GetString().c_str());
+            sLog.outError("CastSpell: unknown spell id %i by caster: %s", spellId, GetGuidStr().c_str());
         return;
     }
 
@@ -1299,9 +1299,9 @@ void Unit::CastSpell(Unit* Victim, SpellEntry const *spellInfo, bool triggered, 
     if(!spellInfo)
     {
         if (triggeredByAura)
-            sLog.outError("CastSpell: unknown spell by caster: %s triggered by aura %u (eff %u)", GetObjectGuid().GetString().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
+            sLog.outError("CastSpell: unknown spell by caster: %s triggered by aura %u (eff %u)", GetGuidStr().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
         else
-            sLog.outError("CastSpell: unknown spell by caster: %s", GetObjectGuid().GetString().c_str());
+            sLog.outError("CastSpell: unknown spell by caster: %s", GetGuidStr().c_str());
         return;
     }
 
@@ -1331,9 +1331,9 @@ void Unit::CastCustomSpell(Unit* Victim,uint32 spellId, int32 const* bp0, int32 
     if(!spellInfo)
     {
         if (triggeredByAura)
-            sLog.outError("CastCustomSpell: unknown spell id %i by caster: %s triggered by aura %u (eff %u)", spellId, GetObjectGuid().GetString().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
+            sLog.outError("CastCustomSpell: unknown spell id %i by caster: %s triggered by aura %u (eff %u)", spellId, GetGuidStr().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
         else
-            sLog.outError("CastCustomSpell: unknown spell id %i by caster: %s", spellId, GetObjectGuid().GetString().c_str());
+            sLog.outError("CastCustomSpell: unknown spell id %i by caster: %s", spellId, GetGuidStr().c_str());
         return;
     }
 
@@ -1345,9 +1345,9 @@ void Unit::CastCustomSpell(Unit* Victim, SpellEntry const *spellInfo, int32 cons
     if(!spellInfo)
     {
         if (triggeredByAura)
-            sLog.outError("CastCustomSpell: unknown spell by caster: %s triggered by aura %u (eff %u)", GetObjectGuid().GetString().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
+            sLog.outError("CastCustomSpell: unknown spell by caster: %s triggered by aura %u (eff %u)", GetGuidStr().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
         else
-            sLog.outError("CastCustomSpell: unknown spell by caster: %s", GetObjectGuid().GetString().c_str());
+            sLog.outError("CastCustomSpell: unknown spell by caster: %s", GetGuidStr().c_str());
         return;
     }
 
@@ -1397,9 +1397,9 @@ void Unit::CastSpell(float x, float y, float z, uint32 spellId, bool triggered, 
     if(!spellInfo)
     {
         if (triggeredByAura)
-            sLog.outError("CastSpell(x,y,z): unknown spell id %i by caster: %s triggered by aura %u (eff %u)", spellId, GetObjectGuid().GetString().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
+            sLog.outError("CastSpell(x,y,z): unknown spell id %i by caster: %s triggered by aura %u (eff %u)", spellId, GetGuidStr().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
         else
-            sLog.outError("CastSpell(x,y,z): unknown spell id %i by caster: %s", spellId, GetObjectGuid().GetString().c_str());
+            sLog.outError("CastSpell(x,y,z): unknown spell id %i by caster: %s", spellId, GetGuidStr().c_str());
         return;
     }
 
@@ -1412,9 +1412,9 @@ void Unit::CastSpell(float x, float y, float z, SpellEntry const *spellInfo, boo
     if(!spellInfo)
     {
         if (triggeredByAura)
-            sLog.outError("CastSpell(x,y,z): unknown spell by caster: %s triggered by aura %u (eff %u)", GetObjectGuid().GetString().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
+            sLog.outError("CastSpell(x,y,z): unknown spell by caster: %s triggered by aura %u (eff %u)", GetGuidStr().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
         else
-            sLog.outError("CastSpell(x,y,z): unknown spell by caster: %s", GetObjectGuid().GetString().c_str());
+            sLog.outError("CastSpell(x,y,z): unknown spell by caster: %s", GetGuidStr().c_str());
         return;
     }
     
@@ -3151,7 +3151,7 @@ bool Unit::IsSpellBlocked(Unit *pCaster, SpellEntry const *spellEntry, WeaponAtt
 
     float blockChance = GetUnitBlockChance();
     blockChance += (int32(pCaster->GetWeaponSkillValue(attackType)) - int32(GetMaxSkillValueForLevel()))*0.04f;
-    
+
     return roll_chance_f(blockChance);
 }
 
@@ -3977,7 +3977,10 @@ bool Unit::IsNonMeleeSpellCasted(bool withDelayed, bool skipChanneled, bool skip
     if ( m_currentSpells[CURRENT_GENERIC_SPELL] &&
         (m_currentSpells[CURRENT_GENERIC_SPELL]->getState() != SPELL_STATE_FINISHED) &&
         (withDelayed || m_currentSpells[CURRENT_GENERIC_SPELL]->getState() != SPELL_STATE_DELAYED) )
-        return(true);
+        {
+            if (!(m_currentSpells[CURRENT_GENERIC_SPELL]->m_spellInfo->AttributesEx2 & SPELL_ATTR_EX2_NOT_RESET_AUTOSHOT))
+                return(true);
+        }
 
     // channeled spells may be delayed, but they are still considered casted
     else if ( !skipChanneled && m_currentSpells[CURRENT_CHANNELED_SPELL] &&
@@ -4359,6 +4362,13 @@ bool Unit::AddSpellAuraHolder(SpellAuraHolder *holder)
                     case SPELL_AURA_OBS_MOD_MANA:
                     case SPELL_AURA_POWER_BURN_MANA:
                         break;
+                    case SPELL_AURA_MOD_ATTACKER_SPELL_AND_WEAPON_CRIT_CHANCE: // Deadly Poison exception
+                        if (aurSpellInfo->Dispel != DISPEL_POISON)             // TODO: stacking rules for all poisons
+                        {
+                            RemoveSpellAuraHolder(foundHolder,AURA_REMOVE_BY_STACK);
+                            stop = true;
+                        }
+                        break;
                     case SPELL_AURA_PERIODIC_ENERGIZE:      // all or self or clear non-stackable
                     default:                                // not allow
                         // can be only single (this check done at _each_ aura add
@@ -4446,7 +4456,7 @@ bool Unit::AddSpellAuraHolder(SpellAuraHolder *holder)
             if (sSpellMgr.GetSpellElixirSpecific((*i)->GetSpellProto()->Id) ||
                 sSpellMgr.GetSpellElixirSpecific(aurSpellInfo->Id))
                 continue;
-            if (holder->GetCastItemGUID() || (*i)->GetCastItemGUID())
+            if (!holder->GetCastItemGuid().IsEmpty() || !(*i)->GetCastItemGuid().IsEmpty())
                 continue;
 
             switch (aurName)
@@ -4526,7 +4536,7 @@ void Unit::ReapplyModifers(Aura *Aur)
         if (sSpellMgr.GetSpellElixirSpecific((*i)->GetSpellProto()->Id) ||
             sSpellMgr.GetSpellElixirSpecific(Aur->GetSpellProto()->Id))
             continue;
-        if (Aur->GetCastItemGUID() || (*i)->GetCastItemGUID())
+        if (!Aur->GetCastItemGuid().IsEmpty() || !(*i)->GetCastItemGuid().IsEmpty())
             continue;
 
         switch (aurName)
@@ -5033,7 +5043,7 @@ void Unit::RemoveAurasDueToItemSpell(Item* castItem,uint32 spellId)
     SpellAuraHolderBounds bounds = GetSpellAuraHolderBounds(spellId);
     for (SpellAuraHolderMap::iterator iter = bounds.first; iter != bounds.second; )
     {
-        if (iter->second->GetCastItemGUID() == castItem->GetGUID())
+        if (iter->second->GetCastItemGuid() == castItem->GetObjectGuid())
         {
             RemoveSpellAuraHolder(iter->second);
             bounds = GetSpellAuraHolderBounds(spellId);
@@ -5354,23 +5364,14 @@ Aura* Unit::GetAura(uint32 spellId, SpellEffectIndex effindex)
     return NULL;
 }
 
-Aura* Unit::GetAura(AuraType type, uint32 family, uint64 familyFlag, uint32 familyFlag2, uint64 casterGUID)
+Aura* Unit::GetAura(AuraType type, SpellFamily family, uint64 familyFlag, uint32 familyFlag2, ObjectGuid casterGuid)
 {
     AuraList const& auras = GetAurasByType(type);
     for(AuraList::const_iterator i = auras.begin();i != auras.end(); ++i)
-    {
-        SpellEntry const *spell = (*i)->GetSpellProto();
-        
-        if (!spell)
-            continue;
-        
-        if (spell->SpellFamilyName == family && (spell->SpellFamilyFlags & familyFlag || spell->SpellFamilyFlags2 & familyFlag2))
-        {
-            if (casterGUID && (*i)->GetCasterGUID()!=casterGUID)
-                continue;
-            return (*i);
-        }
-    }
+        if ((*i)->GetSpellProto()->IsFitToFamily(family, familyFlag, familyFlag2) &&
+            (casterGuid.IsEmpty() || (*i)->GetCasterGuid() == casterGuid))
+            return *i;
+
     return NULL;
 }
 
@@ -8206,7 +8207,7 @@ float Unit::GetPPMProcChance(uint32 WeaponSpeed, float PPM) const
     return WeaponSpeed * PPM / 600.0f;                      // result is chance in percents (probability = Speed_in_sec * (PPM / 60))
 }
 
-void Unit::Mount(uint32 mount, uint32 spellId, uint32 vehicleId)
+void Unit::Mount(uint32 mount, uint32 spellId, uint32 vehicleId, uint32 creatureEntry)
 {
     if (!mount)
         return;
@@ -8260,6 +8261,9 @@ void Unit::Mount(uint32 mount, uint32 spellId, uint32 vehicleId)
 
                 data.Initialize(SMSG_ON_CANCEL_EXPECTED_RIDE_VEHICLE_AURA, 0);
                 ((Player*)this)->GetSession()->SendPacket(&data);
+
+                // mounts can also have accessories
+                GetVehicleKit()->InstallAllAccessories(creatureEntry);
             }
         }
     }
@@ -8516,30 +8520,9 @@ bool Unit::isVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, boo
         if (!IsWithinDistInMap(viewPoint,World::GetMaxVisibleDistanceForObject()+(inVisibleList ? World::GetVisibleObjectGreyDistance() : 0.0f), is3dDistance))
             return false;
     }
-    else if(GetTypeId()==TYPEID_PLAYER)                     // distance for show player
+    else if(!at_same_transport)                             // distance for show player/pet/creature (no transport case)
     {
-        if(u->GetTypeId()==TYPEID_PLAYER)
-        {
-            // Players far than max visible distance for player or not in our map are not visible too
-            if (!at_same_transport && !IsWithinDistInMap(viewPoint, _map.GetVisibilityDistance() + (inVisibleList ? World::GetVisibleUnitGreyDistance() : 0.0f), is3dDistance))
-                return false;
-        }
-        else
-        {
-            // Units far than max visible distance for creature or not in our map are not visible too
-            if (!IsWithinDistInMap(viewPoint, _map.GetVisibilityDistance() + (inVisibleList ? World::GetVisibleUnitGreyDistance() : 0.0f), is3dDistance))
-                return false;
-        }
-    }
-    else if (!GetCharmerOrOwnerGuid().IsEmpty())             // distance for show pet/charmed
-    {
-        // Pet/charmed far than max visible distance for player or not in our map are not visible too
-        if (!IsWithinDistInMap(viewPoint, _map.GetVisibilityDistance() + (inVisibleList ? World::GetVisibleUnitGreyDistance() : 0.0f), is3dDistance))
-            return false;
-    }
-    else                                                    // distance for show creature
-    {
-        // Units far than max visible distance for creature or not in our map are not visible too
+        // Any units far than max visible distance for viewer or not in our map are not visible too
         if (!IsWithinDistInMap(viewPoint, _map.GetVisibilityDistance() + (inVisibleList ? World::GetVisibleUnitGreyDistance() : 0.0f), is3dDistance))
             return false;
     }
@@ -8971,6 +8954,22 @@ void Unit::UpdateSpeed(UnitMoveType mtype, bool forced, float ratio)
         if (speed < min_speed)
             speed = min_speed;
     }
+
+    if (GetTypeId() == TYPEID_UNIT)
+    {
+        switch(mtype)
+        {
+        case MOVE_RUN:
+            speed *= ((Creature*)this)->GetCreatureInfo()->speed_run;
+            break;
+        case MOVE_WALK:
+            speed *= ((Creature*)this)->GetCreatureInfo()->speed_walk;
+            break;
+        default:
+            break;
+        }
+    }
+
     SetSpeedRate(mtype, speed * ratio, forced);
 }
 
@@ -10813,11 +10812,11 @@ void Unit::ProcDamageAndSpellFor( bool isVictim, Unit * pTarget, uint32 procFlag
                             (spellProcEvent->spellFamilyMask2[i] & procSpell->SpellFamilyFlags2) == 0)
                             continue;
                     }
-                    // don't check FamilyFlags if schoolMask exists
-                    else if (!spellProcEvent->schoolMask && !triggeredByAura->CanProcFrom(procSpell, spellProcEvent->procEx, procExtra, damage != 0))
+                    // don't check dbc FamilyFlags unless spellFamilyName != 0
+                    else if (!triggeredByAura->CanProcFrom(procSpell, spellProcEvent->procEx, procExtra, damage != 0, spellProcEvent->spellFamilyName != 0))
                         continue;
                 }
-                else if (!triggeredByAura->CanProcFrom(procSpell, PROC_EX_NONE, procExtra, damage != 0))
+                else if (!triggeredByAura->CanProcFrom(procSpell, PROC_EX_NONE, procExtra, damage != 0, true))
                     continue;
             }
 

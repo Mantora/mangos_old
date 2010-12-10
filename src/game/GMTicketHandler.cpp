@@ -70,7 +70,7 @@ void WorldSession::HandleGMTicketGetTicketOpcode( WorldPacket & /*recv_data*/ )
 {
     SendQueryTimeResponse();
 
-    GMTicket* ticket = sTicketMgr.GetGMTicket(GetPlayer()->GetGUIDLow());
+    GMTicket* ticket = sTicketMgr.GetGMTicket(GetPlayer()->GetObjectGuid());
     if(ticket)
     {
         if(ticket->HasResponse())
@@ -87,7 +87,7 @@ void WorldSession::HandleGMTicketUpdateTextOpcode( WorldPacket & recv_data )
     std::string ticketText;
     recv_data >> ticketText;
 
-    if(GMTicket* ticket = sTicketMgr.GetGMTicket(GetPlayer()->GetGUIDLow()))
+    if(GMTicket* ticket = sTicketMgr.GetGMTicket(GetPlayer()->GetObjectGuid()))
         ticket->SetText(ticketText.c_str());
     else
         sLog.outError("Ticket update: Player %s (GUID: %u) doesn't have active ticket", GetPlayer()->GetName(), GetPlayer()->GetGUIDLow());
@@ -95,7 +95,7 @@ void WorldSession::HandleGMTicketUpdateTextOpcode( WorldPacket & recv_data )
 
 void WorldSession::HandleGMTicketCloseTicketOpcode( WorldPacket & /*recv_data*/ )
 {
-    sTicketMgr.Close(GetPlayer()->GetGUIDLow());
+    sTicketMgr.Close(GetPlayer()->GetObjectGuid());
 
     WorldPacket data( SMSG_GMTICKET_CLOSETICKET, 4 );
     data << uint32(9);
@@ -121,7 +121,7 @@ void WorldSession::HandleGMTicketCreateOpcode( WorldPacket & recv_data )
 
     DEBUG_LOG("TicketCreate: map %u, x %f, y %f, z %f, text %s", map, x, y, z, ticketText.c_str());
 
-    if(sTicketMgr.GetGMTicket(GetPlayer()->GetGUIDLow()) && !isFollowup)
+    if(sTicketMgr.GetGMTicket(GetPlayer()->GetObjectGuid()) && !isFollowup)
     {
         WorldPacket data( SMSG_GMTICKET_CREATE, 4 );
         data << uint32(1);                                  // 1 - You already have GM ticket
@@ -130,9 +130,9 @@ void WorldSession::HandleGMTicketCreateOpcode( WorldPacket & recv_data )
     }
 
     if(isFollowup)
-        sTicketMgr.Close(_player->GetGUIDLow());
+        sTicketMgr.Close(_player->GetObjectGuid());
 
-    sTicketMgr.Create(_player->GetGUIDLow(), ticketText.c_str());
+    sTicketMgr.Create(_player->GetObjectGuid(), ticketText.c_str());
 
     SendQueryTimeResponse();
 
@@ -194,7 +194,7 @@ void WorldSession::HandleGMResponseResolveOpcode(WorldPacket & recv_data)
     // empty opcode
     DEBUG_LOG("WORLD: %s", LookupOpcodeName(recv_data.GetOpcode()));
 
-    sTicketMgr.Close(GetPlayer()->GetGUIDLow());
+    sTicketMgr.Close(GetPlayer()->GetObjectGuid());
 
     WorldPacket data(SMSG_GMRESPONSE_STATUS_UPDATE, 1);
     data << uint8(0);                                       // ask to fill out gm survey = 1

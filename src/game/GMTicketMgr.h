@@ -22,16 +22,17 @@
 #include "Policies/Singleton.h"
 #include "Database/DatabaseEnv.h"
 #include "Util.h"
+#include "ObjectGuid.h"
 #include <map>
 
 class GMTicket
 {
     public:
-        explicit GMTicket() : m_ticketId(0), m_guid(0), m_lastUpdate(0), m_closed(0), m_assignedGuid(0), m_assignedSecLevel(2)
+        explicit GMTicket() : m_ticketId(0), m_lastUpdate(0), m_closed(0), m_assignedSecLevel(2)
         {
         }
 
-        void Init(uint32 ticketId, uint32 guid, const std::string& text, const std::string& responsetext, time_t update, uint8 closed, uint32 assignedGuid, uint8 assignedSecLevel)
+        void Init(uint32 ticketId, ObjectGuid guid, const std::string& text, const std::string& responsetext, time_t update, uint8 closed, ObjectGuid assignedGuid, uint8 assignedSecLevel)
         {
 			m_ticketId = ticketId;
             m_guid = guid;
@@ -43,7 +44,7 @@ class GMTicket
 			m_assignedSecLevel = assignedSecLevel;
         }
 
-        uint32 GetPlayerLowGuid() const
+        ObjectGuid const& GetPlayerGuid() const
         {
             return m_guid;
         }
@@ -63,15 +64,15 @@ class GMTicket
             return m_responseText.c_str();
         }
 		
-		const uint32 GetAssignedGuid() const
+		ObjectGuid const& GetAssignedGuid() const
 		{
 			return m_assignedGuid;
 		}
 		
-		void SetAssignedGuid(uint32 guid)
+		void SetAssignedGuid(ObjectGuid guid)
 		{
 			m_assignedGuid = guid;
-			CharacterDatabase.PExecute("UPDATE character_ticket SET assigned_guid = '%u' WHERE (guid = '%u' AND closed = '0') LIMIT 1", m_assignedGuid, m_guid);
+			CharacterDatabase.PExecute("UPDATE character_ticket SET assigned_guid = '%u' WHERE (guid = '%u' AND closed = '0') LIMIT 1", m_assignedGuid.GetCounter(), m_guid.GetCounter());
 		}
 
 		const uint8 GetAssignedSecLevel() const
@@ -82,7 +83,7 @@ class GMTicket
 		void SetAssignedSecLevel(uint8 secLevel)
 		{
 			m_assignedSecLevel = secLevel;
-			CharacterDatabase.PExecute("UPDATE character_ticket SET assigned_sec_level = '%i' WHERE (guid = '%u' AND closed = '0') LIMIT 1", m_assignedSecLevel, m_guid);
+			CharacterDatabase.PExecute("UPDATE character_ticket SET assigned_sec_level = '%i' WHERE (guid = '%u' AND closed = '0') LIMIT 1", m_assignedSecLevel, m_guid.GetCounter());
 		}
 
         uint64 GetLastUpdate() const
@@ -97,7 +98,7 @@ class GMTicket
 
             std::string escapedString = m_text;
             CharacterDatabase.escape_string(escapedString);
-            CharacterDatabase.PExecute("UPDATE character_ticket SET ticket_text = '%s' WHERE (guid = '%u' AND closed = '0') LIMIT 1", escapedString.c_str(), m_guid);
+            CharacterDatabase.PExecute("UPDATE character_ticket SET ticket_text = '%s' WHERE (guid = '%u' AND closed = '0') LIMIT 1", escapedString.c_str(), m_guid.GetCounter());
         }
 
         void SetResponseText(const char* text)
@@ -107,19 +108,19 @@ class GMTicket
 
             std::string escapedString = m_responseText;
             CharacterDatabase.escape_string(escapedString);
-            CharacterDatabase.PExecute("UPDATE character_ticket SET response_text = '%s' WHERE (guid = '%u' AND closed = '0') LIMIT 1", escapedString.c_str(), m_guid);
+            CharacterDatabase.PExecute("UPDATE character_ticket SET response_text = '%s' WHERE (guid = '%u' AND closed = '0') LIMIT 1", escapedString.c_str(), m_guid.GetCounter());
         }
 
         bool HasResponse() { return !m_responseText.empty(); }
 
         void CloseInDB() const
         {
-			CharacterDatabase.PExecute("UPDATE character_ticket SET closed = '1' WHERE (guid = '%u' AND closed = '0') LIMIT 1", m_guid);
+			CharacterDatabase.PExecute("UPDATE character_ticket SET closed = '1' WHERE (guid = '%u' AND closed = '0') LIMIT 1", m_guid.GetCounter());
         }
 
 		void DeleteFromDB() const
         {
-            CharacterDatabase.PExecute("DELETE FROM character_ticket WHERE guid = '%u' LIMIT 1", m_guid);
+            CharacterDatabase.PExecute("DELETE FROM character_ticket WHERE guid = '%u' LIMIT 1", m_guid.GetCounter());
         }
 
         void SaveToDB() const
@@ -133,20 +134,20 @@ class GMTicket
             std::string escapedString2 = m_responseText;
             CharacterDatabase.escape_string(escapedString2);
 
-			CharacterDatabase.PExecute("INSERT INTO character_ticket (guid, ticket_text, response_text, closed, assigned_guid, assigned_sec_level) VALUES ('%u', '%s', '%s', 0, '%u', '%i')", m_guid, escapedString.c_str(), escapedString2.c_str(), m_assignedGuid, m_assignedSecLevel);
+			CharacterDatabase.PExecute("INSERT INTO character_ticket (guid, ticket_text, response_text, closed, assigned_guid, assigned_sec_level) VALUES ('%u', '%s', '%s', 0, '%u', '%i')", m_guid.GetCounter(), escapedString.c_str(), escapedString2.c_str(), m_assignedGuid.GetCounter(), m_assignedSecLevel);
             CharacterDatabase.CommitTransaction();
         }
     private:
 		uint32 m_ticketId;
-        uint32 m_guid;
+        ObjectGuid m_guid;
         std::string m_text;
         std::string m_responseText;
         time_t m_lastUpdate;
         uint8 m_closed;
-		uint32 m_assignedGuid;
+		ObjectGuid m_assignedGuid;
 		uint8 m_assignedSecLevel;
 };
-typedef std::map<uint32, GMTicket> GMTicketMap;
+typedef std::map<ObjectGuid, GMTicket> GMTicketMap;
 typedef std::list<GMTicket*> GMTicketList;                  // for creating order access
 
 class GMTicketMgr
@@ -157,7 +158,7 @@ class GMTicketMgr
 
         void LoadGMTickets();
 
-        GMTicket* GetGMTicket(uint32 guid)
+        GMTicket* GetGMTicket(ObjectGuid guid)
         {
             GMTicketMap::iterator itr = m_GMTicketMap.find(guid);
             if(itr == m_GMTicketMap.end())
@@ -182,16 +183,16 @@ class GMTicketMgr
 			return *itr;
         }
 		
-		size_t GetAssignedTicketCount(uint32 aGuid, uint8 aLevel) const
+		size_t GetAssignedTicketCount(ObjectGuid aGuid, uint8 aLevel) const
 		{
 			uint32 count = 0;
 			for (GMTicketMap::const_iterator itr = m_GMTicketMap.begin(); itr != m_GMTicketMap.end(); ++itr)
-				if (aGuid && aGuid == itr->second.GetAssignedGuid() || aLevel && aLevel == itr->second.GetAssignedSecLevel())
+				if (!aGuid.IsEmpty() && aGuid == itr->second.GetAssignedGuid() || aLevel && aLevel == itr->second.GetAssignedSecLevel())
 					++count;
 			return count;
 		}
 
-        void Close(uint32 guid)
+        void Close(ObjectGuid guid)
         {
             GMTicketMap::iterator itr = m_GMTicketMap.find(guid);
             if(itr == m_GMTicketMap.end())
@@ -203,16 +204,16 @@ class GMTicketMgr
 
         void CloseAll();
 
-        void Create(uint32 guid, const char* text)
+        void Create(ObjectGuid guid, const char* text)
         {
             GMTicket& ticket = m_GMTicketMap[guid];
-            if (ticket.GetPlayerLowGuid() != 0)             // overwrite ticket
+            if (!ticket.GetPlayerGuid().IsEmpty())          // overwrite ticket
             {
                 ticket.DeleteFromDB();
                 m_GMTicketListByCreatingOrder.remove(&ticket);
             }
 
-            ticket.Init(NULL, guid, text, "", time(NULL), 0, NULL, NULL);
+            ticket.Init(NULL, guid, text, "", time(NULL), 0, ObjectGuid(), NULL);
             ticket.SaveToDB();
             m_GMTicketListByCreatingOrder.push_back(&ticket);
         }
