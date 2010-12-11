@@ -27,6 +27,7 @@
 #include "SharedDefines.h"
 
 #include "../../dep/recastnavigation/Detour/Include/DetourNavMesh.h"
+#include "../../dep/recastnavigation/Detour/Include/DetourNavMeshQuery.h"
 
 #include <bitset>
 #include <list>
@@ -280,6 +281,7 @@ private:
     // begin movemap-related
 public:
     dtNavMesh const* GetNavMesh() const;
+    dtNavMeshQuery const* GetNavMeshQuery() const;
     static void preventPathfindingOnMaps(std::string ignoreMapIds);
     bool IsPathfindingEnabled() const;
 
@@ -287,6 +289,7 @@ private:
     void LoadNavMesh(int gx, int gy);
     void UnloadNavMesh(int gx, int gy);
     dtNavMesh* m_navMesh;
+    dtNavMeshQuery* m_navMeshQuery;
     UNORDERED_MAP<uint32, dtTileRef> m_mmapLoadedTiles;    // maps [map grid coords] to [dtTile]
 
     static std::set<uint32> s_mmapDisabledIds;      // stores list of mapids which do not use pathfinding
