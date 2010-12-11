@@ -160,8 +160,6 @@ ChatCommand * ChatHandler::getCommandTable()
         { "achievements",   SEC_ADMINISTRATOR,     true,  &ChatHandler::HandleCharacterAchievementsCommand,"",NULL },
         { "customize",      SEC_ADMINISTRATOR,     true,  &ChatHandler::HandleCharacterCustomizeCommand,  "", NULL },
         { "deleted",        SEC_ADMINISTRATOR,     true,  NULL,                                           "", characterDeletedCommandTable},
-        { "changefaction",  SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleCharacterChangeFactionCommand, "", NULL },
-        { "changerace",     SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleCharacterChangeRaceCommand, "", NULL },
         { "erase",          SEC_CONSOLE,        true,  &ChatHandler::HandleCharacterEraseCommand,      "", NULL },
         { "level",          SEC_ADMINISTRATOR,  true,  &ChatHandler::HandleCharacterLevelCommand,      "", NULL },
         { "rename",         SEC_ADMINISTRATOR,     true,  &ChatHandler::HandleCharacterRenameCommand,     "", NULL },
