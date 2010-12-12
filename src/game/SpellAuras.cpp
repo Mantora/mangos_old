@@ -3769,7 +3769,7 @@ void Aura::HandleAuraTrackStealthed(bool apply, bool /*Real*/)
     if(apply)
         GetTarget()->RemoveNoStackAurasDueToAuraHolder(GetHolder());
 
-    GetTarget()->ApplyModFlag(PLAYER_FIELD_BYTES, PLAYER_FIELD_BYTE_TRACK_STEALTHED, apply);
+    GetTarget()->ApplyModByteFlag(PLAYER_FIELD_BYTES, 0, PLAYER_FIELD_BYTE_TRACK_STEALTHED, apply);
 }
 
 void Aura::HandleAuraModScale(bool apply, bool /*Real*/)
@@ -6353,6 +6353,7 @@ void Aura::HandleShapeshiftBoosts(bool apply)
             break;
         case FORM_SHADOW:
             spellId1 = 49868;
+            spellId2 = 71167;
 
             if(target->GetTypeId() == TYPEID_PLAYER)      // Spell 49868 have same category as main form spell and share cooldown
                 ((Player*)target)->RemoveSpellCooldown(49868);
