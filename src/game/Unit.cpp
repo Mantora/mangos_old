@@ -200,7 +200,6 @@ Unit::Unit()
     m_extraAttacks = 0;
 
     m_state = 0;
-    m_form = FORM_NONE;
     m_deathState = ALIVE;
 
     for (uint32 i = 0; i < CURRENT_MAX_SPELL; ++i)
@@ -225,7 +224,6 @@ Unit::Unit()
     m_detectInvisibilityMask = 0;
     m_invisibilityMask = 0;
     m_transform = 0;
-    m_ShapeShiftFormSpellId = 0;
     m_canModifyStats = false;
 
     for (int i = 0; i < MAX_SPELL_IMMUNITY; ++i)
@@ -597,23 +595,28 @@ bool Unit::canReachWithAttack(Unit *pVictim) const
     return IsWithinDistInMap(pVictim, reach);
 }
 
-void Unit::RemoveSpellsCausingAura(AuraType auraType, bool negative, bool positive)
+void Unit::RemoveSpellsCausingAura(AuraType auraType)
 {
-    if (auraType >= TOTAL_AURAS) return;
-    AuraList::const_iterator iter, next;
-    for (iter = m_modAuras[auraType].begin(); iter != m_modAuras[auraType].end(); iter = next)
+    for (AuraList::const_iterator iter = m_modAuras[auraType].begin(); iter != m_modAuras[auraType].end();)
     {
-        next = iter;
-        ++next;
+        RemoveAurasDueToSpell((*iter)->GetId());
+        iter = m_modAuras[auraType].begin();
+    }
+}
 
-        if (*iter && ((negative && !(*iter)->IsPositive()) || (positive && (*iter)->IsPositive())) )
+void Unit::RemoveSpellsCausingAura(AuraType auraType, SpellAuraHolder* except)
+{
+    for (AuraList::const_iterator iter = m_modAuras[auraType].begin(); iter != m_modAuras[auraType].end();)
+    {
+        // skip `except` aura
+        if ((*iter)->GetHolder() == except)
         {
-            RemoveAurasDueToSpell((*iter)->GetId());
-            if (!m_modAuras[auraType].empty())
-                next = m_modAuras[auraType].begin();
-            else
-                return;
+            ++iter;
+            continue;
         }
+
+        RemoveAurasDueToSpell((*iter)->GetId(), except);
+        iter = m_modAuras[auraType].begin();
     }
 }
 
@@ -2296,7 +2299,7 @@ void Unit::CalculateDamageAbsorbAndResist(Unit *pCaster, SpellSchoolMask schoolM
                 if (spellProto->SpellIconID == 2253)
                 {
                     //reduces all damage taken while Stunned and in Cat Form
-                    if (m_form == FORM_CAT && (unitflag & UNIT_FLAG_STUNNED))
+                    if (GetShapeshiftForm() == FORM_CAT && (unitflag & UNIT_FLAG_STUNNED))
                         RemainingDamage -= RemainingDamage * currentAbsorb / 100;
                     continue;
                 }
@@ -6444,12 +6447,12 @@ void Unit::SetCharm(Unit* pet)
 void Unit::AddPetToList(Pet* pet)
 {
     if (pet)
-        m_groupPets.insert(pet->GetGUID());
+        m_groupPets.insert(pet->GetObjectGuid());
 }
 
 void Unit::RemovePetFromList(Pet* pet)
 {
-    m_groupPets.erase(pet->GetGUID());
+    m_groupPets.erase(pet->GetObjectGuid());
 
     GroupPetList m_groupPetsTmp = GetPets();
     for(GroupPetList::const_iterator itr = m_groupPetsTmp.begin(); itr != m_groupPetsTmp.end(); ++itr)
@@ -6591,40 +6594,49 @@ int32 Unit::DealHeal(Unit *pVictim, uint32 addhealth, SpellEntry const *spellPro
     return gain;
 }
 
-Unit* Unit::SelectMagnetTarget(Unit *victim, SpellEntry const *spellInfo)
+Unit* Unit::SelectMagnetTarget(Unit *victim, Spell* spell, SpellEffectIndex eff)
 {
     if(!victim)
         return NULL;
 
-    // SPELL_AURA_SPELL_MAGNET must NOT take any physical spells except for Hamstring, Wing Clip and Death Grip
-    if(spellInfo && ((spellInfo->SchoolMask != SPELL_SCHOOL_MASK_NORMAL && spellInfo->DmgClass == SPELL_DAMAGE_CLASS_MAGIC) || (spellInfo->Id == 1715 || spellInfo->Id == 2974 || spellInfo->Id == 49576)))
+    // Magic case
+    if (spell && (spell->m_spellInfo->DmgClass == SPELL_DAMAGE_CLASS_NONE || spell->m_spellInfo->DmgClass == SPELL_DAMAGE_CLASS_MAGIC))
     {
         Unit::AuraList const& magnetAuras = victim->GetAurasByType(SPELL_AURA_SPELL_MAGNET);
         for(Unit::AuraList::const_iterator itr = magnetAuras.begin(); itr != magnetAuras.end(); ++itr)
-            if(Unit* magnet = (*itr)->GetCaster())
-                if(magnet->IsWithinLOSInMap(this) && magnet->isAlive())
+        {
+            if (Unit* magnet = (*itr)->GetCaster())
+            {
+                if (magnet->isAlive() && magnet->IsWithinLOSInMap(this) && spell->CheckTarget(magnet, eff))
                 {
-                    //Destroy totem...
-                    if( ((Creature*)magnet)->IsTotem())
-                         magnet->CastSpell(magnet, 5, true);
-                
+                    if (SpellAuraHolder *holder = (*itr)->GetHolder())
+                        if (holder->DropAuraCharge())
+                            victim->RemoveSpellAuraHolder(holder);
                     return magnet;
                 }
+            }
+        }
     }
     // Normal case
     else
     {
         AuraList const& hitTriggerAuras = victim->GetAurasByType(SPELL_AURA_ADD_CASTER_HIT_TRIGGER);
         for(AuraList::const_iterator i = hitTriggerAuras.begin(); i != hitTriggerAuras.end(); ++i)
-            if(Unit* magnet = (*i)->GetCaster())
-                if(magnet->isAlive() && magnet->IsWithinLOSInMap(this))
-                    if(roll_chance_i((*i)->GetModifier()->m_amount))
-                        if ((*i)->GetHolder()->GetAuraCharges())
-                        {
-                            if((*i)->GetHolder()->DropAuraCharge())
-                                victim->RemoveAura((*i),AURA_REMOVE_BY_DEFAULT);
-                            return magnet;
-                        }
+        {
+            if (Unit* magnet = (*i)->GetCaster())
+            {
+                if (magnet->isAlive() && magnet->IsWithinLOSInMap(this) && (!spell || spell->CheckTarget(magnet, eff)))
+                {
+                    if (roll_chance_i((*i)->GetModifier()->m_amount))
+                    {
+                        if (SpellAuraHolder *holder = (*i)->GetHolder())
+                            if (holder->DropAuraCharge())
+                                victim->RemoveSpellAuraHolder(holder);
+                        return magnet;
+                    }
+                }
+            }
+        }
     }
 
     return victim;
@@ -6847,7 +6859,7 @@ uint32 Unit::SpellDamageBonusDone(Unit *pVictim, SpellEntry const *spellProto, u
                 else // Tundra Stalker
                 {
                     // Frost Fever (target debuff)
-                    if (pVictim->GetAura(SPELL_AURA_MOD_HASTE, SPELLFAMILY_DEATHKNIGHT, UI64LIT(0x0000000000000000), 0x00000002))
+                    if (pVictim->GetAura(SPELL_AURA_MOD_MELEE_HASTE, SPELLFAMILY_DEATHKNIGHT, UI64LIT(0x0000000000000000), 0x00000002))
                         DoneTotalMod *= ((*i)->GetModifier()->m_amount+100.0f)/100.0f;
                     break;
                 }
@@ -7707,17 +7719,26 @@ bool Unit::IsImmuneToSpell(SpellEntry const* spellInfo)
                 return true;
     }
 
-    if(uint32 mechanic = spellInfo->Mechanic)
+    if(uint32 mechanic = spellInfo->Mechanic) // should whole spell be stopped here, not only effect ?
     {
         SpellImmuneList const& mechanicList = m_spellImmune[IMMUNITY_MECHANIC];
         for(SpellImmuneList::const_iterator itr = mechanicList.begin(); itr != mechanicList.end(); ++itr)
             if (itr->type == mechanic)
+            {
+                if (spellInfo->Id == 49560) // Death Grip hack 
+                    continue;
+
                 return true;
+            }
 
         AuraList const& immuneAuraApply = GetAurasByType(SPELL_AURA_MECHANIC_IMMUNITY_MASK);
         for(AuraList::const_iterator iter = immuneAuraApply.begin(); iter != immuneAuraApply.end(); ++iter)
             if ((*iter)->GetModifier()->m_miscvalue & (1 << (mechanic-1)))
+            {
+                if((*iter)->GetId() == 46924 && (1 << (mechanic-1) == 4)) // Hack to remove Bladestorm disarm immunity
+                    continue;
                 return true;
+            }
     }
 
     return false;
@@ -7764,10 +7785,16 @@ bool Unit::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex i
         for(AuraList::const_iterator i = immuneMechanicAuraApply.begin(); i != immuneMechanicAuraApply.end(); ++i)
             if ((spellInfo->EffectMechanic[index] & (*i)->GetMiscValue() ||
                 spellInfo->Mechanic & (*i)->GetMiscValue()) ||
-                ((*i)->GetId() == 46924 &&                                                // Bladestorm Immunity
+                ((*i)->GetId() == 46924 && // Bladestorm Immunity
                 spellInfo->EffectMechanic[index] & IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK ||
                 spellInfo->Mechanic & IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK))
+            {
+                // Additional Bladestorm Immunity check (not immuned to disarm / bleed)
+                if((*i)->GetId() == 46924 && (spellInfo->Mechanic == MECHANIC_DISARM || spellInfo->Mechanic == MECHANIC_BLEED))
+                    continue;
+
                 return true;
+            }
     }
 
     return false;
@@ -7899,7 +7926,7 @@ uint32 Unit::MeleeDamageBonusDone(Unit *pVictim, uint32 pdamage,WeaponAttackType
                     else // Tundra Stalker
                     {
                         // Frost Fever (target debuff)
-                        if (pVictim->GetAura(SPELL_AURA_MOD_HASTE, SPELLFAMILY_DEATHKNIGHT, UI64LIT(0x0000000000000000), 0x00000002))
+                        if (pVictim->GetAura(SPELL_AURA_MOD_MELEE_HASTE, SPELLFAMILY_DEATHKNIGHT, UI64LIT(0x0000000000000000), 0x00000002))
                             DonePercent *= ((*i)->GetModifier()->m_amount+100.0f)/100.0f;
                         break;
                     }
@@ -8908,7 +8935,7 @@ void Unit::UpdateSpeed(UnitMoveType mtype, bool forced, float ratio)
     }
 
     // Remove Druid Dash bonus if not in Cat Form
-    if (m_form != FORM_CAT)
+    if (GetShapeshiftForm() != FORM_CAT)
     {
         AuraList const& speed_increase_auras = GetAurasByType(SPELL_AURA_MOD_INCREASE_SPEED);
         for(AuraList::const_iterator itr = speed_increase_auras.begin(); itr != speed_increase_auras.end(); ++itr)
@@ -9672,7 +9699,7 @@ uint32 Unit::GetCreatureType() const
 {
     if(GetTypeId() == TYPEID_PLAYER)
     {
-        SpellShapeshiftFormEntry const* ssEntry = sSpellShapeshiftFormStore.LookupEntry(m_form);
+        SpellShapeshiftFormEntry const* ssEntry = sSpellShapeshiftFormStore.LookupEntry(GetShapeshiftForm());
         if(ssEntry && ssEntry->creatureType > 0)
             return ssEntry->creatureType;
         else
@@ -10794,8 +10821,8 @@ void Unit::ProcDamageAndSpellFor( bool isVictim, Unit * pTarget, uint32 procFlag
                             (spellProcEvent->spellFamilyMask2[i] & procSpell->SpellFamilyFlags2) == 0)
                             continue;
                     }
-                    // don't check dbc FamilyFlags unless spellFamilyName != 0
-                    else if (!triggeredByAura->CanProcFrom(procSpell, spellProcEvent->procEx, procExtra, damage != 0, spellProcEvent->spellFamilyName != 0))
+                    // don't check dbc FamilyFlags if schoolMask exists
+                    else if (!triggeredByAura->CanProcFrom(procSpell, spellProcEvent->procEx, procExtra, damage != 0, !spellProcEvent->schoolMask))
                         continue;
                 }
                 else if (!triggeredByAura->CanProcFrom(procSpell, PROC_EX_NONE, procExtra, damage != 0, true))
@@ -11709,7 +11736,8 @@ void Unit::ExitVehicle()
     float y = GetPositionY();
     float z = GetPositionZ() + 2.0f;
     GetClosePoint(x, y, z, 2.0f);
-    SendMonsterMove(x, y, z, SPLINETYPE_NORMAL, SPLINEFLAG_WALKMODE, 0);
+    UpdateAllowedPositionZ(x, y, z);
+    SendMonsterMove(x, y, z + 0.5f, SPLINETYPE_NORMAL, SPLINEFLAG_WALKMODE, 0);
 }
 
 void Unit::SetPvP( bool state )

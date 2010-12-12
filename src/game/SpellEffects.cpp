@@ -620,7 +620,7 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                     m_caster->CastCustomSpell(m_caster, 32409, &damage, 0, 0, true);
                 }
                 // Improved Mind Blast (Mind Blast in shadow form bonus)
-                else if (m_caster->m_form == FORM_SHADOW && (m_spellInfo->SpellFamilyFlags & UI64LIT(0x00002000)))
+                else if (m_caster->GetShapeshiftForm() == FORM_SHADOW && (m_spellInfo->SpellFamilyFlags & UI64LIT(0x00002000)))
                 {
                     Unit::AuraList const& ImprMindBlast = m_caster->GetAurasByType(SPELL_AURA_ADD_FLAT_MODIFIER);
                     for(Unit::AuraList::const_iterator i = ImprMindBlast.begin(); i != ImprMindBlast.end(); ++i)
@@ -1327,6 +1327,23 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     unitTarget->CastSpell(unitTarget, 43059, true);
                     return;
                 }
+                case 43069:                                 // Towers of Certain Doom: Skorn Cannonfire
+                {
+                    // Towers of Certain Doom: Tower Caster Instakill
+                    m_caster->CastSpell(m_caster, 43072, true);
+                    return;
+                }
+                case 43572:                                 // Send Them Packing: On /Raise Emote Dummy to Player
+                {
+                    if (!unitTarget)
+                        return;
+
+                    // m_caster (creature) should start walking back to it's "home" here, no clear way how to do that
+
+                    // Send Them Packing: On Successful Dummy Spell Kill Credit
+                    m_caster->CastSpell(unitTarget, 42721, true);
+                    return;
+                }
                 // Demon Broiled Surprise
                 /* FIX ME: Required for correct work implementing implicit target 7 (in pair (22,7))
                 case 43723:
@@ -1562,17 +1579,50 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     }
                     return;
                 }
+                case 49634:                                 // Sergeant's Flare
+                {
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT)
+                        return;
+
+                    // Towers of Certain Doom: Tower Bunny Smoke Flare Effect
+                    // TODO: MaNGOS::DynamicObjectUpdater::VisitHelper prevent aura to be applied to dummy creature (see HandleAuraDummy for effect of aura)
+                    m_caster->CastSpell(unitTarget, 56511, true);
+
+                    static uint32 const spellCredit[4] =
+                    {
+                        43077,                              // E Kill Credit
+                        43067,                              // NW Kill Credit
+                        43087,                              // SE Kill Credit
+                        43086,                              // SW Kill Credit
+                    };
+
+                    // for sizeof(spellCredit)
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        const SpellEntry *pSpell = sSpellStore.LookupEntry(spellCredit[i]);
+
+                        if (pSpell->EffectMiscValue[EFFECT_INDEX_0] == unitTarget->GetEntry())
+                        {
+                            m_caster->CastSpell(m_caster, spellCredit[i], true);
+                            break;
+                        }
+                    }
+
+                    return;
+                }
                 case 50133:                                 // Scourging Crystal Controller
                 {
                     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT)
                         return;
 
+                    // Scourge Mur'gul Camp: Force Shield Arcane Purple x3
                     if (unitTarget->HasAura(43874))
                     {
                         // someone else is already channeling target
                         if (unitTarget->HasAura(43878))
                             return;
 
+                        // Scourging Crystal Controller
                         m_caster->CastSpell(unitTarget, 43878, true, m_CastItem);
                     }
 
@@ -4964,22 +5014,25 @@ void Spell::DoSummonGuardian(SpellEffectIndex eff_idx, uint32 forceFaction)
 
     PetType petType = propEntry->Title == UNITNAME_SUMMON_TITLE_COMPANION ? PROTECTOR_PET : GUARDIAN_PET;
 
-    // protectors allowed only in single amount
-    if (petType == PROTECTOR_PET)
+    // second cast unsummon guardian(s) (guardians without like functionality have cooldown > spawn time)
+    if (m_caster->GetTypeId() == TYPEID_PLAYER && m_CastItem)
     {
-        Pet* old_protector = m_caster->GetProtectorPet();
-
-        // for same pet just despawn
-        if (old_protector && old_protector->GetEntry() == pet_entry)
+        bool found = false;
+        // including protector
+        while (Pet* old_summon = m_caster->FindGuardianWithEntry(pet_entry))
         {
-            old_protector->Unsummon(PET_SAVE_AS_DELETED, m_caster);
-            return;
+            old_summon->Unsummon(PET_SAVE_AS_DELETED, m_caster);
+            found = true;
         }
 
-        // despawn old pet before summon new
-        if (old_protector)
-            old_protector->Unsummon(PET_SAVE_AS_DELETED, m_caster);
+        if (found)
+            return;
     }
+
+    // protectors allowed only in single amount
+    if (petType == PROTECTOR_PET && m_CastItem)
+        if (Pet* old_protector = m_caster->GetProtectorPet())
+            old_protector->Unsummon(PET_SAVE_AS_DELETED, m_caster);
 
     // in another case summon new
     uint32 level = m_caster->getLevel();
@@ -6203,6 +6256,31 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                         unitTarget->CastSpell(unitTarget, spellId, true);
                     return;
                 }
+                case 22539:                                 // Shadow Flame (All script effects, not just end ones to
+                case 22972:                                 // prevent player from dodging the last triggered spell)
+                case 22975:
+                case 22976:
+                case 22977:
+                case 22978:
+                case 22979:
+                case 22980:
+                case 22981:
+                case 22982:
+                case 22983:
+                case 22984:
+                case 22985:
+                {
+                    if (!unitTarget || !unitTarget->isAlive())
+                        return;
+
+                    // Onyxia Scale Cloak
+                    if (unitTarget->GetDummyAura(22683))
+                        return;
+
+                    // Shadow Flame
+                    m_caster->CastSpell(unitTarget, 22682, true);
+                    return;
+                }
                 case 24590:                                 // Brittle Armor - need remove one 24575 Brittle Armor aura
                     unitTarget->RemoveAuraHolderFromStack(24575);
                     return;
@@ -6222,9 +6300,6 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     unitTarget->CastSpell(unitTarget, iTmpSpellId, true);
                     return;
                 }
-                case 26465:                                 // Mercurial Shield - need remove one 26464 Mercurial Shield aura
-                    unitTarget->RemoveAuraHolderFromStack(26464);
-                    return;
                 case 25140:                                 // Orb teleport spells
                 case 25143:
                 case 25650:
@@ -6255,31 +6330,19 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     unitTarget->CastSpell(unitTarget,spellid,false);
                     return;
                 }
-                case 22539:                                 // Shadow Flame (All script effects, not just end ones to
-                case 22972:                                 // prevent player from dodging the last triggered spell)
-                case 22975:
-                case 22976:
-                case 22977:
-                case 22978:
-                case 22979:
-                case 22980:
-                case 22981:
-                case 22982:
-                case 22983:
-                case 22984:
-                case 22985:
+                case 26218:                                 // Mistletoe
                 {
-                    if (!unitTarget || !unitTarget->isAlive())
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
                         return;
 
-                    // Onyxia Scale Cloak
-                    if (unitTarget->GetDummyAura(22683))
-                        return;
+                    uint32 spells[3] = {26206, 26207, 45036};
 
-                    // Shadow Flame
-                    m_caster->CastSpell(unitTarget, 22682, true);
+                    m_caster->CastSpell(unitTarget, spells[urand(0, 2)], true);
                     return;
                 }
+                case 26465:                                 // Mercurial Shield - need remove one 26464 Mercurial Shield aura
+                    unitTarget->RemoveAuraHolderFromStack(26464);
+                    return;
                 case 26656:                                 // Summon Black Qiraji Battle Tank
                 {
                     if (!unitTarget)

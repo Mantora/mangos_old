@@ -1040,6 +1040,14 @@ bool ChatHandler::HandleReloadSpellAreaCommand(char* /*args*/)
     return true;
 }
 
+bool ChatHandler::HandleReloadSpellBonusesCommand(char* /*args*/)
+{
+    sLog.outString( "Re-Loading Spell Bonus Data..." );
+    sSpellMgr.LoadSpellBonuses();
+    SendGlobalSysMessage("DB table `spell_bonus_data` (spell damage/healing coefficients) reloaded.");
+    return true;
+}
+
 bool ChatHandler::HandleReloadSpellChainCommand(char* /*args*/)
 {
     sLog.outString( "Re-Loading Spell Chain Data... " );
@@ -1069,14 +1077,6 @@ bool ChatHandler::HandleReloadSpellProcEventCommand(char* /*args*/)
     sLog.outString( "Re-Loading Spell Proc Event conditions..." );
     sSpellMgr.LoadSpellProcEvents();
     SendGlobalSysMessage("DB table `spell_proc_event` (spell proc trigger requirements) reloaded.");
-    return true;
-}
-
-bool ChatHandler::HandleReloadSpellBonusesCommand(char* /*args*/)
-{
-    sLog.outString( "Re-Loading Spell Bonus Data..." );
-    sSpellMgr.LoadSpellBonuses();
-    SendGlobalSysMessage("DB table `spell_bonus_data` (spell damage/healing coefficients) reloaded.");
     return true;
 }
 
@@ -5231,8 +5231,8 @@ static bool HandleResetStatsOrLevelHelper(Player* player)
     uint8 powertype = cEntry->powerType;
 
     // reset m_form if no aura
-    if(!player->HasAuraType(SPELL_AURA_MOD_SHAPESHIFT))
-        player->m_form = FORM_NONE;
+    if (!player->HasAuraType(SPELL_AURA_MOD_SHAPESHIFT))
+        player->SetShapeshiftForm(FORM_NONE);
 
     player->SetFloatValue(UNIT_FIELD_BOUNDINGRADIUS, DEFAULT_WORLD_OBJECT_SIZE );
     player->SetFloatValue(UNIT_FIELD_COMBATREACH, 1.5f   );
@@ -5242,11 +5242,10 @@ static bool HandleResetStatsOrLevelHelper(Player* player)
     player->SetByteValue(UNIT_FIELD_BYTES_0, 3, powertype);
 
     // reset only if player not in some form;
-    if(player->m_form==FORM_NONE)
+    if (player->GetShapeshiftForm() == FORM_NONE)
         player->InitDisplayIds();
 
     player->SetByteValue(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP );
-    player->SetByteValue(UNIT_FIELD_BYTES_2, 3, player->m_form);
 
     player->SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
 
