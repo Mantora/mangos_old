@@ -7721,17 +7721,26 @@ bool Unit::IsImmuneToSpell(SpellEntry const* spellInfo)
                 return true;
     }
 
-    if(uint32 mechanic = spellInfo->Mechanic)
+    if(uint32 mechanic = spellInfo->Mechanic) // should whole spell be stopped here, not only effect ?
     {
         SpellImmuneList const& mechanicList = m_spellImmune[IMMUNITY_MECHANIC];
         for(SpellImmuneList::const_iterator itr = mechanicList.begin(); itr != mechanicList.end(); ++itr)
             if (itr->type == mechanic)
+            {
+                if (spellInfo->Id == 49560) // Death Grip hack 
+                    continue;
+
                 return true;
+            }
 
         AuraList const& immuneAuraApply = GetAurasByType(SPELL_AURA_MECHANIC_IMMUNITY_MASK);
         for(AuraList::const_iterator iter = immuneAuraApply.begin(); iter != immuneAuraApply.end(); ++iter)
             if ((*iter)->GetModifier()->m_miscvalue & (1 << (mechanic-1)))
+            {
+                if((*iter)->GetId() == 46924 && (1 << (mechanic-1) == 4)) // Hack to remove Bladestorm disarm immunity
+                    continue;
                 return true;
+            }
     }
 
     return false;
@@ -7778,10 +7787,16 @@ bool Unit::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex i
         for(AuraList::const_iterator i = immuneMechanicAuraApply.begin(); i != immuneMechanicAuraApply.end(); ++i)
             if ((spellInfo->EffectMechanic[index] & (*i)->GetMiscValue() ||
                 spellInfo->Mechanic & (*i)->GetMiscValue()) ||
-                ((*i)->GetId() == 46924 &&                                                // Bladestorm Immunity
+                ((*i)->GetId() == 46924 && // Bladestorm Immunity
                 spellInfo->EffectMechanic[index] & IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK ||
                 spellInfo->Mechanic & IMMUNE_TO_MOVEMENT_IMPAIRMENT_AND_LOSS_CONTROL_MASK))
+            {
+                // Additional Bladestorm Immunity check (not immuned to disarm / bleed)
+                if((*i)->GetId() == 46924 && (spellInfo->Mechanic == MECHANIC_DISARM || spellInfo->Mechanic == MECHANIC_BLEED))
+                    continue;
+
                 return true;
+            }
     }
 
     return false;
