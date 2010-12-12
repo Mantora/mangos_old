@@ -83,7 +83,7 @@ Corpse* ObjectAccessor::GetCorpseInMap(ObjectGuid guid, uint32 mapid)
 Player*
 ObjectAccessor::FindPlayer(ObjectGuid guid)
 {
-    Player * plr = HashMapHolder<Player>::Find(guid);;
+    Player * plr = HashMapHolder<Player>::Find(guid);
     if(!plr || !plr->IsInWorld())
         return NULL;
 
@@ -119,6 +119,15 @@ void ObjectAccessor::KickPlayer(ObjectGuid guid)
         s->KickPlayer();                            // mark session to remove at next session list update
         s->LogoutPlayer(false);                     // logout player without waiting next session list update
     }
+}
+
+Pet* ObjectAccessor::FindPet(ObjectGuid guid)
+{
+    Pet * pet = HashMapHolder<Pet>::Find(guid);
+    if(!pet || !pet->IsInWorld())
+        return NULL;
+
+    return pet;
 }
 
 Corpse*
@@ -284,6 +293,7 @@ template <class T> ACE_RW_Thread_Mutex HashMapHolder<T>::i_lock;
 
 template class HashMapHolder<Player>;
 template class HashMapHolder<Corpse>;
+template class HashMapHolder<Pet>;
 
 /// Define the static member of ObjectAccessor
 std::list<Map*> ObjectAccessor::i_mapList;
