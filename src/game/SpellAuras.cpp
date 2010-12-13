@@ -578,11 +578,10 @@ SpellAuraHolder* CreateSpellAuraHolder(SpellEntry const* spellproto, Unit *targe
     return new SpellAuraHolder(spellproto, target, caster, castItem);
 }
 
-void Aura::SetModifier(AuraType t, int32 a, uint32 pt, int32 miscValue, int32 a2)
+void Aura::SetModifier(AuraType t, int32 a, uint32 pt, int32 miscValue)
 {
     m_modifier.m_auraname = t;
     m_modifier.m_amount = a;
-    m_modifier.m_amount2 = a2;
     m_modifier.m_miscvalue = miscValue;
     m_modifier.periodictime = pt;
 }
@@ -835,62 +834,6 @@ void AreaAura::Update(uint32 diff)
 
                     if (addedToExisting)
                     {
-                        AuraType aurName = AuraType(aur->GetModifier()->m_auraname);
-                        Unit::AuraList const& mModStat = (*tIter)->GetAurasByType(aurName);
-                        for(Unit::AuraList::const_iterator i = mModStat.begin(); i != mModStat.end(); ++i)
-                        {
-                            Modifier *i_mod = (*i)->GetModifier();
-                            Modifier *a_mod = aur->GetModifier();
-
-                            if (i_mod->m_miscvalue != a_mod->m_miscvalue)
-                                continue;
-
-                            if (Unit *caster = (*i)->GetCaster())
-                                if (!((Creature *)caster)->IsTotem() && (*i)->GetHolder()->IsPassive())
-                                    continue;
-
-                            if (Unit *caster = holder->GetCaster())
-                                if (!((Creature *)caster)->IsTotem() && holder->IsPassive())
-                                    continue;
-
-                            if (actualSpellInfo->SpellFamilyName == SPELLFAMILY_POTION || 
-                                (*i)->GetSpellProto()->SpellFamilyName == SPELLFAMILY_POTION)
-                                continue;
-                            if (sSpellMgr.GetSpellElixirSpecific((*i)->GetSpellProto()->Id) ||
-                                sSpellMgr.GetSpellElixirSpecific(actualSpellInfo->Id))
-                                continue;
-                            if (!holder->GetCastItemGuid().IsEmpty() || !(*i)->GetCastItemGuid().IsEmpty())
-                                continue;
-
-                            switch (aurName)
-                            {
-                            case SPELL_AURA_MOD_MECHANIC_DAMAGE_TAKEN_PERCENT:
-                            case SPELL_AURA_MOD_TOTAL_STAT_PERCENTAGE:
-                            case SPELL_AURA_MOD_POWER_REGEN:
-                            case SPELL_AURA_MOD_RESISTANCE_EXCLUSIVE:
-                            case SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN:
-                            case SPELL_AURA_MOD_RANGED_ATTACK_POWER:
-                            case SPELL_AURA_MOD_ATTACK_POWER:
-                            case SPELL_AURA_MOD_DAMAGE_DONE:
-                            case SPELL_AURA_MOD_HEALING_DONE:
-                            case SPELL_AURA_MOD_STAT:
-                                {
-                                    if (i_mod->m_amount <= 0 || a_mod->m_amount < 0)     // don't check negative and proved auras
-                                        continue;
-                                    if (i_mod->m_amount >= a_mod->m_amount)
-                                        aur->SetModifier(aurName,0,a_mod->periodictime,a_mod->m_miscvalue);
-                                    else
-                                    {
-                                        (*i)->ApplyModifier(false,false);
-                                        (*i)->SetModifier(aurName,0,i_mod->periodictime,i_mod->m_miscvalue);
-                                    }
-                                    break;
-                                }
-                            default:
-                                break;
-                            }
-                        }
-
                         (*tIter)->AddAuraToModList(aur);
                         holder->SetInUse(true);
                         aur->ApplyModifier(true,true);
