@@ -3569,6 +3569,13 @@ SpellAuraProcResult Unit::HandleProcTriggerSpellAuraProc(Unit *pVictim, uint32 d
                     (((Creature*)pVictim)->GetCreatureInfo()->MechanicImmuneMask & (1 << (MECHANIC_STUN - 1))) == 0)
                     return SPELL_AURA_PROC_FAILED;
             }
+			else if (auraSpellInfo->SpellIconID == 3261 && procSpell->SpellIconID != 2294) // Missile Barrage
+			{
+				// proc chance for spells other than Arcane Blast is always 2 times lower, so we have to roll for 50% now
+				if(!roll_chance_i(50))
+					return SPELL_AURA_PROC_FAILED;
+				break;
+			}
             break;
         case SPELLFAMILY_WARRIOR:
             // Deep Wounds (replace triggered spells to directly apply DoT), dot spell have familyflags
