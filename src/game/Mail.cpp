@@ -1099,7 +1099,7 @@ void WorldSession::SendExternalMails()
 
 			if (Player* Receiver = sObjectMgr.GetPlayer(receiverGuid))
 			{
-				sLog.outString("EXTERNAL MAIL> Send Mail %u to Player %u...", id, receiverGuid);
+				sLog.outString("EXTERNAL MAIL> Send Mail %u to Player %u...", id, receiverGuid.GetCounter());
 
 				message = !message.empty() ? message : "Support Message";
 				MailDraft draft(subject, message);
@@ -1129,7 +1129,7 @@ void WorldSession::SendExternalMails()
 				CharacterDatabase.PExecute("UPDATE mail_external SET sent='1' WHERE id='%u'", id);
 			}
 			else
-				sLog.outString("EXTERNAL MAIL> Player %u not in game, skip Mail!", receiverGuid);
+				sLog.outString("EXTERNAL MAIL> Player %u not in game, skip Mail!", receiverGuid.GetCounter());
 		}while(result->NextRow());
 	}
 	delete result;
