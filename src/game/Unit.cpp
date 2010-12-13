@@ -6366,10 +6366,7 @@ Pet* Unit::GetPet() const
 
 Pet* Unit::_GetPet(ObjectGuid guid) const
 {
-    if (Map* pMap = GetMap())
-        return pMap->GetPet(guid);
-    else
-        return NULL;
+    return ObjectAccessor::FindPet(guid);
 }
 
 void Unit::RemoveMiniPet()
@@ -8986,14 +8983,14 @@ void Unit::UpdateSpeed(UnitMoveType mtype, bool forced, float ratio)
     {
         switch(mtype)
         {
-        case MOVE_RUN:
-            speed *= ((Creature*)this)->GetCreatureInfo()->speed_run;
-            break;
-        case MOVE_WALK:
-            speed *= ((Creature*)this)->GetCreatureInfo()->speed_walk;
-            break;
-        default:
-            break;
+            case MOVE_RUN:
+                speed *= ((Creature*)this)->GetCreatureInfo()->speed_run;
+                break;
+            case MOVE_WALK:
+                speed *= ((Creature*)this)->GetCreatureInfo()->speed_walk;
+                break;
+            default:
+                break;
         }
     }
 
