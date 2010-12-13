@@ -1108,7 +1108,7 @@ void WorldSession::SendExternalMails()
 				draft.SendMailTo(MailReceiver(Receiver), MailSender(MAIL_NORMAL, senderGUID, MAIL_STATIONERY_DEFAULT), MAIL_CHECK_MASK_RETURNED);
 				CharacterDatabase.PExecute("UPDATE mail_external SET sent='1' WHERE id='%u'", id);
 			}
-			else
+			//else
 				//sLog.outString("EXTERNAL MAIL> Player %u not in game, skip Mail!", receiverGUID);
 		}while(result->NextRow());
 	}
