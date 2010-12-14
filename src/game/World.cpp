@@ -51,6 +51,7 @@
 #include "Language.h"
 #include "TemporarySummon.h"
 #include "VMapFactory.h"
+#include "MoveMap.h"
 #include "GameEventMgr.h"
 #include "PoolManager.h"
 #include "Database/DatabaseImpl.h"
@@ -62,8 +63,6 @@
 #include "Util.h"
 #include "CharacterDatabaseCleaner.h"
 #include "AuctionHouseBot.h"
-
-#include "MoveMap.h"
 
 INSTANTIATE_SINGLETON_1( World );
 
@@ -134,6 +133,7 @@ World::~World()
         delete command;
 
     VMAP::VMapFactory::clear();
+    MMAP::MMapFactory::clear();
 
     if(m_resultQueue) delete m_resultQueue;
 
@@ -896,7 +896,7 @@ void World::LoadConfigSettings(bool reload)
 
     setConfig(CONFIG_BOOL_MMAP_ENABLED, "mmap.enabled", true);
     std::string ignoreMapIds = sConfig.GetStringDefault("mmap.ignoreMapIds", "");
-    TerrainInfo::preventPathfindingOnMaps(ignoreMapIds);
+    MMAP::MMapFactory::preventPathfindingOnMaps(ignoreMapIds.c_str());
     sLog.outString("WORLD: mmap pathfinding %sabled", getConfig(CONFIG_BOOL_MMAP_ENABLED) ? "en" : "dis");
 }
 
