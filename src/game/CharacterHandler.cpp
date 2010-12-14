@@ -793,7 +793,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 			ChatHandler(this).PSendSysMessage(LANG_COMMAND_TICKETCOUNT, tCount);
 	}
 
-    if (pCurrChar->isGMVisible())
+    if (!pCurrChar->isGMVisible())
         SendNotification(LANG_INVISIBLE_INVISIBLE);
 
     std::string IP_str = GetRemoteAddress();
