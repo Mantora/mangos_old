@@ -1,9 +1,3 @@
-DELETE FROM `spell_proc_event` WHERE `entry` IN (48492,48494,48495);
-INSERT INTO `spell_proc_event` (`entry`, `SchoolMask`, `SpellFamilyName`, `SpellFamilyMaskA0`, `SpellFamilyMaskA1`, `SpellFamilyMaskA2`, `SpellFamilyMaskB0`, `SpellFamilyMaskB1`, `SpellFamilyMaskB2`, `SpellFamilyMaskC0`, `SpellFamilyMaskC1`, `SpellFamilyMaskC2`, `procFlags`, `procEx`, `ppmRate`, `CustomChance`, `Cooldown`) VALUES
-(48492, 0, 7, 524288, 0, 2048, 0, 0, 0, 0, 0, 0, 16384, 0, 0, 0, 0),
-(48494, 0, 7, 524288, 0, 2048, 0, 0, 0, 0, 0, 0, 16384, 0, 0, 0, 0),
-(48495, 0, 7, 524288, 0, 2048, 0, 0, 0, 0, 0, 0, 16384, 0, 0, 0, 0);
-
 -- Killing Machine
 DELETE FROM `spell_proc_event` WHERE `entry` IN (51123, 51127, 51128, 51129, 51130);
 INSERT INTO `spell_proc_event` VALUES
@@ -388,55 +382,120 @@ INSERT INTO spell_proc_event VALUES (53234, 0x00, 0x09, 0x00020000, 0x00020000, 
 DELETE FROM spell_proc_event WHERE entry = 19184;
 INSERT INTO spell_proc_event VALUES (19184, 0x00, 0x09, 0x00000000, 0x00000000, 0x00000000, 0x00002000, 0x00002000, 0x00002000, 0x00040000, 0x00040000, 0x00040000, 0x00200000, 0x00000000, 0, 0, 0);
 
--- Items
--- (65005) Alacrity of the Elements
-DELETE FROM spell_proc_event WHERE entry = 65005;
-INSERT INTO spell_proc_event VALUES (65005, 0x00, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0x00000000, 0, 0, 45);
 
+-- Trinkets, rings, weapon procs, enchants etc.
+-- Custom Chance included.
+-- Basicly trinkets have 15% chance/rings have 10% chance
+-- hope i did everything ok. ©Selector
+/*
+-- wrong, non neded anymore an so on
+-- saved for unexpected problems...will be deleted later
 -- (33953) Essence of Life
 DELETE FROM spell_proc_event WHERE entry = 33953;
 INSERT INTO spell_proc_event VALUES (33953, 0x00, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00044000, 0x00000000, 0, 0, 45);
-
 -- (60063) Now is the Time!
 DELETE FROM spell_proc_event WHERE entry = 60063;
 INSERT INTO spell_proc_event VALUES (60063, 0x00, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00011000, 0x00000000, 0, 0, 45);
-
--- (55640) Lightweave Embroidery
-DELETE FROM spell_proc_event WHERE entry = 55640;
-INSERT INTO spell_proc_event VALUES (55640, 0x00, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00054000, 0x00000000, 0, 0, 45);
-
 -- (60493) Dying Curse
 DELETE FROM spell_proc_event WHERE entry = 60493;
 INSERT INTO spell_proc_event VALUES (60493, 0x00, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00054000, 0x00000000, 0, 0, 45);
-
--- (57345) Darkmoon Card: Greatness
-DELETE FROM spell_proc_event WHERE entry = 57345;
-INSERT INTO spell_proc_event VALUES (57345, 0x00, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00055554, 0x00000000, 0, 0, 45);
-
--- (62114) Flow of Knowledge
-DELETE FROM spell_proc_event WHERE entry = 62114;
-INSERT INTO spell_proc_event VALUES (62114, 0x00, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00054000, 0x00000000, 0, 0, 45);
-
--- (60487) Extract of Necromatic Power
-DELETE FROM spell_proc_event WHERE entry = 60487;
-INSERT INTO spell_proc_event VALUES (60487, 0x00, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00040000, 0x00000000, 5, 0, 0);
-
--- (60490) Embrace of the Spider
-DELETE FROM spell_proc_event WHERE entry = 60490;
-INSERT INTO spell_proc_event VALUES (60490, 0x00, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0x00000000, 0, 0, 45);
-
 -- (71611) Item - Icecrown 25 Normal Healer Trinket 2
 DELETE FROM spell_proc_event WHERE entry = 71611;
 INSERT INTO spell_proc_event VALUES (71611, 0x00, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00044000, 0x00000000, 0, 0, 45);
-
 -- (64714) Flame of the Heavens
 DELETE FROM spell_proc_event WHERE entry = 64714;
 INSERT INTO spell_proc_event VALUES (64714, 0x00, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0x00000000, 0, 0, 45);
-
 -- (65002) Bonus Mana Regen
 DELETE FROM spell_proc_event WHERE entry = 65002;
 INSERT INTO spell_proc_event VALUES (65002, 0x00, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00054000, 0x00000000, 0, 0, 45);
-
 -- (65013) Pyrite Infusion
 DELETE FROM spell_proc_event WHERE entry = 65013;
 INSERT INTO spell_proc_event VALUES (65013, 0x00, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000154, 0x00000000, 0, 0, 45);
+-- (65005) Alacrity of the Elements
+DELETE FROM spell_proc_event WHERE entry = 65005;
+INSERT INTO spell_proc_event VALUES (65005, 0x00, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0x00000000, 0, 0, 45);
+-- (62114) Flow of Knowledge
+DELETE FROM spell_proc_event WHERE entry = 62114;
+INSERT INTO spell_proc_event VALUES (62114, 0x00, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00054000, 0x00000000, 0, 0, 45);
+*/
+
+-- Светлотканая вышивка	 http://ru.wowhead.com/spell=57345
+DELETE FROM spell_proc_event WHERE entry = 55640;
+INSERT INTO spell_proc_event VALUES (55640, 0x00, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00054000, 0x00000000, 0, 35, 45);
+
+-- http://ru.wowhead.com/item=44255 Карта Новолуния: Величие  http://ru.wowhead.com/spell=57345
+DELETE FROM spell_proc_event WHERE entry = 57345;
+INSERT INTO spell_proc_event VALUES (57345, 0x00, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00055554, 0x00000000, 0, 0, 45);
+
+-- http://ru.wowhead.com/item=40373 Экстракт некромантского могущества  http://ru.wowhead.com/spell=60487
+DELETE FROM spell_proc_event WHERE entry = 60487;
+INSERT INTO spell_proc_event VALUES (60487, 0x00, 0x00, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00040000, 0x00000000, 5, 0, 0);
+
+-- http://ru.wowhead.com/item=39229 Облачение Паука  http://ru.wowhead.com/spell=60490
+REPLACE INTO `spell_proc_event` VALUES (60490, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 45);
+
+-- http://ru.wowhead.com/item=43573 Слезы горькой тоски  http://ru.wowhead.com/spell=58901
+REPLACE INTO `spell_proc_event` VALUES (58901, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 45);
+
+-- http://ru.wowhead.com/item=45609 Хвост кометы http://ru.wowhead.com/spell=64786
+REPLACE INTO `spell_proc_event` VALUES (64786, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 45);
+
+-- http://ru.wowhead.com/item=45866 Камень средоточия стихий  http://ru.wowhead.com/spell=65005
+REPLACE INTO `spell_proc_event` VALUES (65005, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 45);
+
+-- http://ru.wowhead.com/item=47213 Руна Бездны http://ru.wowhead.com/spell=67670
+REPLACE INTO `spell_proc_event` VALUES (67670, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 45);
+
+-- http://ru.wowhead.com/item=45518 Небесная вспышка http://ru.wowhead.com/spell=64714
+REPLACE INTO `spell_proc_event` VALUES (64714, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 45);
+
+-- http://ru.wowhead.com/item=54588 Обугленная сумеречная чешуя героич. http://ru.wowhead.com/spell=75474
+REPLACE INTO `spell_proc_event` VALUES (75474, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 45);
+
+-- http://ru.wowhead.com/item=54572 Обугленная сумеречная чешуя http://ru.wowhead.com/spell=75465
+REPLACE INTO `spell_proc_event` VALUES (75465, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 45);
+
+-- http://ru.wowhead.com/item=44912 Поток знаний http://ru.wowhead.com/spell=62114
+REPLACE INTO `spell_proc_event` VALUES (62114, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 45);
+
+-- http://ru.wowhead.com/item=45490 Мольба Пандоры http://ru.wowhead.com/spell=64742
+REPLACE INTO `spell_proc_event` VALUES (64742, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 45);
+
+-- http://ru.wowhead.com/item=54590 Заостренная сумеречная чешуя героич. http://ru.wowhead.com/spell=75457
+REPLACE INTO `spell_proc_event` VALUES (75457, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 45);
+
+-- http://ru.wowhead.com/item=54569 Заостренная сумеречная чешуя http://ru.wowhead.com/spell=75455
+REPLACE INTO `spell_proc_event` VALUES (75455, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 45);
+
+-- http://ru.wowhead.com/item=44914 Наковальня титанов http://ru.wowhead.com/spell=62115
+REPLACE INTO `spell_proc_event` VALUES (62115, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 45);
+
+-- http://ru.wowhead.com/item=45286 Колчедановый нагнетатель http://ru.wowhead.com/spell=65013
+REPLACE INTO `spell_proc_event` VALUES (65013, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 340, 0, 0, 15, 45);
+
+-- http://ru.wowhead.com/item=46038 Темная сущность http://ru.wowhead.com/spell=65025
+REPLACE INTO `spell_proc_event` VALUES (65025, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 45);
+
+-- http://www.wowwiki.com/Show_of_Faith Доказательство веры http://ru.wowhead.com/spell=64738
+REPLACE INTO `spell_proc_event` VALUES (64738, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 45);
+
+-- http://www.wowwiki.com/Sif's_Remembrance Воспоминание Сиф http://ru.wowhead.com/spell=65002
+REPLACE INTO `spell_proc_event` VALUES (65002, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 344064, 0, 0, 15, 45);
+
+-- http://ru.wowhead.com/item=50641 Сердцекол героич. http://ru.wowhead.com/spell=71892
+REPLACE INTO `spell_proc_event` VALUES (71892, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 37, 45);
+
+-- http://ru.wowhead.com/item=49982 Сердцекол http://ru.wowhead.com/spell=71880
+REPLACE INTO `spell_proc_event` VALUES (71880, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 37, 45);
+
+-- http://ru.wowhead.com/item=50708 Последнее желание героич. http://ru.wowhead.com/spell=71873
+REPLACE INTO `spell_proc_event` VALUES (71873, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 37, 45);
+
+-- http://ru.wowhead.com/item=50179 Последнее желание прок http://ru.wowhead.com/spell=71871
+REPLACE INTO `spell_proc_event` VALUES (71871, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 37, 45);
+
+-- http://ru.wowhead.com/item=52571 http://ru.wowhead.com/item=52572 http://ru.wowhead.com/item=50401 http://ru.wowhead.com/item=50402 Пепельное кольцо ****** http://ru.wowhead.com/spell=72413
+REPLACE INTO `spell_proc_event` VALUES (72413, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 10, 45);
+
+-- http://ru.wowhead.com/item=45522 Кровь древнего бога  http://ru.wowhead.com/spell=64792
+REPLACE INTO `spell_proc_event` VALUES (64792, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 10, 45);
