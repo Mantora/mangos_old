@@ -923,6 +923,17 @@ enum MangosStrings
     LANG_COMMAND_NO_FROZEN_PLAYERS      = 10904,
     LANG_COMMAND_LIST_FREEZE            = 10905,
     LANG_COMMAND_FROZEN_PLAYERS         = 10906,
+    
+    //ChatSpy
+    LANG_CHATSPY_APEENDED               = 11600,
+    LANG_CHATSPY_CANCELLEDMASSIVE       = 11601,
+    LANG_CHATSPY_ALLRESET               = 11602,
+    LANG_CHATSPY_NOCHATSPY              = 11603,
+    LANG_CHATSPY_YOURCANCELLED          = 11604,
+    LANG_CHATSPY_SMBCANCELLED           = 11605,
+    LANG_CHATSPY_LISTOFSPYS             = 11606,
+    LANG_CHATSPY_TOTAL                  = 11607,
+    LANG_CHATSPY_ONESPYSANOTHER         = 11608,
 
     // Use for custom patches             11000-11999
 
