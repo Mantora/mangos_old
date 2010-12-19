@@ -1487,6 +1487,30 @@ Premium.SkillGain.Crafting    = 1
 Premium.SkillGain.Gathering = 1
 
 ###################################################################################################################
+#  WOW_ARMORY_CONFIG
+#  little config option for wowarmory http://github.com/Shadez/wowarmory
+#  armory_author: Shadez
+#  patch_author: Selector
+#  made special for: stcore
+#
+#    Armory.CharStats.Enable
+#        Check for Armory Support. 
+#        If you  have Shadez_wowarmory - Enable(for filling character_feed_log & armory_character_stats tables)
+#        Default: 0 (disable)
+#                 1 (enable)
+#
+#    Armory.CharStats.Enable
+#        Armory.ArenaStats.Enable. 
+#        If you have Shadez_wowarmory and want to use Arena_Game_Chart feature - Enable
+#        Default: 0 (disable)
+#                 1 (enable)
+#
+###################################################################################################################
+
+Armory.CharStats.Enable = 0
+Armory.ArenaStats.Enable = 0
+
+###################################################################################################################
 # BATTLEGROUND CONFIG
 #
 #    Battleground.CastDeserter
