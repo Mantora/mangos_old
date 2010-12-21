@@ -7074,30 +7074,19 @@ uint32 Unit::SpellDamageBonusTaken(Unit *pCaster, SpellEntry const *spellProto, 
     float TakenTotalMod = 1.0f;
     int32 TakenTotal = 0;
 
+    // ..taken
+    TakenTotalMod *= GetTotalAuraMultiplierByMiscMask(SPELL_AURA_MOD_DAMAGE_PERCENT_TAKEN, schoolMask);
+
     // .. taken pct: dummy auras
     if (GetTypeId() == TYPEID_PLAYER)
     {
-        // .. taken (dummy auras)
-        AuraList const& mDummyAuras = GetAurasByType(SPELL_AURA_DUMMY);
-        for(AuraList::const_iterator i = mDummyAuras.begin(); i != mDummyAuras.end(); ++i)
+        //Cheat Death
+        if (Aura *dummy = GetDummyAura(45182))
         {
-            switch((*i)->GetSpellProto()->SpellIconID)
-            {
-                // Cheat Death
-                case 2109:
-                {
-                    float mod = -((Player*)this)->GetRatingBonusValue(CR_CRIT_TAKEN_SPELL)*20; // Feanor: Formula has changed
-                    if (mod < float((*i)->GetModifier()->m_amount))
-                        mod = float((*i)->GetModifier()->m_amount);
-                    TakenTotalMod *= (mod+100.0f)/100.0f;
-                }break;
-                // Ebon Plague
-                case 1933:
-                {
-                    if ((*i)->GetMiscValue() & (spellProto ? GetSpellSchoolMask(spellProto) : 0))
-                        TakenTotalMod *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f;
-                }break;
-            }
+            float mod = -((Player*)this)->GetRatingBonusValue(CR_CRIT_TAKEN_SPELL)*2*4;
+            if (mod < float(dummy->GetModifier()->m_amount))
+                mod = float(dummy->GetModifier()->m_amount);
+            TakenTotalMod *= (mod+100.0f)/100.0f;
         }
     }
 
@@ -8117,6 +8106,7 @@ uint32 Unit::MeleeDamageBonusTaken(Unit *pCaster, uint32 pdamage,WeaponAttackTyp
 
     // .. taken (dummy auras)
     AuraList const& mDummyAuras = GetAurasByType(SPELL_AURA_DUMMY);
+    if (!mDummyAuras.empty())
     for(AuraList::const_iterator i = mDummyAuras.begin(); i != mDummyAuras.end(); ++i)
     {
       if ((*i)->GetId())
@@ -8135,11 +8125,6 @@ uint32 Unit::MeleeDamageBonusTaken(Unit *pCaster, uint32 pdamage,WeaponAttackTyp
 
                     TakenPercent *= (mod + 100.0f) / 100.0f;
                 }
-                break;
-            // Ebon Plague
-            case 1933:
-                if ((*i)->GetMiscValue() & (spellProto ? GetSpellSchoolMask(spellProto) : 0))
-                    TakenPercent *= ((*i)->GetModifier()->m_amount + 100.0f) / 100.0f;
                 break;
         }
     }
