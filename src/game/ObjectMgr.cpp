@@ -1043,7 +1043,7 @@ void ObjectMgr::LoadCreatureModelInfo()
         {
             if (minfo->modelid_other_gender == minfo->modelid)
             {
-                sLog.outErrorDb("Table `creature_model_info` has redundent modelid_other_gender model (%u) defined for model id %u.", minfo->modelid_other_gender, minfo->modelid);
+                sLog.outErrorDb("Table `creature_model_info` has redundant modelid_other_gender model (%u) defined for model id %u.", minfo->modelid_other_gender, minfo->modelid);
                 const_cast<CreatureModelInfo*>(minfo)->modelid_other_gender = 0;
             }
             else if (!sCreatureDisplayInfoStore.LookupEntry(minfo->modelid_other_gender))
@@ -1057,7 +1057,7 @@ void ObjectMgr::LoadCreatureModelInfo()
         {
             if (minfo->modelid_alternative == minfo->modelid)
             {
-                sLog.outErrorDb("Table `creature_model_info` has redundent modelid_alternative model (%u) defined for model id %u.", minfo->modelid_alternative, minfo->modelid);
+                sLog.outErrorDb("Table `creature_model_info` has redundant modelid_alternative model (%u) defined for model id %u.", minfo->modelid_alternative, minfo->modelid);
                 const_cast<CreatureModelInfo*>(minfo)->modelid_alternative = 0;
             }
             else if (!sCreatureDisplayInfoStore.LookupEntry(minfo->modelid_alternative))
@@ -9411,7 +9411,7 @@ void ObjectMgr::LoadVendorTemplates()
         {
             if (cInfo->vendorId)
             {
-                if (vendor_ids.count(cInfo->vendorId) > 0)
+                if (m_mCacheVendorTemplateItemMap.find(cInfo->vendorId) !=  m_mCacheVendorTemplateItemMap.end())
                     vendor_ids.erase(cInfo->vendorId);
                 else
                     sLog.outErrorDb("Creature (Entry: %u) has vendor_id = %u for nonexistent vendor template", cInfo->Entry, cInfo->vendorId);
