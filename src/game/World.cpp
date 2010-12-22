@@ -533,6 +533,8 @@ void World::LoadConfigSettings(bool reload)
     if (reload)
         sMapMgr.SetGridCleanUpDelay(getConfig(CONFIG_UINT32_INTERVAL_GRIDCLEAN));
 
+    setConfig(CONFIG_UINT32_NUMTHREADS, "MapUpdate.Threads", 3);
+
     setConfigMin(CONFIG_UINT32_INTERVAL_MAPUPDATE, "MapUpdateInterval", 100, MIN_MAP_UPDATE_DELAY);
     if (reload)
         sMapMgr.SetMapUpdateInterval(getConfig(CONFIG_UINT32_INTERVAL_MAPUPDATE));
@@ -541,9 +543,6 @@ void World::LoadConfigSettings(bool reload)
 
     if (configNoReload(reload, CONFIG_UINT32_PORT_WORLD, "WorldServerPort", DEFAULT_WORLDSERVER_PORT))
         setConfig(CONFIG_UINT32_PORT_WORLD, "WorldServerPort", DEFAULT_WORLDSERVER_PORT);
-
-    if (configNoReload(reload, CONFIG_UINT32_SOCKET_SELECTTIME, "SocketSelectTime", DEFAULT_SOCKET_SELECT_TIME))
-        setConfig(CONFIG_UINT32_SOCKET_SELECTTIME, "SocketSelectTime", DEFAULT_SOCKET_SELECT_TIME);
 
     if (configNoReload(reload, CONFIG_UINT32_GAME_TYPE, "GameType", 0))
         setConfig(CONFIG_UINT32_GAME_TYPE, "GameType", 0);
@@ -782,6 +781,10 @@ void World::LoadConfigSettings(bool reload)
 	// External Mail
 	setConfig(CONFIG_UINT32_EXTERNAL_MAIL, "ExternalMail.Enabled", 0);
 	setConfig(CONFIG_UINT32_EXTERNAL_MAIL_INTERVAL, "ExternalMail.Interval", 600);
+    
+    // Wow Armory support
+    setConfig(CONFIG_BOOL_ARMORY_ENABLE,                       "Armory.CharStats.Enable", false);
+    setConfig(CONFIG_BOOL_ARENA_ARMORY_ENABLE,                 "Armory.ArenaChart.Enable", false);
 
     m_VisibleUnitGreyDistance = sConfig.GetFloatDefault("Visibility.Distance.Grey.Unit", 1);
     if(m_VisibleUnitGreyDistance >  MAX_VISIBILITY_DISTANCE)
@@ -1198,7 +1201,8 @@ void World::SetInitialWorldSettings()
     sObjectMgr.LoadVendors();                               // must be after load CreatureTemplate, VendorTemplate, and ItemTemplate
 
     sLog.outString( "Loading Trainers..." );
-    sObjectMgr.LoadTrainerSpell();                          // must be after load CreatureTemplate
+    sObjectMgr.LoadTrainerTemplates();                      // must be after load CreatureTemplate
+    sObjectMgr.LoadTrainers();                              // must be after load CreatureTemplate, TrainerTemplate
 
     sLog.outString( "Loading Waypoint scripts..." );        // before loading from creature_movement
     sObjectMgr.LoadCreatureMovementScripts();

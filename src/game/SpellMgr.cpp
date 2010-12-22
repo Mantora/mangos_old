@@ -778,8 +778,20 @@ bool IsPositiveEffect(uint32 spellId, SpellEffectIndex effIndex)
                     }
                     break;
                 case SPELL_AURA_PROC_TRIGGER_SPELL:
+                {
+                    switch(spellproto->Id) // Impact should be poisitive aura
+                    {
+                        case 11103:
+                        case 12357:
+                        case 12358:
+                        case 64343:
+                            return true;
+                        default:
+                            break;
+                    }
                     // many positive auras have negative triggered spells at damage for example and this not make it negative (it can be canceled for example)
                     break;
+                }
                 case SPELL_AURA_MOD_STUN:                   //have positive and negative spells, we can't sort its correctly at this moment.
                     if (effIndex == EFFECT_INDEX_0 && spellproto->Effect[EFFECT_INDEX_1] == 0 && spellproto->Effect[EFFECT_INDEX_2] == 0)
                         return false;                       // but all single stun aura spells is negative
@@ -2135,6 +2147,13 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                     (spellInfo_2->SpellIconID == 456 && spellInfo_1->SpellIconID == 2006))
                     return false;
             }
+            else if (spellInfo_2->SpellFamilyName == SPELLFAMILY_ROGUE)
+            {
+                // Sunder Armor and Expose Armor
+                if (spellInfo_1->EffectApplyAuraName[EFFECT_INDEX_0] == SPELL_AURA_MOD_RESISTANCE_PCT &&
+                    spellInfo_2->EffectApplyAuraName[EFFECT_INDEX_0] == SPELL_AURA_MOD_RESISTANCE_PCT)
+                    return true;
+            }
 
             // Hamstring -> Improved Hamstring (multi-family check)
             if ((spellInfo_1->SpellFamilyFlags & UI64LIT(0x2)) && spellInfo_2->Id == 23694)
@@ -2174,6 +2193,10 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 if ((spellInfo_1->SpellIconID == 566 && spellInfo_2->SpellIconID == 2820) ||
                     (spellInfo_2->SpellIconID == 566 && spellInfo_1->SpellIconID == 2820))
                     return false;
+                // Abolish Disease and Infected Wound
+                if ( (spellInfo_1->Id == 29306 && spellInfo_2->Id == 552) ||
+                     (spellInfo_2->Id == 29306 && spellInfo_1->Id == 552) )
+                     return false;
             }
             break;
         case SPELLFAMILY_DRUID:
@@ -2231,6 +2254,11 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 if ((spellInfo_1->Id == 22842 && spellInfo_2->Id == 62606) ||
                     (spellInfo_2->Id == 22842 && spellInfo_1->Id == 62606))
                     return false;
+                    
+                // Rejuvenation and Forethought Talisman
+                if (spellInfo_1->SpellIconID == 64 && spellInfo_2->SpellIconID == 3088 ||
+                    spellInfo_2->SpellIconID == 64 && spellInfo_1->SpellIconID == 3088)
+                    return false;
             }
 
             // Leader of the Pack and Scroll of Stamina (multi-family check)
@@ -2261,6 +2289,13 @@ bool SpellMgr::IsNoStackSpellDueToSpell(uint32 spellId_1, uint32 spellId_2) cons
                 // Honor Among Thieves dummy auras (multi-family check)
                 if (spellId_1 == 52916 && spellId_2 == 51699)
                     return false;
+            }
+            else if (spellInfo_2->SpellFamilyName == SPELLFAMILY_WARRIOR)
+            {
+                // Sunder Armor and Expose Armor
+                if (spellInfo_1->EffectApplyAuraName[EFFECT_INDEX_0] == SPELL_AURA_MOD_RESISTANCE_PCT &&
+                    spellInfo_2->EffectApplyAuraName[EFFECT_INDEX_0] == SPELL_AURA_MOD_RESISTANCE_PCT)
+                    return true;
             }
             //Overkill
             if (spellInfo_1->SpellIconID == 2285 && spellInfo_2->SpellIconID == 2285)

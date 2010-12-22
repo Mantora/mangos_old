@@ -259,7 +259,7 @@ pAuraProcHandler AuraProcHandler[TOTAL_AURAS]=
     &Unit::HandleNULLProc,                                  //223 dummy code (cast damage spell to attacker) and another dymmy (jump to another nearby raid member)
     &Unit::HandleNULLProc,                                  //224 unused (3.0.8a-3.2.2a)
     &Unit::HandleMendingAuraProc,                           //225 SPELL_AURA_PRAYER_OF_MENDING
-    &Unit::HandleNULLProc,                                  //226 SPELL_AURA_PERIODIC_DUMMY
+    &Unit::HandlePeriodicDummyAuraProc,                     //226 SPELL_AURA_PERIODIC_DUMMY
     &Unit::HandleNULLProc,                                  //227 SPELL_AURA_PERIODIC_TRIGGER_SPELL_WITH_VALUE
     &Unit::HandleNULLProc,                                  //228 SPELL_AURA_DETECT_STEALTH
     &Unit::HandleNULLProc,                                  //229 SPELL_AURA_MOD_AOE_DAMAGE_AVOIDANCE
@@ -574,6 +574,7 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
     uint32 triggered_spell_id = dummySpell->EffectApplyAuraName[effIndex] == SPELL_AURA_DUMMY ? dummySpell->EffectTriggerSpell[effIndex] : 0;
     Unit* target = pVictim;
     int32  basepoints[MAX_EFFECT_INDEX] = {0, 0, 0};
+    ObjectGuid originalCaster = ObjectGuid();
 
     switch(dummySpell->SpellFamilyName)
     {
@@ -2186,16 +2187,27 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                     if (pVictim == this)
                        return SPELL_AURA_PROC_FAILED;
 
-					// PPM per victim
-					float ppmJoL = 15.0f; // must be hard-coded + 100% proc chance in DB
-					WeaponAttackType attType = BASE_ATTACK; // TODO: attack type based? 
-					uint32 WeaponSpeed = pVictim->GetAttackTime(attType);
-					float chanceForVictim = pVictim->GetPPMProcChance(WeaponSpeed, ppmJoL);
-					if (!roll_chance_f(chanceForVictim))
-						return SPELL_AURA_PROC_FAILED;
+                    // custom cooldown processing
+                    if (Player *pCaster = (Player*)triggeredByAura->GetCaster())
+                    {
+                        if(cooldown && pCaster->HasSpellCooldown(dummySpell->Id))
+                            return SPELL_AURA_PROC_FAILED;
 
-                    basepoints[0] = int32( pVictim->GetMaxHealth() * triggeredByAura->GetModifier()->m_amount / 100 );
-                    pVictim->CastCustomSpell(pVictim, 20267, &basepoints[0], NULL, NULL, true, NULL, triggeredByAura);
+						// PPM per victim
+						float ppmJoL = 15.0f; // must be hard-coded + 100% proc chance in DB
+						WeaponAttackType attType = BASE_ATTACK; // TODO: attack type based? 
+						uint32 WeaponSpeed = pVictim->GetAttackTime(attType);
+						float chanceForVictim = pVictim->GetPPMProcChance(WeaponSpeed, ppmJoL);
+						if (!roll_chance_f(chanceForVictim))
+							return SPELL_AURA_PROC_FAILED;
+
+                        basepoints[0] = int32( pVictim->GetMaxHealth() * triggeredByAura->GetModifier()->m_amount / 100 );
+                        pVictim->CastCustomSpell(pVictim, 20267, &basepoints[0], NULL, NULL, true, NULL, triggeredByAura);
+
+                        if (cooldown)
+                            pCaster->AddSpellCooldown(dummySpell->Id, 0, time(NULL) + cooldown);
+                    }
+
                     return SPELL_AURA_PROC_OK;
                 }
                 // Judgement of Wisdom
@@ -2203,9 +2215,19 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                 {
                     if (pVictim->getPowerType() == POWER_MANA)
                     {
-                        // 2% of maximum base mana
-                        basepoints[0] = int32(pVictim->GetCreateMana() * 2 / 100);
-                        pVictim->CastCustomSpell(pVictim, 20268, &basepoints[0], NULL, NULL, true, NULL, triggeredByAura);
+                        // custom cooldown processing
+                        if (Player *pCaster = (Player*)triggeredByAura->GetCaster())
+                        {
+                            if(cooldown && pCaster->HasSpellCooldown(dummySpell->Id))
+                                return SPELL_AURA_PROC_FAILED;
+
+                            // 2% of maximum base mana
+                            basepoints[0] = int32(pVictim->GetCreateMana() * 2 / 100);
+                            pVictim->CastCustomSpell(pVictim, 20268, &basepoints[0], NULL, NULL, true, NULL, triggeredByAura);
+
+                            if (cooldown)
+                                pCaster->AddSpellCooldown(dummySpell->Id, 0, time(NULL) + cooldown);
+                        }
                     }
                     return SPELL_AURA_PROC_OK;
                 }
@@ -2483,151 +2505,33 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
 
                     break;
                 }
-                // Heartpierce (Item - Icecrown 25 Normal Dagger Proc)
-                // ===================================================
-                // 71881 - Restores 120 mana for 10 sec.      - Priest, Shaman, Paladin, Warlock, Hunter, Mage, Druid in human, moonkin, aqua, travel and in tree form.
-                // 71882 - Restores 4 energy for 10 sec.      - Rogue, Druid in cat form.
-                // 71883 - Restores 2 rage for 10 sec.        - Warrior, Druid in bear form.
-                // 71884 - Restores 8 runic power for 10 sec. - Death Knight
+                // Heartpierce, Item - Icecrown 25 Normal Dagger Proc
                 case 71880:
                 {
                     if(GetTypeId() != TYPEID_PLAYER)
                         return SPELL_AURA_PROC_FAILED;
 
-                    // Select class defined buff
-                    switch (getClass())
+                    switch (this->getPowerType())
                     {
-                        case CLASS_DRUID:
-                        {
-                            switch(GetShapeshiftForm())
-                            {
-                                case FORM_CAT:
-                                {
-                                    triggered_spell_id = 71882;
-                                    break;
-                                }
-                                case FORM_BEAR:
-                                case FORM_DIREBEAR:
-                                {
-                                    triggered_spell_id = 71883;
-                                    break;
-                                }
-                                case FORM_MOONKIN:
-                                case FORM_TRAVEL:
-                                case FORM_TREE:
-                                case FORM_AQUA:
-                                case FORM_FLIGHT:
-                                case FORM_FLIGHT_EPIC:
-                                case FORM_NONE:
-                                {
-                                    triggered_spell_id = 71881;
-                                    break;
-                                }
-                                default:
-                                    return SPELL_AURA_PROC_FAILED;
-                            }
-                            break;
-                        }
-                        case CLASS_ROGUE:
-                        {
-                            triggered_spell_id = 71882;
-                            break;
-                        }
-                        case CLASS_WARRIOR:
-                        {
-                            triggered_spell_id = 71883;
-                            break;
-                        }
-                        case CLASS_PRIEST:
-                        case CLASS_SHAMAN:
-                        case CLASS_MAGE:
-                        case CLASS_WARLOCK:
-                        case CLASS_PALADIN:
-                        case CLASS_HUNTER:
-                        {
-                            triggered_spell_id = 71881;
-                            break;
-                        }
-                        case CLASS_DEATH_KNIGHT:
-                        {
-                            triggered_spell_id = 71884;
-                            break;
-                        }
+                        case POWER_ENERGY: triggered_spell_id = 71882; break;
+                        case POWER_RAGE:   triggered_spell_id = 71883; break;
+                        case POWER_MANA:   triggered_spell_id = 71881; break;
                         default:
                             return SPELL_AURA_PROC_FAILED;
                     }
                     break;
                 }
-                // Heartpierce (Item - Icecrown 25 Heroic Dagger Proc)
-                // ===================================================
-                // 71888 - Restores 120 mana for 12 sec.      - Priest, Shaman, Paladin, Warlock, Hunter, Mage, Druid in human, moonkin, aqua, travel and in tree form.
-                // 71887 - Restores 4 energy for 12 sec.      - Rogue, Druid in cat form.
-                // 71886 - Restores 2 rage for 12 sec.        - Warrior, Druid in bear form.
-                // 71885 - Restores 8 runic power for 12 sec. - Death Knigh
+                // Heartpierce, Item - Icecrown 25 Heroic Dagger Proc
                 case 71892:
                 {
                     if(GetTypeId() != TYPEID_PLAYER)
                         return SPELL_AURA_PROC_FAILED;
 
-                    // Select class defined buff
-                    switch (getClass())
+                    switch (this->getPowerType())
                     {
-                        case CLASS_DRUID:
-                        {
-                            switch(GetShapeshiftForm())
-                            {
-                                case FORM_CAT:
-                                {
-                                    triggered_spell_id = 71887;
-                                    break;
-                                }
-                                case FORM_BEAR:
-                                case FORM_DIREBEAR:
-                                {
-                                    triggered_spell_id = 71886;
-                                    break;
-                                }
-                                case FORM_MOONKIN:
-                                case FORM_TRAVEL:
-                                case FORM_TREE:
-                                case FORM_AQUA:
-                                case FORM_FLIGHT:
-                                case FORM_FLIGHT_EPIC:
-                                case FORM_NONE:
-                                {
-                                    triggered_spell_id = 71888;
-                                    break;
-                                }
-                                default:
-                                    return SPELL_AURA_PROC_FAILED;
-                            }
-                            break;
-                        }
-                        case CLASS_ROGUE:
-                        {
-                            triggered_spell_id = 71887;
-                            break;
-                        }
-                        case CLASS_WARRIOR:
-                        {
-                            triggered_spell_id = 71886;
-                            break;
-                        }
-                        case CLASS_PRIEST:
-                        case CLASS_SHAMAN:
-                        case CLASS_MAGE:
-                        case CLASS_WARLOCK:
-                        case CLASS_PALADIN:
-                        case CLASS_HUNTER:
-                        {
-                            triggered_spell_id = 71888;
-                            break;
-                        }
-                        case CLASS_DEATH_KNIGHT:
-                        {
-                            triggered_spell_id = 71885;
-                            break;
-                        }
+                        case POWER_ENERGY: triggered_spell_id = 71887; break;
+                        case POWER_RAGE:   triggered_spell_id = 71886; break;
+                        case POWER_MANA:   triggered_spell_id = 71888; break;
                         default:
                             return SPELL_AURA_PROC_FAILED;
                     }
@@ -2929,6 +2833,7 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
             // Earth Shield
             if (dummySpell->SpellFamilyFlags & UI64LIT(0x0000040000000000))
             {
+                originalCaster = triggeredByAura->GetCasterGuid();
                 target = this;
                 basepoints[0] = triggerAmount;
 
@@ -3390,13 +3295,13 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
         return SPELL_AURA_PROC_FAILED;
 
     if (basepoints[EFFECT_INDEX_0] || basepoints[EFFECT_INDEX_1] || basepoints[EFFECT_INDEX_2])
-        CastCustomSpell(target, triggered_spell_id,
+        CastCustomSpell(target, triggerEntry,
             basepoints[EFFECT_INDEX_0] ? &basepoints[EFFECT_INDEX_0] : NULL,
             basepoints[EFFECT_INDEX_1] ? &basepoints[EFFECT_INDEX_1] : NULL,
             basepoints[EFFECT_INDEX_2] ? &basepoints[EFFECT_INDEX_2] : NULL,
-            true, castItem, triggeredByAura);
+            true, castItem, triggeredByAura, originalCaster);
     else
-        CastSpell(target, triggered_spell_id, true, castItem, triggeredByAura);
+        CastSpell(target, triggerEntry, true, castItem, triggeredByAura);
 
     if (cooldown && GetTypeId()==TYPEID_PLAYER)
         ((Player*)this)->AddSpellCooldown(triggered_spell_id,0,time(NULL) + cooldown);
@@ -3535,6 +3440,11 @@ SpellAuraProcResult Unit::HandleProcTriggerSpellAuraProc(Unit *pVictim, uint32 d
                 //case 54072: break;                        // Knockback Ball Passive
                 //case 54476: break;                        // Blood Presence
                 //case 54775: break;                        // Abandon Vehicle on Poly
+                case 56702:                                 //
+                {
+                    trigger_spell_id = 56701;
+                    break;
+                }
                 case 57345:                                 // Darkmoon Card: Greatness
                 {
                     float stat = 0.0f;
@@ -3609,6 +3519,12 @@ SpellAuraProcResult Unit::HandleProcTriggerSpellAuraProc(Unit *pVictim, uint32 d
                           trigger_spell_id=64442;  //Blade Warding damage
                       }
                         break;
+                }
+                case 72178:                                 // Blood link Saurfang aura
+                {
+                    target = this;
+                    trigger_spell_id = 72195;
+                    break;
                 }
             }
             break;
@@ -4301,14 +4217,22 @@ SpellAuraProcResult Unit::HandleProcTriggerSpellAuraProc(Unit *pVictim, uint32 d
     if (!target || (target != this && !target->isAlive()))
         return SPELL_AURA_PROC_FAILED;
 
-    if (basepoints[EFFECT_INDEX_0] || basepoints[EFFECT_INDEX_1] || basepoints[EFFECT_INDEX_2])
-        CastCustomSpell(target,trigger_spell_id,
-            basepoints[EFFECT_INDEX_0] ? &basepoints[EFFECT_INDEX_0] : NULL,
-            basepoints[EFFECT_INDEX_1] ? &basepoints[EFFECT_INDEX_1] : NULL,
-            basepoints[EFFECT_INDEX_2] ? &basepoints[EFFECT_INDEX_2] : NULL,
-            true, castItem, triggeredByAura);
+    if (SpellEntry const* triggeredSpellInfo = sSpellStore.LookupEntry(trigger_spell_id))
+    {
+        if (basepoints[EFFECT_INDEX_0] || basepoints[EFFECT_INDEX_1] || basepoints[EFFECT_INDEX_2])
+            CastCustomSpell(target,triggeredSpellInfo,
+                basepoints[EFFECT_INDEX_0] ? &basepoints[EFFECT_INDEX_0] : NULL,
+                basepoints[EFFECT_INDEX_1] ? &basepoints[EFFECT_INDEX_1] : NULL,
+                basepoints[EFFECT_INDEX_2] ? &basepoints[EFFECT_INDEX_2] : NULL,
+                true, castItem, triggeredByAura);
+        else
+            CastSpell(target,triggeredSpellInfo,true,castItem,triggeredByAura);
+    }
     else
-        CastSpell(target,trigger_spell_id,true,castItem,triggeredByAura);
+    {
+        sLog.outError("HandleProcTriggerSpellAuraProc: unknown spell id %u by caster: %s triggered by aura %u (eff %u)", trigger_spell_id, GetGuidStr().c_str(), triggeredByAura->GetId(), triggeredByAura->GetEffIndex());
+        return SPELL_AURA_PROC_FAILED;
+    }
 
     if (cooldown && GetTypeId()==TYPEID_PLAYER)
         ((Player*)this)->AddSpellCooldown(trigger_spell_id,0,time(NULL) + cooldown);
@@ -4417,40 +4341,6 @@ SpellAuraProcResult Unit::HandleOverrideClassScriptAuraProc(Unit *pVictim, uint3
                 case POWER_RUNIC_POWER: triggered_spell_id = 48543; break;
                 default: return SPELL_AURA_PROC_FAILED;
             }
-            break;
-        }
-        case 7282:                                          // Crypt Fever & Ebon Plaguebringer
-        {
-            if (!procSpell || pVictim == this)
-                return SPELL_AURA_PROC_FAILED;
-
-            bool HasEP = false;
-            Unit::AuraList const& scriptAuras = GetAurasByType(SPELL_AURA_OVERRIDE_CLASS_SCRIPTS);
-            for(Unit::AuraList::const_iterator i = scriptAuras.begin(); i != scriptAuras.end(); ++i)
-            {
-                if ((*i)->GetSpellProto()->SpellIconID == 1766)
-                {
-                    HasEP = true;
-                    break;
-                }
-            }
-
-            if (!HasEP)
-                switch(triggeredByAura->GetId())
-                {
-                    case 49032: triggered_spell_id = 50508; break;
-                    case 49631: triggered_spell_id = 50509; break;
-                    case 49632: triggered_spell_id = 50510; break;
-                    default: return SPELL_AURA_PROC_FAILED;
-                }
-            else
-                switch(triggeredByAura->GetId())
-                {
-                    case 51099: triggered_spell_id = 51726; break;
-                    case 51160: triggered_spell_id = 51734; break;
-                    case 51161: triggered_spell_id = 51735; break;
-                    default: return SPELL_AURA_PROC_FAILED;
-                }
             break;
         }
     }

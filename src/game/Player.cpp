@@ -584,6 +584,7 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
 
     m_lastFallTime = 0;
     m_lastFallZ = 0;
+    m_chatSpyGuid = 0;
 
     m_anticheat = new AntiCheat(this);
 
@@ -1241,6 +1242,9 @@ void Player::Update( uint32 p_time )
     // Update items that have just a limited lifetime
     if (now>m_Last_tick)
         UpdateItemDuration(uint32(now- m_Last_tick));
+
+    if (now > m_Last_tick + IN_MILLISECONDS)
+        UpdateSoulboundTradeItems();
 
     if (!m_timedquests.empty())
     {
@@ -2778,7 +2782,7 @@ void Player::InitStatsForLevel(bool reapplyMods)
     SetUInt32Value(PLAYER_FIELD_MOD_HEALING_DONE_POS,0);
     for (int i = 0; i < MAX_SPELL_SCHOOL; ++i)
     {
-        SetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_NEG+i, 0);
+        SetInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_NEG+i, 0);
         SetUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS+i, 0);
         SetFloatValue(PLAYER_FIELD_MOD_DAMAGE_DONE_PCT+i, 1.00f);
     }
@@ -4360,6 +4364,9 @@ void Player::DeleteFromDB(ObjectGuid playerguid, uint32 accountId, bool updateRe
             // Get guids of character's pets, will deleted in transaction
             QueryResult *resultPets = CharacterDatabase.PQuery("SELECT id FROM character_pet WHERE owner = '%u'", lowguid);
 
+            // delete char from friends list when selected chars is online (non existing - error)
+            QueryResult *resultFriend = CharacterDatabase.PQuery("SELECT DISTINCT guid FROM character_social WHERE friend = '%u'", lowguid);
+
             // NOW we can finally clear other DB data related to character
             CharacterDatabase.BeginTransaction();
             if (resultPets)
@@ -4371,6 +4378,24 @@ void Player::DeleteFromDB(ObjectGuid playerguid, uint32 accountId, bool updateRe
                     Pet::DeleteFromDB(petguidlow);
                 } while (resultPets->NextRow());
                 delete resultPets;
+            }
+
+            // cleanup friends for online players, offline case will cleanup later in code
+            if (resultFriend)
+            {
+                do
+                {
+                    Field* fieldsFriend = resultFriend->Fetch();
+                    if (Player* sFriend = sObjectAccessor.FindPlayer(ObjectGuid(HIGHGUID_PLAYER, fieldsFriend[0].GetUInt32())))
+                    {
+                        if (sFriend->IsInWorld())
+                        {
+                            sFriend->GetSocial()->RemoveFromSocialList(playerguid, false);
+                            sSocialMgr.SendFriendStatus(sFriend, FRIEND_REMOVED, playerguid, false);
+                        }
+                    }
+                } while (resultFriend->NextRow());
+                delete resultFriend;
             }
 
             CharacterDatabase.PExecute("DELETE FROM characters WHERE guid = '%u'", lowguid);
@@ -5171,6 +5196,7 @@ void Player::GetDodgeFromAgility(float &diminishing, float &nondiminishing)
          0.0f,      // ??
          0.056097f  // Druid
     };
+
     // Crit/agility to dodge/agility coefficient multipliers; 3.2.0 increased required agility by 15%
     static const float crit_to_dodge[MAX_CLASSES] = {
          0.85f/1.15f,    // Warrior
@@ -5764,6 +5790,7 @@ void Player::UpdateSkillsForLevel()
                 SetUInt32Value(valueIndex, MAKE_SKILL_VALUE(maxSkill,maxSkill));
                 if(itr->second.uState != SKILL_NEW)
                     itr->second.uState = SKILL_CHANGED;
+                GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_SKILL_LEVEL, pskill);
             }
             else if(max != maxconfskill)                    /// update max skill value if current max skill not maximized
             {
@@ -5795,6 +5822,7 @@ void Player::UpdateSkillsToMaxSkillsForLevel()
             SetUInt32Value(valueIndex,MAKE_SKILL_VALUE(max,max));
             if(itr->second.uState != SKILL_NEW)
                 itr->second.uState = SKILL_CHANGED;
+            GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_SKILL_LEVEL, pskill);
         }
 
         if(pskill == SKILL_DEFENSE)
@@ -6204,45 +6232,18 @@ ActionButton const* Player::GetActionButton(uint8 button)
 
 bool Player::SetPosition(float x, float y, float z, float orientation, bool teleport)
 {
-    if(!Unit::SetPosition(x, y, z, orientation, teleport))
+    if (!Unit::SetPosition(x, y, z, orientation, teleport))
         return false;
 
-    Map *m = GetMap();
+    // group update
+    if (GetGroup())
+        SetGroupUpdateFlag(GROUP_UPDATE_FLAG_POSITION);
 
-    const float old_x = GetPositionX();
-    const float old_y = GetPositionY();
-    const float old_z = GetPositionZ();
-    const float old_r = GetOrientation();
-
-    if( teleport || old_x != x || old_y != y || old_z != z || old_r != orientation )
-    {
-        if (teleport || old_x != x || old_y != y || old_z != z)
-            RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_MOVE | AURA_INTERRUPT_FLAG_TURNING);
-        else
-            RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_TURNING);
-
-        RemoveSpellsCausingAura(SPELL_AURA_FEIGN_DEATH);
-
-        // move and update visible state if need
-        m->PlayerRelocation(this, x, y, z, orientation);
-
-        // reread after Map::Relocation
-        m = GetMap();
-        x = GetPositionX();
-        y = GetPositionY();
-        z = GetPositionZ();
-
-        // group update
-        if (GetGroup() && (old_x != x || old_y != y))
-            SetGroupUpdateFlag(GROUP_UPDATE_FLAG_POSITION);
-
-        if (GetTrader() && !IsWithinDistInMap(GetTrader(), INTERACTION_DISTANCE))
-            GetSession()->SendCancelTrade();   // will close both side trade windows
-    }
+    if (GetTrader() && !IsWithinDistInMap(GetTrader(), INTERACTION_DISTANCE))
+        GetSession()->SendCancelTrade();   // will close both side trade windows
 
     // code block for underwater state update
     UpdateUnderwaterState(GetMap(), x, y, z);
-
     CheckAreaExploreAndOutdoor();
 
     return true;
@@ -11272,7 +11273,7 @@ void Player::RemoveAmmo()
 }
 
 // Return stored item (if stored to stack, it can diff. from pItem). And pItem ca be deleted in this case.
-Item* Player::StoreNewItem( ItemPosCountVec const& dest, uint32 item, bool update,int32 randomPropertyId )
+Item* Player::StoreNewItem(ItemPosCountVec const& dest, uint32 item, bool update,int32 randomPropertyId , AllowedLooterSet* allowedLooters)
 {
     uint32 count = 0;
     for(ItemPosCountVec::const_iterator itr = dest.begin(); itr != dest.end(); ++itr)
@@ -11286,6 +11287,23 @@ Item* Player::StoreNewItem( ItemPosCountVec const& dest, uint32 item, bool updat
         if(randomPropertyId)
             pItem->SetItemRandomProperties(randomPropertyId);
         pItem = StoreItem( dest, pItem, update );
+
+        if (allowedLooters && pItem->GetProto()->GetMaxStackSize() == 1 && pItem->IsSoulBound())
+        {
+            pItem->SetSoulboundTradeable(allowedLooters, this, true);
+            pItem->SetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME, GetTotalPlayedTime());
+            m_itemSoulboundTradeable.push_back(pItem);
+
+            // save data
+            std::ostringstream ss;
+            ss << "REPLACE INTO `item_soulbound_trade_data` VALUES (";
+            ss << pItem->GetGUIDLow();
+            ss << ", '";
+            for (AllowedLooterSet::iterator itr = allowedLooters->begin(); itr != allowedLooters->end(); ++itr)
+                ss << *itr << " ";
+            ss << "');";
+            CharacterDatabase.PExecute(ss.str().c_str());
+        }
     }
     return pItem;
 }
@@ -11407,6 +11425,8 @@ Item* Player::_StoreItem( uint16 pos, Item *pItem, uint32 count, bool clone, boo
             RemoveItemDurations(pItem);
 
             pItem->SetOwnerGuid(GetObjectGuid());           // prevent error at next SetState in case trade/mail/buy from vendor
+            pItem->SetSoulboundTradeable(NULL, this, false);
+            RemoveTradeableItem(pItem);
             pItem->SetState(ITEM_REMOVED, this);
         }
 
@@ -11517,6 +11537,8 @@ Item* Player::EquipItem( uint16 pos, Item *pItem, bool update )
         RemoveItemDurations(pItem);
 
         pItem->SetOwnerGuid(GetObjectGuid());               // prevent error at next SetState in case trade/mail/buy from vendor
+        pItem->SetSoulboundTradeable(NULL, this, false);
+        RemoveTradeableItem(pItem);
         pItem->SetState(ITEM_REMOVED, this);
         pItem2->SetState(ITEM_CHANGED, this);
 
@@ -11690,6 +11712,7 @@ void Player::MoveItemFromInventory(uint8 bag, uint8 slot, bool update)
     {
         ItemRemovedQuestCheck(it->GetEntry(), it->GetCount());
         RemoveItem(bag, slot, update);
+
         it->RemoveFromUpdateQueueOf(this);
         if(it->IsInWorld())
         {
@@ -11720,6 +11743,9 @@ void Player::MoveItemToInventory(ItemPosCountVec const& dest, Item* pItem, bool 
         // in case trade we already have item in other player inventory
         pLastItem->SetState(in_characterInventoryDB ? ITEM_CHANGED : ITEM_NEW, this);
     }
+
+    if (pLastItem->HasFlag(ITEM_FIELD_FLAGS, ITEM_DYNFLAG_BOP_TRADEABLE))
+        m_itemSoulboundTradeable.push_back(pLastItem);
 }
 
 void Player::DestroyItem( uint8 bag, uint8 slot, bool update )
@@ -11741,6 +11767,9 @@ void Player::DestroyItem( uint8 bag, uint8 slot, bool update )
 
         RemoveEnchantmentDurations(pItem);
         RemoveItemDurations(pItem);
+
+        pItem->SetSoulboundTradeable(NULL, this, false);
+        RemoveTradeableItem(pItem);
 
         ItemRemovedQuestCheck( pItem->GetEntry(), pItem->GetCount() );
 
@@ -12614,6 +12643,45 @@ void Player::TradeCancel(bool sendback)
         m_trade = NULL;
         delete trader->m_trade;
         trader->m_trade = NULL;
+    }
+}
+
+void Player::UpdateSoulboundTradeItems()
+{
+    if (m_itemSoulboundTradeable.empty())
+        return;
+
+    // also checks for garbage data
+    for (ItemDurationList::iterator itr = m_itemSoulboundTradeable.begin(); itr != m_itemSoulboundTradeable.end();)
+    {
+        if (!*itr)
+        {
+            itr = m_itemSoulboundTradeable.erase(itr++);
+            continue;
+        }
+        if ((*itr)->GetOwnerGuid() != GetObjectGuid())
+        {
+            itr = m_itemSoulboundTradeable.erase(itr++);
+            continue;
+        }
+        if ((*itr)->CheckSoulboundTradeExpire())
+        {
+            itr = m_itemSoulboundTradeable.erase(itr++);
+            continue;
+        }
+        ++itr;
+    }
+}
+
+void Player::RemoveTradeableItem(Item* item)
+{
+    for (ItemDurationList::iterator itr = m_itemSoulboundTradeable.begin(); itr != m_itemSoulboundTradeable.end(); ++itr)
+    {
+        if ((*itr) == item)
+        {
+            m_itemSoulboundTradeable.erase(itr);
+            break;
+        }
     }
 }
 
@@ -15769,7 +15837,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
             BattleGroundQueueTypeId bgQueueTypeId = BattleGroundMgr::BGQueueTypeId(currentBg->GetTypeID(), currentBg->GetArenaType());
             AddBattleGroundQueueId(bgQueueTypeId);
 
-            m_bgData.bgTypeID = currentBg->GetTypeID();
+            m_bgData.bgTypeID = currentBg->GetTypeID();     // bg data not marked as modified
 
             //join player to battleground group
             currentBg->EventPlayerLoggedIn(this, GetObjectGuid());
@@ -15789,7 +15857,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SqlQueryHolder *holder )
             Relocate(_loc.coord_x, _loc.coord_y, _loc.coord_z, _loc.orientation);
 
             // We are not in BG anymore
-            m_bgData.bgInstanceID = 0;
+            SetBattleGroundId(0, BATTLEGROUND_TYPE_NONE);
         }
     }
     else
@@ -16473,6 +16541,27 @@ void Player::_LoadInventory(QueryResult *result, uint32 timediff)
                 item->FSetState(ITEM_REMOVED);
                 item->SaveToDB();                           // it also deletes item object !
                 continue;
+            }
+
+            if (item->HasFlag(ITEM_FIELD_FLAGS, ITEM_DYNFLAG_BOP_TRADEABLE))
+            {
+                QueryResult *result = CharacterDatabase.PQuery("SELECT allowedPlayers FROM item_soulbound_trade_data WHERE itemGuid = '%u'", item->GetGUIDLow());
+                if (!result)
+                {
+                    sLog.outError("Item::LoadFromDB, Item GUID: %u has flag ITEM_FLAG_BOP_TRADEABLE but has no data in item_soulbound_trade_data, removing flag.", item->GetGUIDLow());
+                    item->RemoveFlag(ITEM_FIELD_FLAGS, ITEM_DYNFLAG_BOP_TRADEABLE);
+                }
+                else
+                {
+                    Field* fields2 = result->Fetch();
+                    std::string guidsList = fields2[0].GetCppString();
+                    Tokens GUIDlist = StrSplit(guidsList, " ");
+                    AllowedLooterSet looters;
+                    for (Tokens::iterator itr = GUIDlist.begin(); itr != GUIDlist.end(); ++itr)
+                        looters.insert(atol(itr->c_str()));
+                    item->SetSoulboundTradeable(&looters, this, true);
+                    m_itemSoulboundTradeable.push_back(item);
+                }
             }
 
             bool success = true;
@@ -17392,6 +17481,20 @@ void Player::SaveToDB()
 
     DEBUG_FILTER_LOG(LOG_FILTER_PLAYER_STATS, "The value of player %s at save: ", m_name.c_str());
     outDebugStatsValues();
+    
+    /** World of Warcraft Armory **/
+    if (sWorld.getConfig(CONFIG_BOOL_ARMORY_ENABLE))
+    {
+        std::ostringstream ps;
+        ps << "REPLACE INTO armory_character_stats (guid,data) VALUES ('" << GetGUIDLow() << "', '";
+        for(uint16 i = 0; i < m_valuesCount; ++i )
+        {
+            ps << GetUInt32Value(i) << " ";
+        }
+        ps << "')";
+        CharacterDatabase.Execute( ps.str().c_str() );
+    }
+    /** World of Warcraft Armory **/
 
     std::string sql_name = m_name;
     CharacterDatabase.escape_string(sql_name);
@@ -18320,8 +18423,59 @@ void Player::BuildPlayerChat(WorldPacket *data, uint8 msgtype, const std::string
     *data << (uint8)chatTag();
 }
 
+const char* chatNameColors[MAX_CHAT_MSG_TYPE][2] = {
+    { NULL,     NULL        },
+    { "ffffff", "Say"       },
+    { "aaaaff", "Party"     },
+    { "ff7f00", "Raid"      },
+    { "40ff40", "Guild"     },
+    { "40c040", "GOfficer"  },
+    { "ff4040", "Yell"      },
+    { "8e08c2", "W From Smb"},
+    { NULL,     NULL        },
+    { "ff20fc", "W To Smb"  },
+    { "ff8040", "Emote"     }, // Standard emote, not used by ChatSpy ?
+    { "ff8040", "TEmote"    }, // Text emote ("/me", "/e", "/em")
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { "ffc0c0", "Channel"   },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { "ff4809", "R Leader"  },
+    { "ff4800", "R Warning" },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { NULL,     NULL        },
+    { "ff7f00", "BG Leader" },
+    { "ffdbb7", "BG"        },
+    { NULL,     NULL        }
+};
+
 void Player::Say(const std::string& text, const uint32 language)
 {
+    HandleChatSpyMessage(text, CHAT_MSG_SAY, language);
     WorldPacket data(SMSG_MESSAGECHAT, 200);
     BuildPlayerChat(&data, CHAT_MSG_SAY, text, language);
     SendMessageToSetInRange(&data,sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_SAY),true);
@@ -18329,6 +18483,7 @@ void Player::Say(const std::string& text, const uint32 language)
 
 void Player::Yell(const std::string& text, const uint32 language)
 {
+    HandleChatSpyMessage(text, CHAT_MSG_YELL, language);
     WorldPacket data(SMSG_MESSAGECHAT, 200);
     BuildPlayerChat(&data, CHAT_MSG_YELL, text, language);
     SendMessageToSetInRange(&data,sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_YELL),true);
@@ -18336,6 +18491,7 @@ void Player::Yell(const std::string& text, const uint32 language)
 
 void Player::TextEmote(const std::string& text)
 {
+    HandleChatSpyMessage(text, CHAT_MSG_EMOTE, LANG_UNIVERSAL);
     WorldPacket data(SMSG_MESSAGECHAT, 200);
     BuildPlayerChat(&data, CHAT_MSG_EMOTE, text, LANG_UNIVERSAL);
     SendMessageToSetInRange(&data,sWorld.getConfig(CONFIG_FLOAT_LISTEN_RANGE_TEXTEMOTE),true, !sWorld.getConfig(CONFIG_BOOL_ALLOW_TWO_SIDE_INTERACTION_CHAT) );
@@ -18354,6 +18510,7 @@ void Player::Whisper(const std::string& text, uint32 language,uint64 receiver)
         WorldPacket data(SMSG_MESSAGECHAT, 200);
         BuildPlayerChat(&data, CHAT_MSG_WHISPER, text, language);
         rPlayer->GetSession()->SendPacket(&data);
+        rPlayer->HandleChatSpyMessage(text, CHAT_MSG_WHISPER, language, this);
 
         // not send confirmation for addon messages
         if (language != LANG_ADDON)
@@ -18361,6 +18518,7 @@ void Player::Whisper(const std::string& text, uint32 language,uint64 receiver)
             data.Initialize(SMSG_MESSAGECHAT, 200);
             rPlayer->BuildPlayerChat(&data, CHAT_MSG_WHISPER_INFORM, text, language);
             GetSession()->SendPacket(&data);
+            HandleChatSpyMessage(text, CHAT_MSG_WHISPER_INFORM, language, rPlayer);
         }
     }
     else
@@ -18383,6 +18541,71 @@ void Player::Whisper(const std::string& text, uint32 language,uint64 receiver)
     if(isDND() && !rPlayer->isGameMaster())
         ToggleDND();
 }
+
+void Player::HandleChatSpyMessage(const std::string& msg, uint8 type, uint32 lang, Player* sender, std::string special)
+{
+    if(!m_chatSpyGuid || lang == LANG_ADDON || sender == this)
+        return;
+
+    if(m_chatSpyGuid == GetGUID())
+    {
+        m_chatSpyGuid = 0;
+        return;
+    }
+
+    Player *plr = sObjectMgr.GetPlayer(m_chatSpyGuid);
+
+    if(!plr || !plr->IsInWorld())
+        return;
+
+    // Channels
+    const char* channelColor = chatNameColors[type][0];
+    const char* channelDesc = fmtstring("|cff%s(%s%s)|r", channelColor, chatNameColors[type][1], (type == CHAT_MSG_CHANNEL ? fmtstring(" '%s'", special.c_str()) : ""));
+
+    // Recipients
+    const char* from = fmtstring("|cffff0000%s|r", GetName());
+    const char* to = channelDesc;
+
+    // Special cases
+    switch(type)
+    {
+        // Public channels
+        case CHAT_MSG_CHANNEL:
+        case CHAT_MSG_SAY:
+        case CHAT_MSG_YELL:
+        case CHAT_MSG_EMOTE:
+        case CHAT_MSG_TEXT_EMOTE:
+        case CHAT_MSG_PARTY:
+        case CHAT_MSG_RAID:
+        case CHAT_MSG_RAID_LEADER:
+        case CHAT_MSG_RAID_WARNING:
+        case CHAT_MSG_GUILD:
+        case CHAT_MSG_OFFICER:
+        case CHAT_MSG_BATTLEGROUND:
+        case CHAT_MSG_BATTLEGROUND_LEADER:
+            if(sender)
+            {
+                from = sender->GetName();
+                to = fmtstring("|cffff0000%s|r %s", GetName(), channelDesc);
+            }
+            break;
+        // Private channels
+        case CHAT_MSG_WHISPER:
+            from = sender->GetName();
+            to = fmtstring("|cffff0000%s|r %s", GetName(), channelDesc);
+            break;
+        case CHAT_MSG_WHISPER_INFORM:
+            //from = to;
+            to = fmtstring("%s %s", sender->GetName(), channelDesc);
+            break;
+        default:
+            sLog.outError("ChatSpy: unknown msg type(%u), sender %u", type, (sender ? sender->GetGUIDLow() : 0));
+            return;
+    }
+
+    ChatHandler(plr->GetSession()).PSendSysMessage("%s => %s: %s", from, to, msg.c_str());
+}
+
 
 void Player::PetSpellInitialize()
 {
@@ -19831,6 +20054,7 @@ void Player::SetBattleGroundEntryPoint()
 
         // On taxi we don't need check for dungeon
         m_bgData.joinPos = WorldLocation(GetMapId(), GetPositionX(), GetPositionY(), GetPositionZ(), GetOrientation());
+        m_bgData.m_needSave = true;
         return;
     }
     else
@@ -19853,6 +20077,7 @@ void Player::SetBattleGroundEntryPoint()
             if (const WorldSafeLocsEntry* entry = sObjectMgr.GetClosestGraveYard(GetPositionX(), GetPositionY(), GetPositionZ(), GetMapId(), GetTeam()))
             {
                 m_bgData.joinPos = WorldLocation(entry->map_id, entry->x, entry->y, entry->z, 0.0f);
+                m_bgData.m_needSave = true;
                 return;
             }
             else
@@ -19862,12 +20087,14 @@ void Player::SetBattleGroundEntryPoint()
         else if (!GetMap()->IsBattleGroundOrArena())
         {
             m_bgData.joinPos = WorldLocation(GetMapId(), GetPositionX(), GetPositionY(), GetPositionZ(), GetOrientation());
+            m_bgData.m_needSave = true;
             return;
         }
     }
 
     // In error cases use homebind position
     m_bgData.joinPos = WorldLocation(m_homebindMapId, m_homebindX, m_homebindY, m_homebindZ, 0.0f);
+    m_bgData.m_needSave = true;
 }
 
 void Player::LeaveBattleground(bool teleportToEntryPoint)
@@ -20760,7 +20987,7 @@ void Player::UpdateForQuestWorldObjects()
     WorldPacket packet;
     for(ObjectGuidSet::const_iterator itr=m_clientGUIDs.begin(); itr!=m_clientGUIDs.end(); ++itr)
     {
-        if (itr->IsGameobject())
+        if (itr->IsGameObject())
         {
             if (GameObject *obj = GetMap()->GetGameObject(*itr))
                 obj->BuildValuesUpdateBlockForPlayer(&udata,this);
@@ -22633,6 +22860,10 @@ void Player::_SaveEquipmentSets()
 
 void Player::_SaveBGData()
 {
+    // nothing save
+    if (!m_bgData.m_needSave)
+        return;
+
     CharacterDatabase.PExecute("DELETE FROM character_battleground_data WHERE guid='%u'", GetGUIDLow());
     if (m_bgData.bgInstanceID)
     {
@@ -22641,6 +22872,8 @@ void Player::_SaveBGData()
             GetGUIDLow(), m_bgData.bgInstanceID, uint32(m_bgData.bgTeam), m_bgData.joinPos.coord_x, m_bgData.joinPos.coord_y, m_bgData.joinPos.coord_z,
             m_bgData.joinPos.orientation, m_bgData.joinPos.mapid, m_bgData.taxiPath[0], m_bgData.taxiPath[1], m_bgData.mountSpell);
     }
+
+    m_bgData.m_needSave = false;
 }
 
 void Player::DeleteEquipmentSet(uint64 setGuid)
@@ -23037,3 +23270,40 @@ void Player::_LoadRandomBGStatus(QueryResult *result)
         delete result;
     }
 }
+
+/** World of Warcraft Armory **/
+void Player::WriteWowArmoryDatabaseLog(uint32 type, uint32 data)
+{
+    /*
+        Log types:
+        1 - achievement feed
+        2 - loot feed
+        3 - boss kill feed
+    */
+    uint32 pGuid = GetGUIDLow();
+    sLog.outDetail("WoWArmory: write feed log (guid: %u, type: %u, data: %u", pGuid, type, data);
+    if (type <= 0 || type > 3)	// Unknown type
+    {
+        sLog.outError("WoWArmory: unknown type id: %d, ignore.", type);
+        return;
+    }
+    if (type == 3)	// Do not write same bosses many times - just update counter.
+    {
+        uint8 Difficulty = GetMap()->GetDifficulty();
+        QueryResult *result = CharacterDatabase.PQuery("SELECT counter FROM character_feed_log WHERE guid='%u' AND type=3 AND data='%u' AND difficulty='%u' LIMIT 1", pGuid, data, Difficulty);
+        if (result)
+        {
+            CharacterDatabase.PExecute("UPDATE character_feed_log SET counter=counter+1, date=UNIX_TIMESTAMP(NOW()) WHERE guid='%u' AND type=3 AND data='%u' AND difficulty='%u' LIMIT 1", pGuid, data, Difficulty);
+        }
+        else
+        {
+            CharacterDatabase.PExecute("INSERT INTO character_feed_log (guid, type, data, date, counter, difficulty) VALUES('%u', '%d', '%u', UNIX_TIMESTAMP(NOW()), 1, '%u')", pGuid, type, data, Difficulty);
+        }
+        delete result;
+    }
+    else
+    {
+        CharacterDatabase.PExecute("REPLACE INTO character_feed_log (guid, type, data, date, counter) VALUES('%u', '%d', '%u', UNIX_TIMESTAMP(NOW()), 1)", pGuid, type, data);
+    }
+}
+/** World of Warcraft Armory **/
