@@ -1863,6 +1863,17 @@ SpellAuraProcResult Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, Aura
                             aurHolder->SendAuraUpdate(false);
                         }
                     }
+				}
+                // Glyph of Starfire
+                case 54845:
+                {
+                    triggered_spell_id = 54846;
+                    break;
+                }
+                // Glyph of Shred
+                case 54815:
+                {
+                    triggered_spell_id = 63974;
                     break;
                 }
                 // Glyph of Rejuvenation
