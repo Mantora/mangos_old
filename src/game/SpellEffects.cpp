@@ -729,7 +729,7 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                         // Eviscerate and Envenom Bonus Damage (item set effect)
                         if(m_caster->GetDummyAura(37169))
                             damage += combo*40;
-                            
+
                         // Apply spell mods
                         if (Player* modOwner = m_caster->GetSpellModOwner())
                             modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_DAMAGE, damage);
@@ -749,6 +749,24 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                 else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000010000000))
                 {
                     damage += int32(m_caster->GetTotalAttackPowerValue(BASE_ATTACK)*0.04f);
+                }
+                // Thrash (Raise ally ghoul spell)
+                else if (m_spellInfo->Id == 47480)
+                {
+                    if (Aura* aura = m_caster->GetAura(62218, EFFECT_INDEX_0))
+                    {
+                        if (aura->GetStackAmount() > 0)
+                            damage += m_caster->GetTotalAttackPowerValue(BASE_ATTACK) *
+                                     m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_0)/100 +
+                                     m_caster->GetTotalAttackPowerValue(BASE_ATTACK) /10 *
+                                     aura->GetStackAmount();
+                        m_caster->RemoveAurasDueToSpell(62218);
+
+                        if (Unit* owner = m_caster->GetCharmerOrOwner())
+                           owner->RemoveAurasDueToSpell(62218);
+                    }
+                    else
+                        damage += m_caster->GetTotalAttackPowerValue(BASE_ATTACK) * m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_0)/100;
                 }
                 break;
             }
@@ -1345,16 +1363,14 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                     return;
                 }
                 // Demon Broiled Surprise
-                /* FIX ME: Required for correct work implementing implicit target 7 (in pair (22,7))
                 case 43723:
                 {
                     if (m_caster->GetTypeId() != TYPEID_PLAYER)
                         return;
 
-                    ((Player*)m_caster)->CastSpell(unitTarget, 43753, true);
+                    ((Player*)m_caster)->CastSpell(unitTarget, 43753, true, m_CastItem, NULL, m_originalCasterGUID, m_spellInfo);
                     return;
                 }
-                */
                 case 43882:                                 // Scourging Crystal Controller Dummy
                 {
                     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT)
@@ -2065,6 +2081,14 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
                 {
                     ((Player*)m_caster)->RemoveSpellCooldown(53385, true);
                     return;
+                }
+                case 72202:                                 // Blade power
+                {
+                    if (!unitTarget)
+                        return;
+
+                    unitTarget->CastSpell(unitTarget, 72195, true);
+                    break;
                 }
             }
             break;
@@ -2873,6 +2897,12 @@ void Spell::EffectDummy(SpellEffectIndex eff_idx)
             }
             else if (m_spellInfo->Id == 46584)
                 return;
+            else if (m_spellInfo->Id == 61999)
+            {
+                if (m_caster->GetTypeId() == TYPEID_PLAYER)
+                    ((Player*)m_caster)->RemoveSpellCooldown(m_spellInfo->Id,true);
+                return;
+            }
             break;
         }
     }
@@ -3414,7 +3444,7 @@ void Spell::EffectApplyAura(SpellEffectIndex eff_idx)
     {
         // FIXME: currently we can't have auras applied explIcitly by gameobjects
         // so for auras from wild gameobjects (no owner) target used
-        if (m_originalCasterGUID.IsGameobject())
+        if (m_originalCasterGUID.IsGameObject())
             caster = unitTarget;
         else
             return;
@@ -3436,59 +3466,19 @@ void Spell::EffectApplyAura(SpellEffectIndex eff_idx)
         delete Aur;
         return;
     }
-    // Mixology: increase duration and effect of elixirs and flasks
-    if (Aur->GetSpellProto()->SpellFamilyName == SPELLFAMILY_POTION &&
-        caster->GetTypeId() == TYPEID_PLAYER && caster->HasAura(53042))
+
+    // Mixology - increase effect and duration of alchemy spells which the caster has
+    if(caster->GetTypeId() == TYPEID_PLAYER && Aur->GetSpellProto()->SpellFamilyName == SPELLFAMILY_POTION
+        && caster->HasAura(53042))
     {
-        SpellSpecific spellSpec = GetSpellSpecific(Aur->GetId());
-        if ((spellSpec == SPELL_BATTLE_ELIXIR || spellSpec == SPELL_GUARDIAN_ELIXIR || spellSpec == SPELL_FLASK_ELIXIR) &&
-            caster->HasSpell(Aur->GetSpellProto()->EffectTriggerSpell[EFFECT_INDEX_0]))
+        SpellSpecific spellSpec = GetSpellSpecific(Aur->GetSpellProto()->Id);
+        if(spellSpec == SPELL_BATTLE_ELIXIR || spellSpec == SPELL_GUARDIAN_ELIXIR || spellSpec == SPELL_FLASK_ELIXIR)
         {
-            duration *= 2;
-            int32 amount = 0;
-            switch (Aur->GetId())
+            if(caster->HasSpell(Aur->GetSpellProto()->EffectTriggerSpell[0]))
             {
-                case 53749:         // Guru's Elixir
-                    amount = 8;
-                    break;
-                case 28497:         // Elixir of Mighty Agility
-                case 53747:         // Elixir of Spirit
-                case 54212:         // Flask of Pure Mojo
-                case 60340:         // Elixir of Accuracy
-                case 60341:         // Elixir of Deadly Strikes
-                case 60343:         // Elixir of Mighty Defense
-                case 60344:         // Elixir of Expertise
-                case 60345:         // Elixir of Armor Piercing
-                case 60346:         // Elixir of Lightning Speed
-                case 60347:         // Elixir of Mighty Thoughts
-                    amount = 20;
-                    break;
-                case 53752:         // Lesser Flask of Toughness
-                case 62380:         // Lesser Flask of Resistance
-                    amount = 40;
-                    break;
-                case 53755:         // Flask of the Frost Wyrm
-                    amount = 47;
-                    break;
-                case 53760:         // Flask of Endless Rage
-                    amount = 82;
-                    break;
-                case 53751:         // Elixir of Mighty Fortitude
-                    amount = 200;
-                    break;
-                case 53763:         // Elixir of Protection
-                    amount = 280;
-                    break;
-                case 53758:         // Flask of Stoneblood
-                    amount = 650;
-                    break;
-                default:
-                    // default value for all other flasks/elixirs
-                    //TODO: add data to db table or find way of getting it from dbc
-                    amount = Aur->GetModifier()->m_amount * 30 / 100;
-                    break;
+               duration *= 2.0f;
+               Aur->GetModifier()->m_amount *= 1.3f;
             }
-            Aur->GetModifier()->m_amount += amount;
         }
     }
 
@@ -4018,6 +4008,7 @@ void Spell::EffectEnergize(SpellEffectIndex eff_idx)
         case 63375:                                         // Improved Stormstrike
         case 67545:                                         // Empowered Fire
         case 68082:                                         // Glyph of Seal of Command
+        case 71132:                                         // Glyph of Shadow Word: Pain
             damage = damage * unitTarget->GetCreateMana() / 100;
             break;
         case 67487:                                         // Mana Potion Injector
@@ -5015,7 +5006,7 @@ void Spell::DoSummonGuardian(SpellEffectIndex eff_idx, uint32 forceFaction)
     PetType petType = propEntry->Title == UNITNAME_SUMMON_TITLE_COMPANION ? PROTECTOR_PET : GUARDIAN_PET;
 
     // second cast unsummon guardian(s) (guardians without like functionality have cooldown > spawn time)
-    if (m_caster->GetTypeId() == TYPEID_PLAYER && m_CastItem)
+    if (!m_IsTriggeredSpell && m_caster->GetTypeId() == TYPEID_PLAYER && m_CastItem)
     {
         bool found = false;
         // including protector
@@ -5317,6 +5308,8 @@ void Spell::EffectEnchantItemPerm(SpellEffectIndex eff_idx)
 
     // add new enchanting if equipped
     item_owner->ApplyEnchantment(itemTarget,PERM_ENCHANTMENT_SLOT,true);
+
+    itemTarget->SetSoulboundTradeable(NULL, item_owner, false);
 }
 
 void Spell::EffectEnchantItemPrismatic(SpellEffectIndex eff_idx)
@@ -5375,6 +5368,8 @@ void Spell::EffectEnchantItemPrismatic(SpellEffectIndex eff_idx)
 
     // add new enchanting if equipped
     item_owner->ApplyEnchantment(itemTarget,PRISMATIC_ENCHANTMENT_SLOT,true);
+
+    itemTarget->SetSoulboundTradeable(NULL, item_owner, false);
 }
 
 void Spell::EffectEnchantItemTmp(SpellEffectIndex eff_idx)
@@ -5516,7 +5511,8 @@ void Spell::EffectTameCreature(SpellEffectIndex /*eff_idx*/)
         return;
     }
 
-    uint16 level = (creatureTarget->getLevel() < (plr->getLevel() - 5)) ? (plr->getLevel() - 5) : creatureTarget->getLevel();
+    // level of hunter pet can't be less owner level at 5 levels
+    uint32 level = creatureTarget->getLevel() + 5 < plr->getLevel() ? (plr->getLevel() - 5) : creatureTarget->getLevel();
 
     // prepare visual effect for levelup
     pet->SetLevel(level - 1);
@@ -7227,6 +7223,18 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     m_caster->CastSpell(unitTarget, 71480, true);
                     return;
                 }
+                case 72195:                                 // Blood link
+                {
+                    if (!unitTarget)
+                        return;
+                    if (unitTarget->HasAura(72371))
+                    {
+                        unitTarget->RemoveAurasDueToSpell(72371);
+                        int32 power = unitTarget->GetPower(unitTarget->getPowerType());
+                        unitTarget->CastCustomSpell(unitTarget, 72371, &power, &power, NULL, true);
+                    }
+                    return;
+                }
             }
             break;
         }
@@ -7667,6 +7675,22 @@ void Spell::EffectScriptEffect(SpellEffectIndex eff_idx)
                     }
                     ((Player*)m_caster)->RemoveSpellCooldown(triggered_spell_id,true);
                     break;
+                }
+                // Raise ally
+                case 61999:
+                {
+                    if (m_caster->GetTypeId() != TYPEID_PLAYER)
+                        return;
+
+                    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER || unitTarget->isAlive())
+                    {
+                        ((Player*)m_caster)->RemoveSpellCooldown(m_spellInfo->Id,true);
+                        return;
+                    }
+
+                    // hack remove death
+                    unitTarget->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(EFFECT_INDEX_0), true);
+                    return;
                 }
                 default:
                     break;
@@ -8404,13 +8428,11 @@ void Spell::EffectReputation(SpellEffectIndex eff_idx)
 
 void Spell::EffectQuestComplete(SpellEffectIndex eff_idx)
 {
-    if(m_caster->GetTypeId() != TYPEID_PLAYER)
+    if (unitTarget->GetTypeId() != TYPEID_PLAYER)
         return;
 
-    Player *_player = (Player*)m_caster;
-
     uint32 quest_id = m_spellInfo->EffectMiscValue[eff_idx];
-    _player->AreaExploredOrEventHappens(quest_id);
+    ((Player*)unitTarget)->AreaExploredOrEventHappens(quest_id);
 }
 
 void Spell::EffectSelfResurrect(SpellEffectIndex eff_idx)

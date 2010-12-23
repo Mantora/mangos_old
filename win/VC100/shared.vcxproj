@@ -449,6 +449,7 @@
     <ClCompile Include="..\..\src\shared\ServiceWin32.cpp" />
     <ClCompile Include="..\..\src\shared\Threading.cpp" />
     <ClCompile Include="..\..\src\shared\Util.cpp" />
+	<ClCompile Include="..\..\src\shared\DelayExecutor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\dep\include\mersennetwister\MersenneTwister.h" />
@@ -486,6 +487,7 @@
     <ClInclude Include="..\..\src\shared\Threading.h" />
     <ClInclude Include="..\..\src\shared\Timer.h" />
     <ClInclude Include="..\..\src\shared\Util.h" />
+	<ClCompile Include="..\..\src\shared\DelayExecutor.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="ACE_vc10.vcxproj">

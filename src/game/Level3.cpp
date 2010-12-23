@@ -941,8 +941,12 @@ bool ChatHandler::HandleReloadNpcGossipCommand(char* /*args*/)
 
 bool ChatHandler::HandleReloadNpcTrainerCommand(char* /*args*/)
 {
+    sLog.outString( "Re-Loading `npc_trainer_template` Table!" );
+    sObjectMgr.LoadTrainerTemplates();
+    SendGlobalSysMessage("DB table `npc_trainer_template` reloaded.");
+
     sLog.outString( "Re-Loading `npc_trainer` Table!" );
-    sObjectMgr.LoadTrainerSpell();
+    sObjectMgr.LoadTrainers();
     SendGlobalSysMessage("DB table `npc_trainer` reloaded.");
     return true;
 }
@@ -7534,5 +7538,123 @@ bool ChatHandler::HandleMmapTestArea(char* args)
         PSendSysMessage("No creatures in %f yard range.", radius);
     }
 
+	return true;
+}
+
+//ChatSpy control commands
+bool ChatHandler::HandleChatSpySetCommand(char *args)
+{
+    if(!args)
+        return false;
+
+    char* name = strtok((char*)args, " ");
+    std::string cname;
+    Player* target = NULL;
+
+    if(name)
+    {
+        cname = name;
+        normalizePlayerName(cname);
+        target = sObjectMgr.GetPlayer(cname.c_str());
+    }
+    else
+        target = getSelectedPlayer();
+
+    if(!target || target->GetSession() == m_session)
+    {
+        SendSysMessage(LANG_PLAYER_NOT_FOUND);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    target->m_chatSpyGuid = m_session->GetPlayer()->GetGUID();
+    PSendSysMessage(LANG_CHATSPY_APEENDED, target->GetName(), target->GetGUIDLow());
+    return true;
+}
+
+bool ChatHandler::HandleChatSpyResetCommand(char* /*args*/)
+{
+    HashMapHolder<Player>::MapType &m = HashMapHolder<Player>::GetContainer();
+    HashMapHolder<Player>::MapType::iterator itr = m.begin();
+    for(; itr != m.end(); ++itr)
+    {
+        Player* plr = itr->second->GetSession()->GetPlayer();
+        if (plr && plr->m_chatSpyGuid)
+        {
+            if(Player* spy = sObjectMgr.GetPlayer(plr->m_chatSpyGuid))
+                if(spy->IsInWorld())
+                    ChatHandler(spy).PSendSysMessage(LANG_CHATSPY_CANCELLEDMASSIVE,
+                        plr->GetName(), plr->GetGUIDLow());
+            plr->m_chatSpyGuid = 0;
+        }
+    }
+    SendSysMessage("All |cff00cc00ChatSpy|rs reset.");
+    return true;
+}
+
+bool ChatHandler::HandleChatSpyCancelCommand(char* args)
+{
+    if(!args)
+        return false;
+
+    char* name = strtok((char*)args, " ");
+    std::string cname;
+    Player* target = NULL;
+
+    if(name)
+    {
+        cname = name;
+        normalizePlayerName(cname);
+        target = sObjectMgr.GetPlayer(cname.c_str());
+    }
+    else
+        target = getSelectedPlayer();
+
+    if(!target || target->GetSession() == m_session)
+    {
+        SendSysMessage(LANG_PLAYER_NOT_FOUND);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    // ok, player found
+    if(!target->m_chatSpyGuid)
+    {
+        PSendSysMessage(LANG_CHATSPY_NOCHATSPY, target->GetName(), target->GetGUIDLow());
+        SetSentErrorMessage(true);
+        return false;
+    }
+    if(target->m_chatSpyGuid == m_session->GetPlayer()->GetGUID())
+        SendSysMessage(LANG_CHATSPY_YOURCANCELLED);
+    else
+    {
+        Player* spy = sObjectMgr.GetPlayer(target->m_chatSpyGuid);
+        PSendSysMessage(LANG_CHATSPY_SMBCANCELLED, (spy ? spy->GetName() : "ERROR"), (spy ? spy->GetGUIDLow() : 0));
+    }
+    target->m_chatSpyGuid = 0;
+    return true;
+}
+
+bool ChatHandler::HandleChatSpyStatusCommand(char* args)
+{
+    uint32 spynr = 0;
+    SendSysMessage(LANG_CHATSPY_LISTOFSPYS);
+
+    HashMapHolder<Player>::MapType &m = HashMapHolder<Player>::GetContainer();
+    HashMapHolder<Player>::MapType::iterator itr = m.begin();
+    for(; itr != m.end(); ++itr)
+    {
+        Player* plr = itr->second->GetSession()->GetPlayer();
+        if (plr && plr->m_chatSpyGuid)
+        {
+            Player* spy = sObjectMgr.GetPlayer(plr->m_chatSpyGuid);
+            PSendSysMessage(LANG_CHATSPY_ONESPYSANOTHER,
+                (spy ? spy->GetName() : "ERROR"), (spy ? spy->GetGUIDLow() : 0),
+                plr->GetName(), plr->GetGUIDLow()
+            );
+            spynr++;
+        }
+    }
+    PSendSysMessage(LANG_CHATSPY_TOTAL, spynr);
     return true;
 }

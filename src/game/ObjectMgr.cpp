@@ -1039,16 +1039,32 @@ void ObjectMgr::LoadCreatureModelInfo()
             const_cast<CreatureModelInfo*>(minfo)->gender = GENDER_MALE;
         }
 
-        if (minfo->modelid_other_gender && !sCreatureDisplayInfoStore.LookupEntry(minfo->modelid_other_gender))
+        if (minfo->modelid_other_gender)
         {
-            sLog.outErrorDb("Table `creature_model_info` has nonexistent modelid_other_gender model (%u) defined for model id %u.", minfo->modelid_other_gender, minfo->modelid);
-            const_cast<CreatureModelInfo*>(minfo)->modelid_other_gender = 0;
+            if (minfo->modelid_other_gender == minfo->modelid)
+            {
+                sLog.outErrorDb("Table `creature_model_info` has redundant modelid_other_gender model (%u) defined for model id %u.", minfo->modelid_other_gender, minfo->modelid);
+                const_cast<CreatureModelInfo*>(minfo)->modelid_other_gender = 0;
+            }
+            else if (!sCreatureDisplayInfoStore.LookupEntry(minfo->modelid_other_gender))
+            {
+                sLog.outErrorDb("Table `creature_model_info` has nonexistent modelid_other_gender model (%u) defined for model id %u.", minfo->modelid_other_gender, minfo->modelid);
+                const_cast<CreatureModelInfo*>(minfo)->modelid_other_gender = 0;
+            }
         }
 
-        if (minfo->modelid_alternative && !sCreatureDisplayInfoStore.LookupEntry(minfo->modelid_alternative))
+        if (minfo->modelid_alternative)
         {
-            sLog.outErrorDb("Table `creature_model_info` has nonexistent modelid_alternative model (%u) defined for model id %u.", minfo->modelid_alternative, minfo->modelid);
-            const_cast<CreatureModelInfo*>(minfo)->modelid_alternative = 0;
+            if (minfo->modelid_alternative == minfo->modelid)
+            {
+                sLog.outErrorDb("Table `creature_model_info` has redundant modelid_alternative model (%u) defined for model id %u.", minfo->modelid_alternative, minfo->modelid);
+                const_cast<CreatureModelInfo*>(minfo)->modelid_alternative = 0;
+            }
+            else if (!sCreatureDisplayInfoStore.LookupEntry(minfo->modelid_alternative))
+            {
+                sLog.outErrorDb("Table `creature_model_info` has nonexistent modelid_alternative model (%u) defined for model id %u.", minfo->modelid_alternative, minfo->modelid);
+                const_cast<CreatureModelInfo*>(minfo)->modelid_alternative = 0;
+            }
         }
     }
 
@@ -4833,28 +4849,28 @@ void ObjectMgr::LoadQuestLocales()
 
 void ObjectMgr::LoadScripts(ScriptMapMap& scripts, char const* tablename)
 {
-    if(sWorld.IsScriptScheduled())                          // function don't must be called in time scripts use.
+    if (sWorld.IsScriptScheduled())                         // function don't must be called in time scripts use.
         return;
 
-    sLog.outString( "%s :", tablename);
+    sLog.outString("%s :", tablename);
 
     scripts.clear();                                        // need for reload support
 
-    QueryResult *result = WorldDatabase.PQuery( "SELECT id, delay, command, datalong, datalong2, datalong3, datalong4, data_flags, dataint, dataint2, dataint3, dataint4, x, y, z, o FROM %s", tablename );
+    QueryResult *result = WorldDatabase.PQuery("SELECT id, delay, command, datalong, datalong2, datalong3, datalong4, data_flags, dataint, dataint2, dataint3, dataint4, x, y, z, o FROM %s", tablename);
 
     uint32 count = 0;
 
-    if( !result )
+    if (!result)
     {
-        barGoLink bar( 1 );
+        barGoLink bar(1);
         bar.step();
 
         sLog.outString();
-        sLog.outString( ">> Loaded %u script definitions", count );
+        sLog.outString(">> Loaded %u script definitions", count);
         return;
     }
 
-    barGoLink bar( (int)result->GetRowCount() );
+    barGoLink bar((int)result->GetRowCount());
 
     do
     {
@@ -4919,7 +4935,7 @@ void ObjectMgr::LoadScripts(ScriptMapMap& scripts, char const* tablename)
                     }
                 }
 
-                // if(!GetMangosStringLocale(tmp.dataint)) will checked after db_script_string loading
+                // if (!GetMangosStringLocale(tmp.dataint)) will be checked after db_script_string loading
                 break;
             }
             case SCRIPT_COMMAND_EMOTE:
@@ -5013,11 +5029,11 @@ void ObjectMgr::LoadScripts(ScriptMapMap& scripts, char const* tablename)
                     continue;
                 }
 
-                if (info->type==GAMEOBJECT_TYPE_FISHINGNODE ||
-                    info->type==GAMEOBJECT_TYPE_FISHINGHOLE ||
-                    info->type==GAMEOBJECT_TYPE_DOOR        ||
-                    info->type==GAMEOBJECT_TYPE_BUTTON      ||
-                    info->type==GAMEOBJECT_TYPE_TRAP)
+                if (info->type == GAMEOBJECT_TYPE_FISHINGNODE ||
+                    info->type == GAMEOBJECT_TYPE_FISHINGHOLE ||
+                    info->type == GAMEOBJECT_TYPE_DOOR        ||
+                    info->type == GAMEOBJECT_TYPE_BUTTON      ||
+                    info->type == GAMEOBJECT_TYPE_TRAP)
                 {
                     sLog.outErrorDb("Table `%s` have gameobject type (%u) unsupported by command SCRIPT_COMMAND_RESPAWN_GAMEOBJECT for script id %u", tablename, info->id, tmp.id);
                     continue;
@@ -5056,7 +5072,7 @@ void ObjectMgr::LoadScripts(ScriptMapMap& scripts, char const* tablename)
                     continue;
                 }
 
-                if (info->type!=GAMEOBJECT_TYPE_DOOR)
+                if (info->type != GAMEOBJECT_TYPE_DOOR)
                 {
                     sLog.outErrorDb("Table `%s` has gameobject type (%u) non supported by command %s for script id %u", tablename, info->id, (tmp.command == SCRIPT_COMMAND_OPEN_DOOR ? "SCRIPT_COMMAND_OPEN_DOOR" : "SCRIPT_COMMAND_CLOSE_DOOR"), tmp.id);
                     continue;
@@ -5270,50 +5286,50 @@ void ObjectMgr::LoadScripts(ScriptMapMap& scripts, char const* tablename)
             ScriptMap emptyMap;
             scripts[tmp.id] = emptyMap;
         }
-        scripts[tmp.id].insert(std::pair<uint32, ScriptInfo>(tmp.delay, tmp));
+        scripts[tmp.id].insert(ScriptMap::value_type(tmp.delay, tmp));
 
         ++count;
-    } while( result->NextRow() );
+    } while(result->NextRow());
 
     delete result;
 
     sLog.outString();
-    sLog.outString( ">> Loaded %u script definitions", count );
+    sLog.outString(">> Loaded %u script definitions", count);
 }
 
 void ObjectMgr::LoadGameObjectScripts()
 {
-    LoadScripts(sGameObjectScripts,    "gameobject_scripts");
+    LoadScripts(sGameObjectScripts, "gameobject_scripts");
 
     // check ids
     for(ScriptMapMap::const_iterator itr = sGameObjectScripts.begin(); itr != sGameObjectScripts.end(); ++itr)
     {
-        if(!GetGOData(itr->first))
-            sLog.outErrorDb("Table `gameobject_scripts` has not existing gameobject (GUID: %u) as script id",itr->first);
+        if (!GetGOData(itr->first))
+            sLog.outErrorDb("Table `gameobject_scripts` has not existing gameobject (GUID: %u) as script id", itr->first);
     }
 }
 
 void ObjectMgr::LoadQuestEndScripts()
 {
-    LoadScripts(sQuestEndScripts,  "quest_end_scripts");
+    LoadScripts(sQuestEndScripts, "quest_end_scripts");
 
     // check ids
     for(ScriptMapMap::const_iterator itr = sQuestEndScripts.begin(); itr != sQuestEndScripts.end(); ++itr)
     {
-        if(!GetQuestTemplate(itr->first))
-            sLog.outErrorDb("Table `quest_end_scripts` has not existing quest (Id: %u) as script id",itr->first);
+        if (!GetQuestTemplate(itr->first))
+            sLog.outErrorDb("Table `quest_end_scripts` has not existing quest (Id: %u) as script id", itr->first);
     }
 }
 
 void ObjectMgr::LoadQuestStartScripts()
 {
-    LoadScripts(sQuestStartScripts,"quest_start_scripts");
+    LoadScripts(sQuestStartScripts, "quest_start_scripts");
 
     // check ids
     for(ScriptMapMap::const_iterator itr = sQuestStartScripts.begin(); itr != sQuestStartScripts.end(); ++itr)
     {
-        if(!GetQuestTemplate(itr->first))
-            sLog.outErrorDb("Table `quest_start_scripts` has not existing quest (Id: %u) as script id",itr->first);
+        if (!GetQuestTemplate(itr->first))
+            sLog.outErrorDb("Table `quest_start_scripts` has not existing quest (Id: %u) as script id", itr->first);
     }
 }
 
@@ -5326,9 +5342,9 @@ void ObjectMgr::LoadSpellScripts()
     {
         SpellEntry const* spellInfo = sSpellStore.LookupEntry(itr->first);
 
-        if(!spellInfo)
+        if (!spellInfo)
         {
-            sLog.outErrorDb("Table `spell_scripts` has not existing spell (Id: %u) as script id",itr->first);
+            sLog.outErrorDb("Table `spell_scripts` has not existing spell (Id: %u) as script id", itr->first);
             continue;
         }
 
@@ -5348,7 +5364,7 @@ void ObjectMgr::LoadSpellScripts()
         }
 
         if (!found)
-            sLog.outErrorDb("Table `spell_scripts` has unsupported spell (Id: %u) without SPELL_EFFECT_SCRIPT_EFFECT (%u) spell effect",itr->first,SPELL_EFFECT_SCRIPT_EFFECT);
+            sLog.outErrorDb("Table `spell_scripts` has unsupported spell (Id: %u) without SPELL_EFFECT_SCRIPT_EFFECT (%u) spell effect", itr->first, SPELL_EFFECT_SCRIPT_EFFECT);
     }
 }
 
@@ -5360,19 +5376,19 @@ void ObjectMgr::LoadEventScripts()
 
     // Load all possible script entries from gameobjects
     for(uint32 i = 1; i < sGOStorage.MaxEntry; ++i)
-        if (GameObjectInfo const * goInfo = sGOStorage.LookupEntry<GameObjectInfo>(i))
+        if (GameObjectInfo const* goInfo = sGOStorage.LookupEntry<GameObjectInfo>(i))
             if (uint32 eventId = goInfo->GetEventScriptId())
                 evt_scripts.insert(eventId);
 
     // Load all possible script entries from spells
     for(uint32 i = 1; i < sSpellStore.GetNumRows(); ++i)
     {
-        SpellEntry const * spell = sSpellStore.LookupEntry(i);
+        SpellEntry const* spell = sSpellStore.LookupEntry(i);
         if (spell)
         {
             for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
             {
-                if( spell->Effect[j] == SPELL_EFFECT_SEND_EVENT )
+                if (spell->Effect[j] == SPELL_EFFECT_SEND_EVENT)
                 {
                     if (spell->EffectMiscValue[j])
                         evt_scripts.insert(spell->EffectMiscValue[j]);
@@ -5948,22 +5964,22 @@ void ObjectMgr::LoadTavernAreaTriggers()
 
 void ObjectMgr::LoadAreaTriggerScripts()
 {
-    mAreaTriggerScripts.clear();                            // need for reload case
+    m_AreaTriggerScripts.clear();                           // need for reload case
     QueryResult *result = WorldDatabase.Query("SELECT entry, ScriptName FROM scripted_areatrigger");
 
     uint32 count = 0;
 
     if (!result)
     {
-        barGoLink bar( 1 );
+        barGoLink bar(1);
         bar.step();
 
         sLog.outString();
-        sLog.outString( ">> Loaded %u scripted areatrigger", count );
+        sLog.outString(">> Loaded %u scripted areatrigger", count);
         return;
     }
 
-    barGoLink bar( (int)result->GetRowCount() );
+    barGoLink bar((int)result->GetRowCount());
 
     do
     {
@@ -5972,62 +5988,61 @@ void ObjectMgr::LoadAreaTriggerScripts()
 
         Field *fields = result->Fetch();
 
-        uint32 Trigger_ID      = fields[0].GetUInt32();
+        uint32 triggerId       = fields[0].GetUInt32();
         const char *scriptName = fields[1].GetString();
 
-        AreaTriggerEntry const* atEntry = sAreaTriggerStore.LookupEntry(Trigger_ID);
-        if (!atEntry)
+        if (!sAreaTriggerStore.LookupEntry(triggerId))
         {
-            sLog.outErrorDb("Table `scripted_areatrigger` has area trigger (ID:%u) not listed in `AreaTrigger.dbc`.", Trigger_ID);
+            sLog.outErrorDb("Table `scripted_areatrigger` has area trigger (ID: %u) not listed in `AreaTrigger.dbc`.", triggerId);
             continue;
         }
 
-        mAreaTriggerScripts[Trigger_ID] = GetScriptId(scriptName);
-    } while( result->NextRow() );
+        m_AreaTriggerScripts[triggerId] = GetScriptId(scriptName);
+    } while(result->NextRow());
 
     delete result;
 
     sLog.outString();
-    sLog.outString( ">> Loaded %u areatrigger scripts", count );
+    sLog.outString(">> Loaded %u areatrigger scripts", count);
 }
 
 void ObjectMgr::LoadEventIdScripts()
 {
-    mEventIdScripts.clear();                            // need for reload case
+    m_EventIdScripts.clear();                           // need for reload case
     QueryResult *result = WorldDatabase.Query("SELECT id, ScriptName FROM scripted_event_id");
 
     uint32 count = 0;
 
     if (!result)
     {
-        barGoLink bar( 1 );
+        barGoLink bar(1);
         bar.step();
 
         sLog.outString();
-        sLog.outString( ">> Loaded %u scripted event id", count );
+        sLog.outString(">> Loaded %u scripted event id", count);
         return;
     }
 
-    barGoLink bar( (int)result->GetRowCount() );
+    barGoLink bar((int)result->GetRowCount());
 
     // TODO: remove duplicate code below, same way to collect event id's used in LoadEventScripts()
     std::set<uint32> evt_scripts;
 
     // Load all possible event entries from gameobjects
     for(uint32 i = 1; i < sGOStorage.MaxEntry; ++i)
-        if (GameObjectInfo const * goInfo = sGOStorage.LookupEntry<GameObjectInfo>(i))
+        if (GameObjectInfo const* goInfo = sGOStorage.LookupEntry<GameObjectInfo>(i))
             if (uint32 eventId = goInfo->GetEventScriptId())
                 evt_scripts.insert(eventId);
 
     // Load all possible event entries from spells
     for(uint32 i = 1; i < sSpellStore.GetNumRows(); ++i)
     {
-        SpellEntry const * spell = sSpellStore.LookupEntry(i);
+        SpellEntry const* spell = sSpellStore.LookupEntry(i);
         if (spell)
         {
             for(int j = 0; j < MAX_EFFECT_INDEX; ++j)
             {
-                if( spell->Effect[j] == SPELL_EFFECT_SEND_EVENT )
+                if (spell->Effect[j] == SPELL_EFFECT_SEND_EVENT)
                 {
                     if (spell->EffectMiscValue[j])
                         evt_scripts.insert(spell->EffectMiscValue[j]);
@@ -6066,13 +6081,13 @@ void ObjectMgr::LoadEventIdScripts()
             sLog.outErrorDb("Table `scripted_event_id` has id %u not referring to any gameobject_template type 10 data2 field, type 3 data6 field, type 13 data 2 field or any spell effect %u or path taxi node data",
                 eventId, SPELL_EFFECT_SEND_EVENT);
 
-        mEventIdScripts[eventId] = GetScriptId(scriptName);
-    } while( result->NextRow() );
+        m_EventIdScripts[eventId] = GetScriptId(scriptName);
+    } while(result->NextRow());
 
     delete result;
 
     sLog.outString();
-    sLog.outString( ">> Loaded %u scripted event id", count );
+    sLog.outString(">> Loaded %u scripted event id", count);
 }
 
 uint32 ObjectMgr::GetNearestTaxiNode( float x, float y, float z, uint32 mapid, Team team )
@@ -8550,19 +8565,20 @@ bool ObjectMgr::CheckDeclinedNames( std::wstring w_ownname, DeclinedName const& 
     return (x||y);
 }
 
-uint32 ObjectMgr::GetAreaTriggerScriptId(uint32 trigger_id)
+uint32 ObjectMgr::GetAreaTriggerScriptId(uint32 triggerId) const
 {
-    AreaTriggerScriptMap::const_iterator i = mAreaTriggerScripts.find(trigger_id);
-    if(i!= mAreaTriggerScripts.end())
-        return i->second;
+    AreaTriggerScriptMap::const_iterator itr = m_AreaTriggerScripts.find(triggerId);
+    if (itr != m_AreaTriggerScripts.end())
+        return itr->second;
+
     return 0;
 }
 
-uint32 ObjectMgr::GetEventIdScriptId(uint32 eventId)
+uint32 ObjectMgr::GetEventIdScriptId(uint32 eventId) const
 {
-    EventIdScriptMap::const_iterator i = mEventIdScripts.find(eventId);
-    if (i!= mEventIdScripts.end())
-        return i->second;
+    EventIdScriptMap::const_iterator itr = m_EventIdScripts.find(eventId);
+    if (itr != m_EventIdScripts.end())
+        return itr->second;
 
     return 0;
 }
@@ -9175,29 +9191,31 @@ void ObjectMgr::LoadMailLevelRewards()
     sLog.outString( ">> Loaded %u level dependent mail rewards,", count );
 }
 
-void ObjectMgr::LoadTrainerSpell()
+void ObjectMgr::LoadTrainers(char const* tableName, bool isTemplates)
 {
+    CacheTrainerSpellMap& trainerList = isTemplates ? m_mCacheTrainerTemplateSpellMap : m_mCacheTrainerSpellMap;
+
     // For reload case
-    for (CacheTrainerSpellMap::iterator itr = m_mCacheTrainerSpellMap.begin(); itr != m_mCacheTrainerSpellMap.end(); ++itr)
+    for (CacheTrainerSpellMap::iterator itr = trainerList.begin(); itr != trainerList.end(); ++itr)
         itr->second.Clear();
-    m_mCacheTrainerSpellMap.clear();
+    trainerList.clear();
 
     std::set<uint32> skip_trainers;
 
-    QueryResult *result = WorldDatabase.Query("SELECT entry, spell,spellcost,reqskill,reqskillvalue,reqlevel FROM npc_trainer");
+    QueryResult *result = WorldDatabase.PQuery("SELECT entry, spell,spellcost,reqskill,reqskillvalue,reqlevel FROM %s", tableName);
 
-    if( !result )
+    if (!result)
     {
-        barGoLink bar( 1 );
+        barGoLink bar(1);
 
         bar.step();
 
         sLog.outString();
-        sLog.outErrorDb(">> Loaded `npc_trainer`, table is empty!");
+        sLog.outString(">> Loaded `%s`, table is empty!", tableName);
         return;
     }
 
-    barGoLink bar( (int)result->GetRowCount() );
+    barGoLink bar((int)result->GetRowCount());
 
     std::set<uint32> talentIds;
 
@@ -9211,48 +9229,60 @@ void ObjectMgr::LoadTrainerSpell()
         uint32 entry  = fields[0].GetUInt32();
         uint32 spell  = fields[1].GetUInt32();
 
-        CreatureInfo const* cInfo = GetCreatureTemplate(entry);
-
-        if(!cInfo)
-        {
-            sLog.outErrorDb("Table `npc_trainer` have entry for nonexistent creature template (Entry: %u), ignore", entry);
-            continue;
-        }
-
-        if(!(cInfo->npcflag & UNIT_NPC_FLAG_TRAINER))
-        {
-            if (skip_trainers.find(entry) == skip_trainers.end())
-            {
-                sLog.outErrorDb("Table `npc_trainer` have data for creature (Entry: %u) without trainer flag, ignore", entry);
-                skip_trainers.insert(entry);
-            }
-            continue;
-        }
-
         SpellEntry const *spellinfo = sSpellStore.LookupEntry(spell);
-        if(!spellinfo)
+        if (!spellinfo)
         {
-            sLog.outErrorDb("Table `npc_trainer` for Trainer (Entry: %u ) has non existing spell %u, ignore", entry,spell);
+            sLog.outErrorDb("Table `%s` for trainer (Entry: %u ) has non existing spell %u, ignore", tableName, entry, spell);
             continue;
         }
 
-        if(!SpellMgr::IsSpellValid(spellinfo))
+        if (!SpellMgr::IsSpellValid(spellinfo))
         {
-            sLog.outErrorDb("Table `npc_trainer` for Trainer (Entry: %u) has broken learning spell %u, ignore", entry, spell);
+            sLog.outErrorDb("Table `%s` for trainer (Entry: %u) has broken learning spell %u, ignore", tableName, entry, spell);
             continue;
         }
 
-        if(GetTalentSpellCost(spell))
+        if (GetTalentSpellCost(spell))
         {
             if (talentIds.find(spell) == talentIds.end())
             {
-                sLog.outErrorDb("Table `npc_trainer` has talent as learning spell %u, ignore", spell);
+                sLog.outErrorDb("Table `%s` has talent as learning spell %u, ignore", tableName, spell);
                 talentIds.insert(spell);
             }
             continue;
         }
 
-        TrainerSpellData& data = m_mCacheTrainerSpellMap[entry];
+        if (!isTemplates)
+        {
+            CreatureInfo const* cInfo = GetCreatureTemplate(entry);
+
+            if (!cInfo)
+            {
+                sLog.outErrorDb("Table `%s` have entry for nonexistent creature template (Entry: %u), ignore", tableName, entry);
+                continue;
+            }
+
+            if (!(cInfo->npcflag & UNIT_NPC_FLAG_TRAINER))
+            {
+                if (skip_trainers.find(entry) == skip_trainers.end())
+                {
+                    sLog.outErrorDb("Table `%s` have data for creature (Entry: %u) without trainer flag, ignore", tableName, entry);
+                    skip_trainers.insert(entry);
+                }
+                continue;
+            }
+
+            if (TrainerSpellData const* tSpells = cInfo->trainerId ? GetNpcTrainerTemplateSpells(cInfo->trainerId) : NULL)
+            {
+                if (tSpells->spellList.find(spell) != tSpells->spellList.end())
+                {
+                    sLog.outErrorDb("Table `%s` for trainer (Entry: %u) has spell %u listed in trainer template %u, ignore", tableName, entry, spell, cInfo->trainerId);
+                    continue;
+                }
+            }
+        }
+
+        TrainerSpellData& data = trainerList[entry];
 
         TrainerSpell& trainerSpell = data.spellList[spell];
         trainerSpell.spell         = spell;
@@ -9277,7 +9307,7 @@ void ObjectMgr::LoadTrainerSpell()
             }
         }
 
-        if(SpellMgr::IsProfessionSpell(trainerSpell.learnedSpell))
+        if (SpellMgr::IsProfessionSpell(trainerSpell.learnedSpell))
             data.trainerType = 2;
 
         ++count;
@@ -9286,7 +9316,35 @@ void ObjectMgr::LoadTrainerSpell()
     delete result;
 
     sLog.outString();
-    sLog.outString( ">> Loaded %d Trainers", count );
+    sLog.outString( ">> Loaded %d trainer %sspells", count, isTemplates ? "template " : "" );
+}
+
+void ObjectMgr::LoadTrainerTemplates()
+{
+    LoadTrainers("npc_trainer_template", true);
+
+    // post loading check
+    std::set<uint32> trainer_ids;
+
+    for(CacheTrainerSpellMap::const_iterator tItr = m_mCacheTrainerTemplateSpellMap.begin(); tItr != m_mCacheTrainerTemplateSpellMap.end(); ++tItr)
+        trainer_ids.insert(tItr->first);
+
+    for(uint32 i = 1; i < sCreatureStorage.MaxEntry; ++i)
+    {
+        if (CreatureInfo const* cInfo = sCreatureStorage.LookupEntry<CreatureInfo>(i))
+        {
+            if (cInfo->trainerId)
+            {
+                if (trainer_ids.count(cInfo->trainerId) > 0)
+                    trainer_ids.erase(cInfo->trainerId);
+                else
+                    sLog.outErrorDb("Creature (Entry: %u) has trainer_id = %u for nonexistent trainer template", cInfo->Entry, cInfo->trainerId);
+            }
+        }
+    }
+
+    for(std::set<uint32>::const_iterator tItr = trainer_ids.begin(); tItr != trainer_ids.end(); ++tItr)
+        sLog.outErrorDb("Table `npc_trainer_template` has trainer template %u not used by any trainers ", *tItr);
 }
 
 void ObjectMgr::LoadVendors(char const* tableName, bool isTemplates)
@@ -9338,7 +9396,7 @@ void ObjectMgr::LoadVendors(char const* tableName, bool isTemplates)
     delete result;
 
     sLog.outString();
-    sLog.outString( ">> Loaded %u vendor items", count);
+    sLog.outString( ">> Loaded %u vendor %sitems", count, isTemplates ? "template " : "");
 }
 
 
@@ -9358,7 +9416,7 @@ void ObjectMgr::LoadVendorTemplates()
         {
             if (cInfo->vendorId)
             {
-                if (vendor_ids.count(cInfo->vendorId) > 0)
+                if (m_mCacheVendorTemplateItemMap.find(cInfo->vendorId) !=  m_mCacheVendorTemplateItemMap.end())
                     vendor_ids.erase(cInfo->vendorId);
                 else
                     sLog.outErrorDb("Creature (Entry: %u) has vendor_id = %u for nonexistent vendor template", cInfo->Entry, cInfo->vendorId);
@@ -9554,6 +9612,14 @@ void ObjectMgr::LoadGossipMenuItems()
     for(ScriptMapMap::const_iterator itr = sGossipScripts.begin(); itr != sGossipScripts.end(); ++itr)
         gossipScriptSet.insert(itr->first);
 
+    // prepare menuid -> CreatureInfo map for fast access
+    typedef  std::multimap<uint32, const CreatureInfo*> Menu2CInfoMap;
+    Menu2CInfoMap menu2CInfoMap;
+    for(uint32 i = 1;  i < sCreatureStorage.MaxEntry; ++i)
+        if (CreatureInfo const* cInfo = sCreatureStorage.LookupEntry<CreatureInfo>(i))
+            if (cInfo->GossipMenuId)
+                menu2CInfoMap.insert(Menu2CInfoMap::value_type(cInfo->GossipMenuId, cInfo));
+
     do
     {
         bar.step();
@@ -9634,23 +9700,21 @@ void ObjectMgr::LoadGossipMenuItems()
         {
             bool found_menu_uses = false;
             bool found_flags_uses = false;
-            for(uint32 i = 1; !found_flags_uses && i < sCreatureStorage.MaxEntry; ++i)
+
+            std::pair<Menu2CInfoMap::const_iterator, Menu2CInfoMap::const_iterator> tm_bounds = menu2CInfoMap.equal_range(gMenuItem.menu_id);
+            for (Menu2CInfoMap::const_iterator it2 = tm_bounds.first; !found_flags_uses && it2 != tm_bounds.second; ++it2)
             {
-                if (CreatureInfo const* cInfo = sCreatureStorage.LookupEntry<CreatureInfo>(i))
-                {
-                    if (cInfo->GossipMenuId == gMenuItem.menu_id)
-                    {
-                        found_menu_uses = true;
+                CreatureInfo const* cInfo = it2->second;
 
-                        // some from creatures with gossip menu can use gossip option base at npc_flags
-                        if (gMenuItem.npc_option_npcflag & cInfo->npcflag)
-                            found_flags_uses = true;
+                found_menu_uses = true;
 
-                        // unused check data preparing part
-                        if (!sLog.HasLogFilter(LOG_FILTER_DB_STRICTED_CHECK))
-                            menu_ids.erase(cInfo->GossipMenuId);
-                    }
-                }
+                // some from creatures with gossip menu can use gossip option base at npc_flags
+                if (gMenuItem.npc_option_npcflag & cInfo->npcflag)
+                    found_flags_uses = true;
+
+                // unused check data preparing part
+                if (!sLog.HasLogFilter(LOG_FILTER_DB_STRICTED_CHECK))
+                    menu_ids.erase(gMenuItem.menu_id);
             }
 
             if (found_menu_uses && !found_flags_uses)
@@ -9866,16 +9930,16 @@ void ObjectMgr::LoadScriptNames()
       "UNION "
       "SELECT DISTINCT(ScriptName) FROM instance_template WHERE ScriptName <> ''");
 
-    if( !result )
+    if (!result)
     {
-        barGoLink bar( 1 );
+        barGoLink bar(1);
         bar.step();
         sLog.outString();
         sLog.outErrorDb(">> Loaded empty set of Script Names!");
         return;
     }
 
-    barGoLink bar( (int)result->GetRowCount() );
+    barGoLink bar((int)result->GetRowCount());
     uint32 count = 0;
 
     do
@@ -9891,14 +9955,19 @@ void ObjectMgr::LoadScriptNames()
     sLog.outString( ">> Loaded %d Script Names", count );
 }
 
-uint32 ObjectMgr::GetScriptId(const char *name)
+uint32 ObjectMgr::GetScriptId(const char *name) const
 {
     // use binary search to find the script name in the sorted vector
     // assume "" is the first element
-    if(!name) return 0;
+    if (!name)
+        return 0;
+
     ScriptNameMap::const_iterator itr =
         std::lower_bound(m_scriptNames.begin(), m_scriptNames.end(), name);
-    if(itr == m_scriptNames.end() || *itr != name) return 0;
+
+    if (itr == m_scriptNames.end() || *itr != name)
+        return 0;
+
     return uint32(itr - m_scriptNames.begin());
 }
 
@@ -9978,9 +10047,9 @@ void ObjectMgr::RemoveArenaTeam( uint32 Id )
 }
 
 // Functions for scripting access
-uint32 GetAreaTriggerScriptId(uint32 trigger_id)
+uint32 GetAreaTriggerScriptId(uint32 triggerId)
 {
-    return sObjectMgr.GetAreaTriggerScriptId(trigger_id);
+    return sObjectMgr.GetAreaTriggerScriptId(triggerId);
 }
 
 uint32 GetEventIdScriptId(uint32 eventId)
@@ -10006,7 +10075,7 @@ uint32 MANGOS_DLL_SPEC GetScriptId(const char *name)
     return sObjectMgr.GetScriptId(name);
 }
 
-ObjectMgr::ScriptNameMap & GetScriptNames()
+ObjectMgr::ScriptNameMap const& GetScriptNames()
 {
     return sObjectMgr.GetScriptNames();
 }

@@ -24,7 +24,7 @@ CREATE TABLE `db_version` (
   `version` varchar(120) default NULL,
   `creature_ai_version` varchar(120) default NULL,
   `cache_id` int(10) default '0',
-  `required_10864_01_mangos_spell_proc_event` bit(1) default NULL
+  `required_10906_02_mangos_spell_bonus_data` bit(1) default NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Used DB version notes';
 
 --
@@ -1252,6 +1252,7 @@ CREATE TABLE `creature_template` (
   `movementId` int(11) UNSIGNED DEFAULT '0' NOT NULL,
   `RegenHealth` tinyint(3) unsigned NOT NULL default '1',
   `equipment_id` mediumint(8) unsigned NOT NULL default '0',
+  `trainer_id` mediumint(8) unsigned NOT NULL default '0',
   `vendor_id` mediumint(8) unsigned NOT NULL default '0',
   `mechanic_immune_mask` int(10) unsigned NOT NULL default '0',
   `flags_extra` int(10) unsigned NOT NULL default '0',
@@ -1266,7 +1267,7 @@ CREATE TABLE `creature_template` (
 LOCK TABLES `creature_template` WRITE;
 /*!40000 ALTER TABLE `creature_template` DISABLE KEYS */;
 INSERT INTO `creature_template` VALUES
-(1,0,0,0,0,0,10045,0,0,0,'Waypoint(Only GM can see it)','Visual',NULL,0,1,1,64,64,0,0,5,35,35,0,0.91,1.14286,1,0,2,3,0,10,1,2000,2200,8,4096,0,0,0,0,0,0,1,2,100,8,5242886,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,3,1,1,0,0,0,0,0,0,0,0,1,0,0,0,130,'');
+(1,0,0,0,0,0,10045,0,0,0,'Waypoint(Only GM can see it)','Visual',NULL,0,1,1,64,64,0,0,5,35,35,0,0.91,1.14286,1,0,2,3,0,10,1,2000,2200,8,4096,0,0,0,0,0,0,1,2,100,8,5242886,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'',0,3,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,130,'');
 /*!40000 ALTER TABLE `creature_template` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -3988,6 +3989,30 @@ CREATE TABLE `npc_trainer` (
 LOCK TABLES `npc_trainer` WRITE;
 /*!40000 ALTER TABLE `npc_trainer` DISABLE KEYS */;
 /*!40000 ALTER TABLE `npc_trainer` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `npc_trainer_template`
+--
+
+DROP TABLE IF EXISTS `npc_trainer_template`;
+CREATE TABLE `npc_trainer_template` (
+  `entry` mediumint(8) unsigned NOT NULL default '0',
+  `spell` mediumint(8) unsigned NOT NULL default '0',
+  `spellcost` int(10) unsigned NOT NULL default '0',
+  `reqskill` smallint(5) unsigned NOT NULL default '0',
+  `reqskillvalue` smallint(5) unsigned NOT NULL default '0',
+  `reqlevel` tinyint(3) unsigned NOT NULL default '0',
+  UNIQUE KEY `entry_spell` (`entry`,`spell`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+--
+-- Dumping data for table `npc_trainer_template`
+--
+
+LOCK TABLES `npc_trainer_template` WRITE;
+/*!40000 ALTER TABLE `npc_trainer_template` DISABLE KEYS */;
+/*!40000 ALTER TABLE `npc_trainer_template` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -14377,7 +14402,7 @@ INSERT INTO `spell_bonus_data` VALUES
 (47633, 0,      0,       0.15,  0,     'Death Knight - Death Coil Heal'),
 (48743, 0,      0,       0,     0,     'Death Knight - Death Pact'),
 (55095, 0,      0,       0,     0.06325,'Death Knight - Frost Fever'),
-(49184, 0,      0,       0.1,   0,     'Death Knight - Howling Blast'),
+(49184, 0,      0,       0.2,   0,     'Death Knight - Howling Blast'),
 (45477, 0,      0,       0.1,   0,     'Death Knight - Icy Touch'),
 (56903, 0,      0,       0,     0,     'Death Knight - Lichflame'),
 (50842, 0,      0,       0.04,  0,     'Death Knight - Pestilence'),
@@ -14472,6 +14497,7 @@ INSERT INTO `spell_bonus_data` VALUES
 (379,   0,      0,       0,     0,     'Shaman - Earth Shield Triggered'),
 (8042,  0.3858, 0,       0,     0,     'Shaman - Earth Shock'),
 (8050,  0.2142, 0.1,     0,     0,     'Shaman - Flame Shock'),
+(10444, 0,      0,       0,     0,     'Shaman - Flametongue Attack'),
 (8026,  0.1,    0,       0,     0,     'Shaman - Flametongue Weapon Proc'),
 (8056,  0.3858, 0,       0,     0,     'Shaman - Frost Shock'),
 (8034,  0.1,    0,       0,     0,     'Shaman - Frostbrand Attack Rank 1'),
@@ -14482,7 +14508,6 @@ INSERT INTO `spell_bonus_data` VALUES
 (8188,  0.1,    0,       0,     0,     'Shaman - Magma Totam Passive'),
 (61295, 0.4,    0.18,    0,     0,     'Shaman - Riptide'),
 (3606,  0.1667, 0,       0,     0,     'Shaman - Searing Totem Attack'),
-(10444, 0,      0,       0,     0,     'Shaman - Flametongue Attack'),
 /* Warlock */
 (17962, 0,      0,       0,     0,     'Warlock - Conflagrate'),
 (172,   0,      0.2,     0,     0,     'Warlock - Corruption'),
@@ -17389,6 +17414,7 @@ INSERT INTO `spell_proc_event` VALUES
 (63251, 0x7F,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (63280, 0x00, 11, 0x20000000, 0x20000000, 0x20000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (63320, 0x00,  5, 0x00040000, 0x00040000, 0x00040000, 0x00000000, 0x00000000, 0x00000000, 0x00008000, 0x00008000, 0x00008000, 0x00004000, 0x00000001, 0.000000, 0.000000,  0),
+(63335, 0x00, 15, 0x00000000, 0x00000000, 0x00000000, 0x00000002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (63373, 0x00, 11, 0x80000000, 0x80000000, 0x80000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0x00000000, 0.000000, 0.000000,  0),
 (63534, 0x00,  6, 0x00000040, 0x00000040, 0x00000040, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00004000, 0x00000000, 0.000000, 0.000000,  0),
 (64952, 0x00,  7, 0x00000000, 0x00000000, 0x00000000, 0x00000440, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
@@ -17445,6 +17471,8 @@ INSERT INTO `spell_proc_event` VALUES
 (71642, 0x7F,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (71645, 0x7F,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000, 45),
 (71761, 0x00,  3, 0x00000000, 0x00000000, 0x00000000, 0x00100000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000100, 0.000000, 0.000000,  0),
+(71880, 0x00,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 1.000000, 0.000000,  0),
+(71892, 0x00,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 1.000000, 0.000000,  0),
 (74396, 0x00,  3, 0x28E212F7, 0x28E212F7, 0x28E212F7, 0x00119048, 0x00119048, 0x00119048, 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0x00000000, 0.000000, 0.000000,  0),
 (75490, 0x7F,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0),
 (75495, 0x7F,  0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0.000000, 0.000000,  0);
