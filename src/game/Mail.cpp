@@ -1077,11 +1077,11 @@ void MailDraft::SendMailTo(MailReceiver const& receiver, MailSender const& sende
 
 void WorldSession::SendExternalMails()
 {
-	sLog.outString("EXTERNAL MAIL> Sending mails in queue...");
+	//sLog.outString("EXTERNAL MAIL> Sending mails in queue...");
 	QueryResult *result = CharacterDatabase.Query("SELECT id,sender,receiver,subject,message,money,stationery FROM mail_external WHERE sent='0'");
 	if (!result)
 	{
-		sLog.outString("EXTERNAL MAIL> No mails in queue...");
+		//sLog.outString("EXTERNAL MAIL> No mails in queue...");
 		delete result;
 		return;
 	}
@@ -1099,7 +1099,7 @@ void WorldSession::SendExternalMails()
 
 			if (Player* Receiver = sObjectMgr.GetPlayer(receiverGuid))
 			{
-				sLog.outString("EXTERNAL MAIL> Send Mail %u to Player %u...", id, receiverGuid.GetCounter());
+				//sLog.outString("EXTERNAL MAIL> Send Mail %u to Player %u...", id, receiverGuid.GetCounter());
 
 				message = !message.empty() ? message : "Support Message";
 				MailDraft draft(subject, message);
@@ -1128,10 +1128,10 @@ void WorldSession::SendExternalMails()
 				draft.SendMailTo(MailReceiver(Receiver), MailSender(MAIL_NORMAL, senderGuid.GetCounter(), MAIL_STATIONERY_DEFAULT), MAIL_CHECK_MASK_RETURNED);
 				CharacterDatabase.PExecute("UPDATE mail_external SET sent='1' WHERE id='%u'", id);
 			}
-			else
-				sLog.outString("EXTERNAL MAIL> Player %u not in game, skip Mail!", receiverGuid.GetCounter());
+			//else
+				//sLog.outString("EXTERNAL MAIL> Player %u not in game, skip Mail!", receiverGuid.GetCounter());
 		}while(result->NextRow());
 	}
 	delete result;
-	sLog.outString("EXTERNAL MAIL> End Load External Mails...");
+	//sLog.outString("EXTERNAL MAIL> End Load External Mails...");
 }
