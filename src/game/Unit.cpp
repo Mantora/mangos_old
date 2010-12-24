@@ -275,6 +275,15 @@ Unit::Unit()
     // remove aurastates allowing special moves
     for(int i=0; i < MAX_REACTIVE; ++i)
         m_reactiveTimer[i] = 0;
+
+    m_transport = NULL;
+
+    m_pVehicle = NULL;
+    m_pVehicleKit = NULL;
+
+    // Frozen Mod
+    m_spoofSamePlayerFaction = false;
+    // Frozen Mod
 }
 
 Unit::~Unit()
@@ -11784,9 +11793,9 @@ void Unit::ExitVehicle()
         return;
 
     m_pVehicle->RemovePassenger(this);
-	
-	if((GetTypeId() == TYPEID_PLAYER) && (((Player*)this)->GetQuestStatus(12779) == QUEST_STATUS_INCOMPLETE) && (m_pVehicle->GetVehicleId() == 156))
-		((Player*)this)->CastSpell(((Player*)this), 74470, false);
+    
+    if((GetTypeId() == TYPEID_PLAYER) && (((Player*)this)->GetQuestStatus(12779) == QUEST_STATUS_INCOMPLETE) && (m_pVehicle->GetVehicleId() == 156))
+        ((Player*)this)->CastSpell(((Player*)this), 74470, false);
 
     m_pVehicle = NULL;
 
