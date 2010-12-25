@@ -574,6 +574,14 @@ class ChatHandler
         bool HandleFreezeCommand(char *args);
         bool HandleUnFreezeCommand(char *args);
         bool HandleListFreezeCommand(char* args);
+        bool HandleVipDebuffCommand(char* args);
+        bool HandleVipMapCommand(char* args);
+        bool HandleVipBankCommand(char* args);
+        bool HandleVipRepairCommand(char* args);
+        bool HandleVipAuctionCommand(char* args);
+        bool HandleVipResetTalentsCommand(char* args);
+        bool HandleVipWhispersCommand(char* args);
+        bool HandleVipTaxiCommand(char* args);
 
         bool HandleAHBotOptionsCommand(char* args);
 
