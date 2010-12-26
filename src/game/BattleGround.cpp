@@ -765,6 +765,13 @@ void BattleGround::EndBattleGround(Team winner)
             winner_rating = winner_arena_team->GetStats().rating;
             int32 winner_change = winner_arena_team->WonAgainst(loser_rating);
             int32 loser_change = loser_arena_team->LostAgainst(winner_rating);
+            uint32 noratinglimit = sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE);
+            uint32 halfratinglimit = sWorld.getConfig(CONFIG_UINT32_LOSERHALFCHANGE);
+
+            if(winner_rating <= noratinglimit || loser_rating <= noratinglimit)
+                loser_change = 0;
+            else if (loser_rating <= halfratinglimit)
+                loser_change /= 2;
             DEBUG_LOG("--- Winner rating: %u, Loser rating: %u, Winner change: %i, Loser change: %i ---", winner_rating, loser_rating, winner_change, loser_change);
             SetArenaTeamRatingChangeForTeam(winner, winner_change);
             SetArenaTeamRatingChangeForTeam(GetOtherTeam(winner), loser_change);
