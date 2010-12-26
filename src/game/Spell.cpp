@@ -3184,16 +3184,18 @@ void Spell::cast(bool skipCheck)
             // Bandages
             if (m_spellInfo->Mechanic == MECHANIC_BANDAGE)
                 AddPrecastSpell(11196);                     // Recently Bandaged
-            // Stoneskin
-            else if (m_spellInfo->Id == 20594)
+            else if(m_spellInfo->Id == 7744)                // Will of the Forsaken
+                AddTriggeredSpell(72757);                   // PvP trinket Cooldown
+            else if (m_spellInfo->Id == 20594)              // Stoneskin
                 AddTriggeredSpell(65116);                   // Stoneskin - armor 10% for 8 sec
-            // Chaos Bane strength buff
-            else if (m_spellInfo->Id == 71904)
+            else if (m_spellInfo->Id == 71904)              // Chaos Bane strength buff
                 AddTriggeredSpell(73422);
             else if (m_spellInfo->Id == 74607)
-                AddTriggeredSpell(74610);                  // Fiery combustion
+                AddTriggeredSpell(74610);                   // Fiery combustion
             else if (m_spellInfo->Id == 74799)
-                AddTriggeredSpell(74800);                  // Soul consumption
+                AddTriggeredSpell(74800);                   // Soul consumption
+            else if(m_spellInfo->Id == 42292)               // PvP trinket
+                AddTriggeredSpell(72752);                   // Will of the Forsaken Cooldown
             break;
         }
         case SPELLFAMILY_MAGE:
