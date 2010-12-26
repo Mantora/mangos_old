@@ -953,6 +953,10 @@ enum MangosStrings
     LANG_CHATSPY_LISTOFSPYS             = 11606,
     LANG_CHATSPY_TOTAL                  = 11607,
     LANG_CHATSPY_ONESPYSANOTHER         = 11608,
+    
+    //VIP
+    VIP_CANT_DO                         = 12000,
+    VIP_CANT_DO_2                       = 12001,
 
     // Use for custom patches             11000-11999
 
