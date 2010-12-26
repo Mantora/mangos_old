@@ -674,7 +674,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "import",         SEC_ADMINISTRATOR,  false, &ChatHandler::HandleWpImportCommand,            "", NULL },
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
-
+    
     static ChatCommand chatspyCommandTable[] =
     {
         { "set",            SEC_ADMINISTRATOR,  false, &ChatHandler::HandleChatSpySetCommand,          "", NULL },
