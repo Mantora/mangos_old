@@ -712,7 +712,8 @@ void Spell::EffectSchoolDMG(SpellEffectIndex effect_idx)
                                 unitTarget->RemoveAuraHolderFromStack(spellId, doses, m_caster->GetGUID());
 
                             damage *= doses;
-                            damage += int32(((Player*)m_caster)->GetTotalAttackPowerValue(BASE_ATTACK) * 0.09f * doses);
+                            // based on comments, attack power bonus is calculated by number of combo points, not by number of consumed stacks of poison...
+                            damage += int32(((Player*)m_caster)->GetTotalAttackPowerValue(BASE_ATTACK) * 0.09f * combo);
                         }
                         // Eviscerate and Envenom Bonus Damage (item set effect)
                         if (m_caster->GetDummyAura(37169))
@@ -3019,6 +3020,10 @@ void Spell::EffectTriggerSpell(SpellEffectIndex effIndex)
         // Vanish (not exist)
         case 18461:
         {
+            // Stop combat and remove attackers
+            unitTarget->CombatStop();
+            unitTarget->getHostileRefManager().deleteReferences();
+
             unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_ROOT);
             unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_DECREASE_SPEED);
             unitTarget->RemoveSpellsCausingAura(SPELL_AURA_MOD_STALKED);
@@ -6101,6 +6106,9 @@ void Spell::EffectSummonObjectWild(SpellEffectIndex eff_idx)
     {
         if(m_spellInfo->Id == 48018)
         {
+            // Hack::Check if caster has already the aura, if yes, remove it:
+            if (m_caster->HasAura(48018))
+                m_caster->RemoveAurasDueToSpell(48018);
             x = m_caster->GetPositionX();
             y = m_caster->GetPositionY();
             z = m_caster->GetPositionZ();
@@ -8626,7 +8634,7 @@ void Spell::EffectKnockBack(SpellEffectIndex eff_idx)
         if (m_caster->HasAura(62126)) // Glyph of Blast Wave
             return;
 
-    unitTarget->KnockBackFrom(m_caster,float(m_spellInfo->EffectMiscValue[eff_idx])/10,float(damage)/30);
+    unitTarget->KnockBackFrom(m_caster,float(m_spellInfo->EffectMiscValue[eff_idx])/10,float(damage)/10);
 }
 
 void Spell::EffectSendTaxi(SpellEffectIndex eff_idx)

@@ -1093,6 +1093,16 @@ void Spell::DoAllEffectOnTarget(TargetInfo *target)
         m_damage += target->damage;
     }
 
+    // recheck for visibility of target
+    if ((m_spellInfo->speed > 0.0f || 
+        (m_spellInfo->EffectImplicitTargetA[0] == TARGET_CHAIN_DAMAGE && GetSpellCastTime(m_spellInfo, this) > 0)) &&
+        !unit->isVisibleForOrDetect(m_caster, m_caster, false))
+    {
+        caster->SendSpellMiss(unit, m_spellInfo->Id, SPELL_MISS_EVADE);
+        missInfo = SPELL_MISS_EVADE;
+        return;
+    }
+
     if (missInfo==SPELL_MISS_NONE)                          // In case spell hit target, do all effect on that target
         DoSpellHitOnUnit(unit, mask);
     else if (missInfo == SPELL_MISS_REFLECT)                // In case spell reflect from target, do all effect on caster (if hit)
@@ -3215,16 +3225,18 @@ void Spell::cast(bool skipCheck)
             // Bandages
             if (m_spellInfo->Mechanic == MECHANIC_BANDAGE)
                 AddPrecastSpell(11196);                     // Recently Bandaged
-            // Stoneskin
-            else if (m_spellInfo->Id == 20594)
+            else if(m_spellInfo->Id == 7744)                // Will of the Forsaken
+                AddTriggeredSpell(72757);                   // PvP trinket Cooldown
+            else if (m_spellInfo->Id == 20594)              // Stoneskin
                 AddTriggeredSpell(65116);                   // Stoneskin - armor 10% for 8 sec
-            // Chaos Bane strength buff
-            else if (m_spellInfo->Id == 71904)
+            else if (m_spellInfo->Id == 71904)              // Chaos Bane strength buff
                 AddTriggeredSpell(73422);
             else if (m_spellInfo->Id == 74607)
-                AddTriggeredSpell(74610);                  // Fiery combustion
+                AddTriggeredSpell(74610);                   // Fiery combustion
             else if (m_spellInfo->Id == 74799)
-                AddTriggeredSpell(74800);                  // Soul consumption
+                AddTriggeredSpell(74800);                   // Soul consumption
+            else if(m_spellInfo->Id == 42292)               // PvP trinket
+                AddTriggeredSpell(72752);                   // Will of the Forsaken Cooldown
             break;
         }
         case SPELLFAMILY_MAGE:

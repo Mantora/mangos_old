@@ -4398,6 +4398,11 @@ void Aura::HandleModStealth(bool apply, bool Real)
         // only at real aura add
         if (Real)
         {
+        
+            //Player stealths has no logner ranks...could be correct
+            if(GetSpellProto()->EffectRealPointsPerLevel[GetEffIndex()])
+                m_modifier.m_amount = target->getLevel()*GetSpellProto()->EffectRealPointsPerLevel[GetEffIndex()];
+
             target->SetStandFlags(UNIT_STAND_FLAGS_CREEP);
 
             if (target->GetTypeId()==TYPEID_PLAYER)
@@ -6073,6 +6078,23 @@ void Aura::HandleModSpellCritChance(bool apply, bool Real)
     else
     {
         GetTarget()->m_baseSpellCritChance += apply ? m_modifier.m_amount:(-m_modifier.m_amount);
+    }
+    
+    switch(GetId()) 
+    { 
+        // Elemental Oath (dmg increase while Clearcasting) 
+        case 51466: 
+        case 51470: 
+        { 
+            if (GetTarget()->GetTypeId() != TYPEID_PLAYER) 
+                break; 
+            // NO DBC??? - need to hack :( 
+            m_spellmod = new SpellModifier(SPELLMOD_EFFECT2, SPELLMOD_FLAT, GetSpellProto()->CalculateSimpleValue(EFFECT_INDEX_1), GetId(), UI64LIT(0x400000000000)); 
+ 
+            ((Player*)GetTarget())->AddSpellMod(m_spellmod, apply); 
+        } 
+        default: 
+            break; 
     }
 }
 
@@ -9358,6 +9380,22 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                         }
                     }
                 }
+                else
+                    return;
+            }
+            // Health Funnel
+            else if (m_spellProto->SpellFamilyFlags & 0x01000000)
+            {
+                Unit* caster = GetCaster();
+                if (!caster)
+                    return;
+                // Improved Health Funnel
+                // rank 1
+                if (caster->HasAura(18703))
+                    spellId1 = 60955;
+                // rank 2
+                else if (caster->HasAura(18704))
+                    spellId1 = 60956;
                 else
                     return;
             }
