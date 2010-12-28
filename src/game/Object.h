@@ -146,13 +146,19 @@ class MANGOS_DLL_SPEC Object
 
         const int32& GetInt32Value( uint16 index ) const
         {
-            MANGOS_ASSERT( index < m_valuesCount || PrintIndexError( index , false) );
+            //MANGOS_ASSERT( index < m_valuesCount || PrintIndexError( index , false) );
+            if (!m_uint32Values)
+                return GetInt32Value(0);
+
             return m_int32Values[ index ];
         }
 
         const uint32& GetUInt32Value( uint16 index ) const
         {
-            MANGOS_ASSERT( index < m_valuesCount || PrintIndexError( index , false) );
+            //MANGOS_ASSERT( index < m_valuesCount || PrintIndexError( index , false) );
+            if (!m_uint32Values)
+                return GetUInt32Value(0);
+
             return m_uint32Values[ index ];
         }
 
