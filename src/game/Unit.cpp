@@ -6586,8 +6586,8 @@ Unit* Unit::SelectMagnetTarget(Unit *victim, Spell* spell, SpellEffectIndex eff)
     if(!victim)
         return NULL;
 
-    // Magic case
-    if (spell && (spell->m_spellInfo->DmgClass == SPELL_DAMAGE_CLASS_NONE || spell->m_spellInfo->DmgClass == SPELL_DAMAGE_CLASS_MAGIC))
+    // SPELL_AURA_SPELL_MAGNET must NOT take any physical spells except for Hamstring, Wing Clip and Death Grip
+    if (spell && ((spell->m_spellInfo->SchoolMask != SPELL_SCHOOL_MASK_NORMAL && spell->m_spellInfo->DmgClass == SPELL_DAMAGE_CLASS_MAGIC) || (spell->m_spellInfo->Id == 1715 || spell->m_spellInfo->Id == 2974 || spell->m_spellInfo->Id == 49576)))
     {
         Unit::AuraList const& magnetAuras = victim->GetAurasByType(SPELL_AURA_SPELL_MAGNET);
         for(Unit::AuraList::const_iterator itr = magnetAuras.begin(); itr != magnetAuras.end(); ++itr)
@@ -8391,8 +8391,7 @@ void Unit::ClearInCombat()
     // Player's state will be cleared in Player::UpdateContestedPvP
     if (GetTypeId() != TYPEID_PLAYER)
     {
-        Creature* creature = (Creature*)this;
-        if (creature->GetCreatureInfo() && creature->GetCreatureInfo()->unit_flags & UNIT_FLAG_OOC_NOT_ATTACKABLE)
+        if (((Creature*)this)->GetCreatureInfo()->unit_flags & UNIT_FLAG_OOC_NOT_ATTACKABLE)
             SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
 
         clearUnitState(UNIT_STAT_ATTACK_PLAYER);
@@ -9628,7 +9627,7 @@ void Unit::ApplyDiminishingToDuration(DiminishingGroup group, int32 &duration,Un
     float mod = 1.0f;
 
     // Some diminishings applies to mobs too (for example, Stun)
-    if((GetDiminishingReturnsGroupType(group) == DRTYPE_PLAYER && GetTypeId() == TYPEID_PLAYER) || GetDiminishingReturnsGroupType(group) == DRTYPE_ALL)
+    if((GetDiminishingReturnsGroupType(group) == DRTYPE_PLAYER && (GetCharmerOrOwner() ? GetCharmerOrOwner()->GetTypeId() : GetTypeId()) == TYPEID_PLAYER) || GetDiminishingReturnsGroupType(group) == DRTYPE_ALL)
     {
         DiminishingLevels diminish = Level;
         switch(diminish)

@@ -1349,7 +1349,7 @@ void Spell::DoSpellHitOnUnit(Unit *unit, const uint32 effectMask)
         m_diminishGroup = GetDiminishingReturnsGroupForSpell(m_spellInfo,m_triggeredByAuraSpell);
         m_diminishLevel = unit->GetDiminishing(m_diminishGroup);
         // Increase Diminishing on unit, current informations for actually casts will use values above
-        if ((GetDiminishingReturnsGroupType(m_diminishGroup) == DRTYPE_PLAYER && unit->GetTypeId() == TYPEID_PLAYER) ||
+        if ((GetDiminishingReturnsGroupType(m_diminishGroup) == DRTYPE_PLAYER && (unit->GetCharmerOrOwner() ? unit->GetCharmerOrOwner()->GetTypeId() : unit->GetTypeId()) == TYPEID_PLAYER) ||
             GetDiminishingReturnsGroupType(m_diminishGroup) == DRTYPE_ALL)
             unit->IncrDiminishing(m_diminishGroup);
     }
@@ -2173,6 +2173,11 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 {
                     if (Unit *owner = m_caster->GetOwner())
                         targetUnitMap.push_back(owner);
+                    break;
+                }
+                case 59754:                                 // Rune Tap triggered by Glyph of Rune Tap (does not include caster)
+                {
+                    FillRaidOrPartyTargets(targetUnitMap, m_caster, m_caster, radius, false, true, false);
                     break;
                 }
                 default:
@@ -3225,18 +3230,16 @@ void Spell::cast(bool skipCheck)
             // Bandages
             if (m_spellInfo->Mechanic == MECHANIC_BANDAGE)
                 AddPrecastSpell(11196);                     // Recently Bandaged
-            else if(m_spellInfo->Id == 7744)                // Will of the Forsaken
-                AddTriggeredSpell(72757);                   // PvP trinket Cooldown
-            else if (m_spellInfo->Id == 20594)              // Stoneskin
+            // Stoneskin
+            else if (m_spellInfo->Id == 20594)
                 AddTriggeredSpell(65116);                   // Stoneskin - armor 10% for 8 sec
-            else if (m_spellInfo->Id == 71904)              // Chaos Bane strength buff
+            // Chaos Bane strength buff
+            else if (m_spellInfo->Id == 71904)
                 AddTriggeredSpell(73422);
             else if (m_spellInfo->Id == 74607)
-                AddTriggeredSpell(74610);                   // Fiery combustion
+                AddTriggeredSpell(74610);                  // Fiery combustion
             else if (m_spellInfo->Id == 74799)
-                AddTriggeredSpell(74800);                   // Soul consumption
-            else if(m_spellInfo->Id == 42292)               // PvP trinket
-                AddTriggeredSpell(72752);                   // Will of the Forsaken Cooldown
+                AddTriggeredSpell(74800);                  // Soul consumption
             break;
         }
         case SPELLFAMILY_MAGE:
