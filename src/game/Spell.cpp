@@ -2175,6 +2175,11 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                         targetUnitMap.push_back(owner);
                     break;
                 }
+                case 59754:                                 // Rune Tap triggered by Glyph of Rune Tap (does not include caster)
+                {
+                    FillRaidOrPartyTargets(targetUnitMap, m_caster, m_caster, radius, false, true, false);
+                    break;
+                }
                 default:
                 {
                     FillRaidOrPartyTargets(targetUnitMap, m_caster, m_caster, radius, false, true, true);
