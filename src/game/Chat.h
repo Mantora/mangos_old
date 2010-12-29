@@ -587,6 +587,12 @@ class ChatHandler
 
         //! Development Commands
         bool HandleSaveAllCommand(char* args);
+        
+        // ChatSpy
+        bool HandleChatSpyResetCommand(char * args);
+        bool HandleChatSpyCancelCommand(char * args);
+        bool HandleChatSpySetCommand(char * args);
+        bool HandleChatSpyStatusCommand(char * args);
 
         Player*   getSelectedPlayer();
         Creature* getSelectedCreature();
@@ -709,6 +715,8 @@ class CliHandler : public ChatHandler
         void* m_callbackArg;
         Print* m_print;
 };
+
+char const *fmtstring( char const *format, ... );
 
 
 
