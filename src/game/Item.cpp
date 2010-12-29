@@ -22,7 +22,6 @@
 #include "WorldPacket.h"
 #include "Database/DatabaseEnv.h"
 #include "ItemEnchantmentMgr.h"
-#include "World.h"
 
 void AddItemsSetItem(Player*player,Item *item)
 {
@@ -1062,18 +1061,6 @@ Item* Item::CreateItem( uint32 item, uint32 count, Player const* player )
         if( pItem->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_ITEM), item, player) )
         {
             pItem->SetCount( count );
-            /** World of Warcraft Armory **/
-            if (sWorld.getConfig(CONFIG_BOOL_ARMORY_ENABLE))
-            {
-                if (pProto->Quality > 2 && pProto->Flags != 2048 && (pProto->Class == ITEM_CLASS_WEAPON || pProto->Class == ITEM_CLASS_ARMOR) && player)
-                {
-                    std::ostringstream ss;
-                    sLog.outDetail("WoWArmory: write feed log (guid: %u, type: 2, data: %u)", player->GetGUIDLow(), item);
-                    ss << "REPLACE INTO character_feed_log (guid, type, data, date, counter, item_guid) VALUES (" << player->GetGUIDLow() << ", 2, " << item << ", UNIX_TIMESTAMP(NOW()), 1," << pItem->GetGUIDLow()  << ")";
-                    CharacterDatabase.PExecute( ss.str().c_str() );
-                }
-            }
-            /** World of Warcraft Armory **/
             return pItem;
         }
         else

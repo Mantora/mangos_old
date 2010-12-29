@@ -793,10 +793,6 @@ void World::LoadConfigSettings(bool reload)
     setConfigPos(CONFIG_UINT32_SKILL_PREMIUM_GAIN_DEFENSE,      "Premium.SkillGain.Defense", 1);
     setConfigPos(CONFIG_UINT32_SKILL_PREMIUM_GAIN_CRAFTING,     "Premium.SkillGain.Crafting", 1);
     setConfigPos(CONFIG_UINT32_SKILL_PREMIUM_GAIN_GATHERING,    "Premium.SkillGain.Gathering", 1);
-    
-    // Wow Armory support
-    setConfig(CONFIG_BOOL_ARMORY_ENABLE,                       "Armory.CharStats.Enable", false);
-    setConfig(CONFIG_BOOL_ARENA_ARMORY_ENABLE,                 "Armory.ArenaChart.Enable", false);
 
 
     m_VisibleUnitGreyDistance = sConfig.GetFloatDefault("Visibility.Distance.Grey.Unit", 1);
