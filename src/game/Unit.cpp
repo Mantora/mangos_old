@@ -866,6 +866,13 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
             {
                 // FIXME: kept by compatibility. don't know in BG if the restriction apply.
                 bg->UpdatePlayerScore(killer, SCORE_DAMAGE_DONE, damage);
+                /** World of Warcraft Armory **/
+                if (sWorld.getConfig(CONFIG_BOOL_ARMORY_ENABLE) && sWorld.getConfig(CONFIG_BOOL_ARENA_ARMORY_ENABLE))
+                {
+                    if (BattleGround *bgV = ((Player*)pVictim)->GetBattleGround())
+                        bgV->UpdatePlayerScore(((Player*)pVictim), SCORE_DAMAGE_TAKEN, damage);
+                }
+                /** World of Warcraft Armory **/
             }
         }
 
@@ -1070,7 +1077,13 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
                     if (m->IsRaidOrHeroicDungeon())
                     {
                         if(cVictim->GetCreatureInfo()->flags_extra & CREATURE_FLAG_EXTRA_INSTANCE_BIND)
+                        {
                             ((InstanceMap *)m)->PermBindAllPlayers(creditedPlayer);
+                            /** World of Warcraft Armory **/
+                            if (sWorld.getConfig(CONFIG_BOOL_ARMORY_ENABLE))
+                                creditedPlayer->WriteWowArmoryDatabaseLog(3, cVictim->GetCreatureInfo()->Entry); // Difficulty will be defined in Player::WriteWowArmoryDatabaseLog();
+                            /** World of Warcraft Armory **/
+                        }
                     }
                     else
                     {
@@ -6582,6 +6595,13 @@ int32 Unit::DealHeal(Unit *pVictim, uint32 addhealth, SpellEntry const *spellPro
     {
         ((Player*)pVictim)->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_TOTAL_HEALING_RECEIVED, gain);
         ((Player*)pVictim)->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_HEALING_RECEIVED, addhealth);
+        /** World of Warcraft Armory **/
+        if (sWorld.getConfig(CONFIG_BOOL_ARMORY_ENABLE) && sWorld.getConfig(CONFIG_BOOL_ARENA_ARMORY_ENABLE))
+        {
+            if (BattleGround *bgV = ((Player*)pVictim)->GetBattleGround())
+                bgV->UpdatePlayerScore(((Player*)pVictim), SCORE_HEALING_TAKEN, gain);
+        }
+        /** World of Warcraft Armory **/
     }
 
     return gain;
