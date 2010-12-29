@@ -660,6 +660,20 @@ ChatCommand * ChatHandler::getCommandTable()
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
     
+    static ChatCommand vipCommandTable[] =
+    {
+        { "debuff",         SEC_ADMINISTRATOR,  false, &ChatHandler::HandleVipDebuffCommand,           "", NULL },
+        { "map",            SEC_ADMINISTRATOR,  false, &ChatHandler::HandleVipMapCommand,              "", NULL },
+        { "bank",           SEC_ADMINISTRATOR,  false, &ChatHandler::HandleVipBankCommand,             "", NULL },
+        { "repair",         SEC_ADMINISTRATOR,  false, &ChatHandler::HandleVipRepairCommand,           "", NULL },
+        { "auction",        SEC_ADMINISTRATOR,  false, &ChatHandler::HandleVipAuctionCommand,          "", NULL },
+        { "resettalents",   SEC_ADMINISTRATOR,  false, &ChatHandler::HandleVipResetTalentsCommand,     "", NULL },
+        { "whispers",       SEC_ADMINISTRATOR,  false, &ChatHandler::HandleVipWhispersCommand,         "", NULL },
+        { "taxi",           SEC_ADMINISTRATOR,  false, &ChatHandler::HandleVipTaxiCommand,             "", NULL },
+        
+        { NULL,             0,                  false, NULL,                                           "", NULL }
+    };
+    
     static ChatCommand chatspyCommandTable[] =
     {
         { "set",            SEC_ADMINISTRATOR,  false, &ChatHandler::HandleChatSpySetCommand,          "", NULL },
@@ -766,6 +780,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "unfreeze",       SEC_ADMINISTRATOR,     true, &ChatHandler::HandleUnFreezeCommand,            "", NULL },
         { "listfreeze",     SEC_ADMINISTRATOR,     true, &ChatHandler::HandleListFreezeCommand,          "", NULL },
         { "chatspy",        SEC_ADMINISTRATOR,     true, NULL,                                           "", chatspyCommandTable },
+        { "vip",            SEC_ADMINISTRATOR,     true, NULL,                                           "", vipCommandTable },
         { "dev",            SEC_ADMINISTRATOR,     true, &ChatHandler::HandleDevCommand,                 "", NULL },
 
         { NULL,             0,                  false, NULL,                                           "", NULL }
