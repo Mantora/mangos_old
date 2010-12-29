@@ -674,15 +674,6 @@ ChatCommand * ChatHandler::getCommandTable()
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
     
-    static ChatCommand chatspyCommandTable[] =
-    {
-        { "set",            SEC_ADMINISTRATOR,  false, &ChatHandler::HandleChatSpySetCommand,          "", NULL },
-        { "reset",          SEC_ADMINISTRATOR,  false, &ChatHandler::HandleChatSpyResetCommand,        "", NULL },
-        { "cancel",         SEC_ADMINISTRATOR,  false, &ChatHandler::HandleChatSpyCancelCommand,       "", NULL },
-        { "status",         SEC_ADMINISTRATOR,  false, &ChatHandler::HandleChatSpyStatusCommand,       "", NULL },
-        { NULL,             0,                  false, NULL,                                           "", NULL }
-    };
-
     static ChatCommand commandTable[] =
     {
         { "account",        SEC_PLAYER,         true,  NULL,                                           "", accountCommandTable  },
@@ -779,7 +770,6 @@ ChatCommand * ChatHandler::getCommandTable()
         { "freeze",         SEC_ADMINISTRATOR,     true, &ChatHandler::HandleFreezeCommand,              "", NULL },
         { "unfreeze",       SEC_ADMINISTRATOR,     true, &ChatHandler::HandleUnFreezeCommand,            "", NULL },
         { "listfreeze",     SEC_ADMINISTRATOR,     true, &ChatHandler::HandleListFreezeCommand,          "", NULL },
-        { "chatspy",        SEC_ADMINISTRATOR,     true, NULL,                                           "", chatspyCommandTable },
         { "vip",            SEC_ADMINISTRATOR,     true, NULL,                                           "", vipCommandTable },
 
         { NULL,             0,                  false, NULL,                                           "", NULL }
@@ -2724,38 +2714,6 @@ bool ChatHandler::ExtractUint32KeyFromLink(char** text, char const* linkType, ui
         return false;
 
     return ExtractUInt32(&arg, value);
-}
-
-char const *fmtstring( char const *format, ... )
-{
-    va_list        argptr;
-    #define    MAX_FMT_STRING    32000
-    static char        temp_buffer[MAX_FMT_STRING];
-    static char        string[MAX_FMT_STRING];
-    static int        index = 0;
-    char    *buf;
-    int len;
-
-    va_start(argptr, format);
-    vsnprintf(temp_buffer,MAX_FMT_STRING, format, argptr);
-    va_end(argptr);
-
-    len = strlen(temp_buffer);
-
-    if( len >= MAX_FMT_STRING )
-        return "ERROR";
-
-    if (len + index >= MAX_FMT_STRING-1)
-    {
-        index = 0;
-    }
-
-    buf = &string[index];
-    memcpy( buf, temp_buffer, len+1 );
-
-    index += len + 1;
-
-    return buf;
 }
 
 GameObject* ChatHandler::GetObjectGlobalyWithGuidOrNearWithDbGuid(uint32 lowguid,uint32 entry)
