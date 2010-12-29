@@ -781,6 +781,7 @@ ChatCommand * ChatHandler::getCommandTable()
         { "listfreeze",     SEC_ADMINISTRATOR,     true, &ChatHandler::HandleListFreezeCommand,          "", NULL },
         { "chatspy",        SEC_ADMINISTRATOR,     true, NULL,                                           "", chatspyCommandTable },
         { "vip",            SEC_ADMINISTRATOR,     true, NULL,                                           "", vipCommandTable },
+        { "dev",            SEC_ADMINISTRATOR,     true, &ChatHandler::HandleDevCommand,                 "", NULL },
 
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };

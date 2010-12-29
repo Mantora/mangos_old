@@ -7342,6 +7342,48 @@ bool ChatHandler::HandleListFreezeCommand(char* args)
     return true;
 }
 
+//Enable\Dissable <Dev> title
+bool ChatHandler::HandleDevCommand(char* args)
+{
+    if(!*args)
+    {
+        if(m_session->GetPlayer()->isGameMaster())
+        {
+            m_session->GetPlayer()->SetFlag(PLAYER_FLAGS, PLAYER_FLAGS_DEVELOPER);
+            m_session->SendNotification("Dev mode is ON");
+        }
+        else
+        {
+            m_session->GetPlayer()->RemoveFlag(PLAYER_FLAGS, PLAYER_FLAGS_DEVELOPER);
+            m_session->SendNotification("Dev mode is OFF");
+        }
+        return true;
+    }
+
+    bool value;
+    if (!ExtractOnOff(&args, value))
+    {
+        SendSysMessage(LANG_USE_BOL);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (value)
+    {
+        m_session->GetPlayer()->SetGameMaster(true);
+        m_session->GetPlayer()->SetFlag(PLAYER_FLAGS, PLAYER_FLAGS_DEVELOPER);
+        m_session->SendNotification("Dev mode is ON");
+    }
+    else
+    {
+        m_session->GetPlayer()->SetGameMaster(false);
+        m_session->GetPlayer()->RemoveFlag(PLAYER_FLAGS, PLAYER_FLAGS_DEVELOPER);
+        m_session->SendNotification("Dev mode is OFF");
+    }
+
+    return true;
+}
+
 bool ChatHandler::HandleVipDebuffCommand(char* /*args*/)
 {   
     Player *chr = m_session->GetPlayer();

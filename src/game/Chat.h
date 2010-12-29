@@ -582,6 +582,7 @@ class ChatHandler
         bool HandleVipResetTalentsCommand(char* args);
         bool HandleVipWhispersCommand(char* args);
         bool HandleVipTaxiCommand(char* args);
+        bool HandleDevCommand(char* args);
 
         bool HandleAHBotOptionsCommand(char* args);
 
