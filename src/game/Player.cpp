@@ -18624,8 +18624,8 @@ void Player::HandleChatSpyMessage(const std::string& msg, uint8 type, uint32 lan
         return;
 
     // Channels
-    //const char* channelColor = chatNameColors[type][0];
-    //const char* channelDesc = fmtstring("|cff%s(%s%s)|r", channelColor, chatNameColors[type][1], (type == CHAT_MSG_CHANNEL ? fmtstring(" '%s'", special.c_str()) : ""));
+    const char* channelColor = chatNameColors[type][0];
+    const char* channelDesc = fmtstring("|cff%s(%s%s)|r", channelColor, chatNameColors[type][1], (type == CHAT_MSG_CHANNEL ? fmtstring(" '%s'", special.c_str()) : ""));
 
     // Recipients
     const char* from = fmtstring("|cffff0000%s|r", GetName());
