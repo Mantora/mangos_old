@@ -568,7 +568,6 @@ class MANGOS_DLL_SPEC WorldObject : public Object
 
         void SetMap(Map * map);
         Map * GetMap() const { return m_currMap; }
-        Map * GetMapSafe() const { return m_currMap; }
         //used to check all object's GetMap() calls when object is not in world!
         void ResetMap() { m_currMap = NULL; }
 
