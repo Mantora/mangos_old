@@ -204,7 +204,10 @@ enum ScoreType
     SCORE_GRAVEYARDS_DEFENDED   = 12,
     SCORE_TOWERS_ASSAULTED      = 13,
     SCORE_TOWERS_DEFENDED       = 14,
-    SCORE_SECONDARY_OBJECTIVES  = 15
+    SCORE_SECONDARY_OBJECTIVES  = 15,
+    //SA
+	SCORE_GATES_DESTROYED		= 16,
+	SCORE_DEMOLISHERS_DESTROYED	= 17
 };
 
 enum ArenaType
@@ -347,6 +350,12 @@ class BattleGround
         uint32 GetBonusHonorFromKill(uint32 kills) const;
         bool IsRandom() { return m_IsRandom; }
 
+        // Strand of the Ancients and Isle of Conquest related
+        virtual uint32 GetController()				  const	{ return false; }
+        virtual uint8  GetGydController(uint8 /*gyd*/) const { return false; }
+        virtual uint8  GetNodeControll(uint8 /*node*/) const { return false; }
+        virtual uint32 GetVehicleFaction(uint8 vehicleType) const { return 35; }
+
         // Set methods:
         void SetName(char const* Name)      { m_Name = Name; }
         void SetTypeID(BattleGroundTypeId TypeID) { m_TypeID = TypeID; }
@@ -453,6 +462,7 @@ class BattleGround
         void SendMessageToAll(int32 entry, ChatMsg type, Player const* source = NULL);
         void SendYellToAll(int32 entry, uint32 language, ObjectGuid guid);
         void PSendMessageToAll(int32 entry, ChatMsg type, Player const* source, ...  );
+		void SendWarningToAll(int32 entry, ...);
 
         GameObject* GetBGObject(uint32 type);
 
