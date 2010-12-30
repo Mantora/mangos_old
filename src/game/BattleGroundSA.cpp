@@ -50,8 +50,6 @@ BattleGroundSA::BattleGroundSA()
     for (int32 i = 0; i <= BG_SA_GATE_MAX; ++i)
         GateStatus[i] = 1;
     TimerEnabled = false;
-    alliance_sc = 0;
-    horde_sc = 0;
     TimeST2Round = 60000;
     Round_timer = 0;
     Phase = 1;
@@ -59,7 +57,6 @@ BattleGroundSA::BattleGroundSA()
 
 BattleGroundSA::~BattleGroundSA()
 {
-
 }
 
 void BattleGroundSA::FillInitialWorldStates(WorldPacket& data, uint32& count)
@@ -117,38 +114,22 @@ void BattleGroundSA::ToggleTimer()
     UpdateWorldState(BG_SA_ENABLE_TIMER, (TimerEnabled) ? 1 : 0);
 }
 
-void BattleGroundSA::EndBattleGround(uint32 winner)
+void BattleGroundSA::EndBattleGround(Team winner)
 {
-    if (winner == ALLIANCE)
-        ++alliance_sc;
-    else if (winner == HORDE)
-        ++horde_sc;
-    Team win = TEAM_NONE;
-    if(alliance_sc == 0 && horde_sc == 0)
+    //win reward
+    if(winner)
     {
-        RewardHonorToTeam(50, ALLIANCE);
-        RewardHonorToTeam(50, HORDE);
-    }
-    else if(alliance_sc > horde_sc)
-    {
-        RewardHonorToTeam(100, ALLIANCE);
-        RewardHonorToTeam(50, HORDE);
-        win = ALLIANCE;
-    }
-    else if(alliance_sc < horde_sc)
-    {
-        RewardHonorToTeam(50, ALLIANCE);
-        RewardHonorToTeam(100, HORDE);
-        win = HORDE;
+        RewardHonorToTeam(GetBonusHonorFromKill(1), winner);
+        RewardXpToTeam(0, 0.8f, winner);
     }
 
-    if (win)
-    {
-        RewardXpToTeam(0, 0.8f, win);
-        RewardXpToTeam(0, 0.8f, ALLIANCE);
-        RewardXpToTeam(0, 0.8f, HORDE);
-    }
-    BattleGround::EndBattleGround(win);
+    //complete map_end rewards (even if no team wins)
+    RewardHonorToTeam(GetBonusHonorFromKill(2), ALLIANCE);
+    RewardHonorToTeam(GetBonusHonorFromKill(2), HORDE);
+    RewardXpToTeam(0, 0.8f, ALLIANCE);
+    RewardXpToTeam(0, 0.8f, HORDE);
+    
+    BattleGround::EndBattleGround(winner);
 }
 
 void BattleGroundSA::Update(uint32 diff)
@@ -175,7 +156,7 @@ void BattleGroundSA::Update(uint32 diff)
             else
             {
                 SendMessageToAll(LANG_BG_SA_NETRALL_END_2ROUND, CHAT_MSG_BG_SYSTEM_NEUTRAL, NULL);
-                EndBattleGround(0);
+                EndBattleGround(TEAM_NONE);
             }
         } 
         else
@@ -330,22 +311,6 @@ void BattleGroundSA::RemovePlayer(Player* /*plr*/, ObjectGuid /*guid*/)
 {
 }
 
-void BattleGroundSA::RewardMedalsToTeam(uint32 teamid, bool winner)
-{
-    for (BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
-    {
-        Player *plr = sObjectMgr.GetPlayer(itr->first);
-
-        if(plr->GetTeam()==teamid)
-        {
-            if(winner)
-                plr->CastSpell(plr, 61160, false);
-            else
-                plr->CastSpell(plr, 61159, false);
-        }
-    }
-}
-
 void BattleGroundSA::AddPlayer(Player *plr)
 {
     BattleGround::AddPlayer(plr);
@@ -406,11 +371,6 @@ void BattleGroundSA::VirtualUpdatePlayerScore(Player* Source, uint32 type, uint3
 
 void BattleGroundSA::ResetBattle(uint32 winner, Team defender)
 {
-    if (winner == ALLIANCE)
-        ++alliance_sc;
-    else if (winner == HORDE)
-        ++horde_sc;
-
     Phase = 2;
     shipsTimer = 60000;
     shipsStarted = false;
@@ -438,8 +398,7 @@ void BattleGroundSA::Reset()
     //call parent's class reset
     BattleGround::Reset();
 
-    uint32 Attackers = ((urand(0,1)) ? ALLIANCE : HORDE);
-    controller = (Attackers == ALLIANCE) ? HORDE : ALLIANCE;
+	controller = ((urand(0,1)) ? ALLIANCE : HORDE);
 
     m_ActiveEvents[SA_EVENT_ADD_GO] = BG_EVENT_NONE;
     m_ActiveEvents[SA_EVENT_ADD_NPC] = BG_EVENT_NONE;
@@ -1199,7 +1158,7 @@ uint32 BattleGroundSA::GetCorrectFactionSA(uint8 vehicleType) const
     {
         switch(vehicleType)
         {
-            case VEHICLE_SA_DEMOLISHER
+            case VEHICLE_SA_DEMOLISHER:
             {
                 if (GetController() == ALLIANCE)
                     return VEHICLE_FACTION_HORDE;
