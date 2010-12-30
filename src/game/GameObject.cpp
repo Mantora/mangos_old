@@ -1638,8 +1638,12 @@ void GameObject::DamageTaken(Unit* pDoneBy, uint32 damage)
                 m_health = 0;
 
             if (pWho)
+            {
+                Script->GODestroyed(pWho, this);
+ 
                 if (BattleGround *bg = pWho->GetBattleGround())
                     bg->EventPlayerDamageGO(pWho, this, m_goInfo->destructibleBuilding.damagedEvent);
+            }
          }
     }
     SetGoAnimProgress(m_health * 255 / GetMaxHealth());
