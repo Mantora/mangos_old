@@ -30,7 +30,6 @@
 #include "Group.h"
 #include "Guild.h"
 #include "ObjectAccessor.h"
-#include "ScriptCalls.h"
 #include "Player.h"
 #include "SpellAuras.h"
 #include "Language.h"
@@ -520,7 +519,7 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
                 if(Channel *chn = cMgr->GetChannel(channel, _player))
                 {
                     chn->Say(_player->GetGUID(), msg.c_str(), lang);
-                    GetPlayer()->HandleChatSpyMessage(msg, CHAT_MSG_CHANNEL, lang, NULL, channel);
+                    //GetPlayer()->HandleChatSpyMessage(msg, CHAT_MSG_CHANNEL, lang, NULL, channel);
                 }
         } break;
 

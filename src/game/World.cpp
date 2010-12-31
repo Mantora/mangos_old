@@ -23,6 +23,7 @@
 #include "World.h"
 #include "Database/DatabaseEnv.h"
 #include "Config/Config.h"
+#include "Platform/Define.h"
 #include "SystemConfig.h"
 #include "Log.h"
 #include "Opcodes.h"
@@ -44,7 +45,6 @@
 #include "LootMgr.h"
 #include "ItemEnchantmentMgr.h"
 #include "MapManager.h"
-#include "ScriptCalls.h"
 #include "ScriptMgr.h"
 #include "CreatureAIRegistry.h"
 #include "Policies/SingletonImp.h"
@@ -902,7 +902,7 @@ void World::SetInitialWorldSettings()
     srand((unsigned int)time(NULL));
 
     ///- Time server startup
-    uint32 uStartTime = getMSTime();
+    uint32 uStartTime = WorldTimer::getMSTime();
 
     ///- Initialize config settings
     LoadConfigSettings();
@@ -1292,11 +1292,7 @@ void World::SetInitialWorldSettings()
     sEventAIMgr.LoadCreatureEventAI_Scripts();
 
     sLog.outString( "Initializing Scripts..." );
-    if(!LoadScriptingModule())
-    {
-        Log::WaitBeforeContinueIfNeed();
-        exit(1);                                            // Error message displayed in function already
-    }
+    sScriptMgr.LoadScriptLibrary(MANGOS_SCRIPT_NAME);
 
     ///- Initialize game time and timers
     sLog.outString( "DEBUG:: Initialize game time and timers" );
@@ -1385,7 +1381,7 @@ void World::SetInitialWorldSettings()
 
     sLog.outString( "WORLD: World initialized" );
 
-    uint32 uStartInterval = getMSTimeDiff(uStartTime, getMSTime());
+    uint32 uStartInterval = WorldTimer::getMSTimeDiff(uStartTime, WorldTimer::getMSTime());
     sLog.outString( "SERVER STARTUP TIME: %i minutes %i seconds", uStartInterval / 60000, (uStartInterval % 60000) / 1000 );
 }
 
