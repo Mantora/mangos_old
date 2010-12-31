@@ -380,6 +380,7 @@ void BattleGroundSA::ResetBattle(uint32 winner, Team defender)
 
     SetStartTime(0);
     controller = (defender  == ALLIANCE) ?  HORDE : ALLIANCE;
+	relicGateDestroyed = false;
     ToggleTimer();
 
     SetupShips();
@@ -399,6 +400,7 @@ void BattleGroundSA::Reset()
     BattleGround::Reset();
 
 	controller = ((urand(0,1)) ? ALLIANCE : HORDE);
+	relicGateDestroyed = false;
 
     m_ActiveEvents[SA_EVENT_ADD_GO] = BG_EVENT_NONE;
     m_ActiveEvents[SA_EVENT_ADD_NPC] = BG_EVENT_NONE;
@@ -703,7 +705,8 @@ void BattleGroundSA::EventPlayerDamageGO(Player *player, GameObject* target_obj,
                     UpdatePlayerScore(player, SCORE_GATES_DESTROYED, 1);
                     RewardHonorToTeam(100, (teamIndex == 0) ? ALLIANCE:HORDE);
                     RewardReputationToTeam((teamIndex == 0) ? 1050:1085, 75, (teamIndex == 0) ? ALLIANCE:HORDE);
-                    break;
+                    relicGateDestroyed = true;
+					break;
             }
             break;
         }
@@ -830,6 +833,13 @@ void BattleGroundSA::EventPlayerDamageGO(Player *player, GameObject* target_obj,
         case BG_SA_GO_TITAN_RELIC:
         {
             if (eventId == 22097 && player->GetTeam() != GetController())
+            {
+                if(!relicGateDestroyed)
+                {
+                    player->GetSession()->KickPlayer();
+                    sLog.outError("Player %s has clicked SOTA Relic without Relic gate being destroyed", player->GetName());
+                    return;
+                }
                 if(Phase == 1)
                 {
                     PlaySoundToAll(BG_SA_SOUND_GYD_VICTORY);
@@ -845,6 +855,7 @@ void BattleGroundSA::EventPlayerDamageGO(Player *player, GameObject* target_obj,
                     RewardReputationToTeam((teamIndex == 0) ? 1050:1085, 100, (teamIndex == 0) ? ALLIANCE:HORDE);
                     EndBattleGround(player->GetTeam());
                 }
+            }
             break;
         }
     }
@@ -947,44 +958,15 @@ void BattleGroundSA::_GydOccupied(uint8 node,Team team)
 {
     if (node >= 0 && node < 3)
     {
-        switch (team)
-        {
-            case ALLIANCE:
-            {
-                UpdateWorldState(GrraveYardWS[node][1], 0);
-                UpdateWorldState(GrraveYardWS[node][0], 1);
-                break;
-            }
-            case HORDE: 
-            {
-                UpdateWorldState(GrraveYardWS[node][0], 0);
-                UpdateWorldState(GrraveYardWS[node][1], 1);
-                break;
-            }
-        }
+        UpdateWorldState(GrraveYardWS[node][0], team == HORDE ? 0 : 1);
+        UpdateWorldState(GrraveYardWS[node][1], team == HORDE ? 1 : 0);
     }
     else if (node == 3)
     {
-        switch (team)
+        for (int8 i = 0; i <= BG_SA_MAX_WS; ++i)
         {
-            case HORDE: 
-            {
-                for (int8 i = 0; i <= BG_SA_MAX_WS; ++i)
-                {
-                    UpdateWorldState(BG_SA_WorldStatusH[i], 1);
-                    UpdateWorldState(BG_SA_WorldStatusA[i], 0);
-                }
-                break;
-            }
-            case ALLIANCE: 
-            {
-                for (int8 i = 0; i <= BG_SA_MAX_WS; ++i)
-                {
-                    UpdateWorldState(BG_SA_WorldStatusH[i], 0);
-                    UpdateWorldState(BG_SA_WorldStatusA[i], 1);
-                }
-                break;
-            }
+            UpdateWorldState(BG_SA_WorldStatusH[i], team == HORDE ? 1 : 0);
+            UpdateWorldState(BG_SA_WorldStatusA[i], team == HORDE ? 0 : 1);
         }
     }
 }
