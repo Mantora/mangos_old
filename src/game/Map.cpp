@@ -718,8 +718,8 @@ Map::PlayerRelocation(Player *player, float x, float y, float z, float orientati
     }
 
     // FG: attempt to use less CPU, reduce calling interval of CPU-intensive grid search to min. 500 ms
-    uint32 timems = getMSTime();
-    if(getMSTimeDiff(player->m_grid_update_timer, timems) >= 500)
+    uint32 timems = WorldTimer::getMSTime();
+    if(WorldTimer::getMSTimeDiff(player->m_grid_update_timer, timems) >= 500)
         player->m_grid_update_timer = timems;
     else
         return;

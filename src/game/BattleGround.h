@@ -207,10 +207,10 @@ enum ScoreType
     SCORE_SECONDARY_OBJECTIVES  = 15,
     //SA
 	SCORE_GATES_DESTROYED		= 16,
-	SCORE_DEMOLISHERS_DESTROYED	= 17
+	SCORE_DEMOLISHERS_DESTROYED	= 17,
     /** World of Warcraft Armory **/
-    SCORE_DAMAGE_TAKEN          = 16,
-    SCORE_HEALING_TAKEN         = 17
+    SCORE_DAMAGE_TAKEN          = 18,
+    SCORE_HEALING_TAKEN         = 19
     /** World of Warcraft Armory **/
 };
 
@@ -359,7 +359,7 @@ class BattleGround
         bool IsRandom() { return m_IsRandom; }
 
         // Strand of the Ancients and Isle of Conquest related
-        virtual uint32 GetController()				  const	{ return false; }
+        virtual Team GetController()				  const	{ return TEAM_NONE; }
         virtual uint8  GetGydController(uint8 /*gyd*/) const { return false; }
         virtual uint8  GetNodeControll(uint8 /*node*/) const { return false; }
         virtual uint32 GetVehicleFaction(uint8 vehicleType) const { return 35; }

@@ -338,6 +338,7 @@ class ScriptMgr
 
         bool OnGossipHello(Player* pPlayer, Creature* pCreature);
         bool OnGossipHello(Player* pPlayer, GameObject* pGameObject);
+		bool OnGoDestroyed(Unit *pWho, GameObject* pGameObject, uint32 eventId);
         bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32 sender, uint32 action, const char* code);
         bool OnGossipSelect(Player* pPlayer, GameObject* pGameObject, uint32 sender, uint32 action, const char* code);
         bool OnQuestAccept(Player* pPlayer, Creature* pCreature, Quest const* pQuest);
@@ -385,6 +386,7 @@ class ScriptMgr
 
         bool (MANGOS_IMPORT* m_pOnGossipHello) (Player*, Creature*);
         bool (MANGOS_IMPORT* m_pOnGOGossipHello) (Player*, GameObject*);
+		bool (MANGOS_IMPORT* m_pOnGODestroyed) (Unit*, GameObject*, uint32);
         bool (MANGOS_IMPORT* m_pOnGossipSelect) (Player*, Creature*, uint32, uint32);
         bool (MANGOS_IMPORT* m_pOnGOGossipSelect) (Player*, GameObject*, uint32, uint32);
         bool (MANGOS_IMPORT* m_pOnGossipSelectWithCode) (Player*, Creature*, uint32, uint32, const char*);
