@@ -66,21 +66,6 @@ enum BG_SA_WorldStates
     BG_SA_BONUS_TIMER           = 0xdf3,
     BG_SA_ENABLE_TIMER          = 3564,
 };
-/*
-enum BG_SA_WorldStates
-{
-    BG_SA_BONUS_TIMER                       = 3571, //bonus timer (1 - on, 0 - off)
-    BG_SA_ENABLE_TIMER                      = 3564,
-    BG_SA_TIMER_SEC                         = 3561, //C
-    BG_SA_TIMER_10SEC                       = 3560, //B
-    BG_SA_TIMER_MINUTES                     = 3559, //A
-    BG_SA_S_GRRAVE_YARD_A_CONTROL           = 3637, //South g - Horde control
-    BG_SA_W_GRRAVE_YARD_A_CONTROL           = 3635, //West g - Horde control
-    BG_SA_E_GRRAVE_YARD_A_CONTROL           = 3636, //East g - Horde control
-    BG_SA_S_GRRAVE_YARD_H_CONTROL           = 3634, //South g - Alliance control
-    BG_SA_W_GRRAVE_YARD_H_CONTROL           = 3633, //West g - Alliance control
-    BG_SA_E_GRRAVE_YARD_H_CONTROL           = 3632, //East g - Alliance control
-};*/
 
 static int32 GrraveYardWS[3][2]=
 {
@@ -245,6 +230,12 @@ enum BG_SA_Phase
     SA_ROUND_TWO = 2,
 };
 
+struct BG_SA_RoundScore
+{
+    Team winner;
+    uint32 time;
+};
+
 class BattleGroundSAScore : public BattleGroundScore
 {
     public:
@@ -276,19 +267,19 @@ class BattleGroundSA : public BattleGround
         virtual WorldSafeLocsEntry const* GetClosestGraveYard(Player* player);
         virtual void Reset();
 
-        Team GetController() const	{ return controller; }
+        Team GetDefender() const	{ return defender; }
 		uint8 GetGydController(uint8 gyd) const { return m_Gyd[gyd]; }
 		uint32 GetVehicleFaction(uint8 vehicleType) const { return GetCorrectFactionSA(vehicleType); }
         void RemovePlayer(Player *plr, ObjectGuid guid);
         void HandleAreaTrigger(Player *Source, uint32 Trigger);
         void EndBattleGround(Team winner);
-        void ResetBattle(uint32 winner, Team controller);
+        void ResetBattle(uint32 winner, Team teamDefending);
         bool SetupBattleGround();
         void SendMessageSA(Player *player, uint32 type, uint32 name);
         void UpdateTimer();
         void UpdatePhase();
         uint32 Phase;
-        Team controller;
+        Team defender;
         uint32 Round_timer;
         uint32 TimeST2Round;
         bool shipsStarted;
@@ -314,6 +305,7 @@ class BattleGroundSA : public BattleGround
         uint8               m_Gyd[BG_SA_GRY_MAX];
         uint8               m_prevGyd[BG_SA_GRY_MAX];   // used for performant wordlstate-updating
         uint32              m_GydTimers[BG_SA_GRY_MAX];
+		BG_SA_RoundScore RoundScores[2];
 		/* Gameobject spawning/despawning */
         void _CreateBanner(uint8 node, uint8 type, uint8 teamIndex, bool delay);
         BG_SA_BannerTimer   m_BannerTimers[BG_SA_GRY_MAX];
