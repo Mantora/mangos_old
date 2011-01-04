@@ -3270,9 +3270,9 @@ void Spell::cast(bool skipCheck)
             // Fingers of Frost
             else if (m_spellInfo->Id == 44544)
                 AddPrecastSpell(74396);                     // Fingers of Frost
-			// Mirror Image (glyph)
-			else if (m_spellInfo->Id == 55342 && m_caster->HasAura(63093))
-				AddPrecastSpell(65047); //summon one more
+            // Mirror Image (glyph)
+            else if (m_spellInfo->Id == 55342 && m_caster->HasAura(63093))
+                AddPrecastSpell(65047); //summon one more
             break;
         }
         case SPELLFAMILY_WARRIOR:
@@ -3288,9 +3288,9 @@ void Spell::cast(bool skipCheck)
             else if (m_spellInfo->Id == 64382)
                 AddTriggeredSpell(64380);                     // Shattering Throw
 
-			// Item - Warrior T10 Melee 4P Bonus
+            // Item - Warrior T10 Melee 4P Bonus
             else if (m_spellInfo->Id == 46916 || m_spellInfo->Id == 52437)
-				if (Aura *aur = m_caster->GetAura(70847, EFFECT_INDEX_0))
+                if (Aura *aur = m_caster->GetAura(70847, EFFECT_INDEX_0))
                     if (roll_chance_i(aur->GetModifier()->m_amount))
                         AddTriggeredSpell(70849);
             break;
@@ -3325,7 +3325,7 @@ void Spell::cast(bool skipCheck)
             // Faerie Fire (Feral)
             if (m_spellInfo->Id == 16857 && m_caster->GetShapeshiftForm() != FORM_CAT)
                 AddTriggeredSpell(60089);
-			// Item - Druid T10 Balance 2P Bonus
+            // Item - Druid T10 Balance 2P Bonus
             else if (m_spellInfo->Id == 16870 && m_caster->HasAura(70718))
                 AddTriggeredSpell(70721);
             // Berserk (Bear Mangle part)
@@ -3334,7 +3334,7 @@ void Spell::cast(bool skipCheck)
             break;
         }
         case SPELLFAMILY_ROGUE:
-		{
+        {
             // Fan of Knives (main hand)
             if (m_spellInfo->Id == 51723 && m_caster->GetTypeId() == TYPEID_PLAYER &&
                 ((Player*)m_caster)->haveOffhandWeapon())
@@ -3342,7 +3342,7 @@ void Spell::cast(bool skipCheck)
                 AddTriggeredSpell(52874);                   // Fan of Knives (offhand)
             }
             break;
-		}
+        }
         case SPELLFAMILY_HUNTER:
         {
             // Lock and Load
@@ -3371,14 +3371,14 @@ void Spell::cast(bool skipCheck)
                 if (m_targets.getUnitTarget() && m_targets.getUnitTarget() == m_caster) 
                 {
                     AddPrecastSpell(61987);                 // Avenging Wrath Marker 
-				}
+                }
             }
             // Lay on Hands
             else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000008000))
             {
                 // only for self cast
                 if (m_caster == m_targets.getUnitTarget())
-				{
+                {
                     AddPrecastSpell(25771);                     // Forbearance
                     AddPrecastSpell(61987);                 // Avenging Wrath Marker
                 }
@@ -4654,14 +4654,14 @@ void Spell::HandleThreatSpells(uint32 spellId)
     if(!m_targets.getUnitTarget()->CanHaveThreatList())
         return;
 
-    uint16 threat = sSpellMgr.GetSpellThreat(spellId);
+    SpellThreatEntry const* threatEntry = sSpellMgr.GetSpellThreatEntry(spellId);
 
-    if(!threat)
+    if(!threatEntry || threatEntry->threat)
         return;
 
-    m_targets.getUnitTarget()->AddThreat(m_caster, float(threat), false, GetSpellSchoolMask(m_spellInfo), m_spellInfo);
+    m_targets.getUnitTarget()->AddThreat(m_caster, float(threatEntry->threat), false, GetSpellSchoolMask(m_spellInfo), m_spellInfo);
 
-    DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell %u, rank %u, added an additional %i threat", spellId, sSpellMgr.GetSpellRank(spellId), threat);
+    DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell %u, rank %u, added an additional %i threat", spellId, sSpellMgr.GetSpellRank(spellId), threatEntry->threat);
 }
 
 void Spell::HandleEffects(Unit *pUnitTarget,Item *pItemTarget,GameObject *pGOTarget,SpellEffectIndex i, float DamageMultiplier)

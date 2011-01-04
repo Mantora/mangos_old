@@ -1176,8 +1176,7 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         }
         if (pVictim->GetTypeId() != TYPEID_PLAYER)
         {
-            if(spellProto)
-               pVictim->AddThreat(this, float(damage*getSpellThreatMultiplicator(spellProto)), (cleanDamage && cleanDamage->hitOutCome == MELEE_HIT_CRIT), damageSchoolMask, spellProto);
+            pVictim->AddThreat(this, float(damage), (cleanDamage && cleanDamage->hitOutCome == MELEE_HIT_CRIT), damageSchoolMask, spellProto);
         }
         else                                                // victim is a player
         {
@@ -7816,19 +7815,6 @@ bool Unit::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex i
     return false;
 }
 
-float Unit::getSpellThreatMultiplicator(SpellEntry const * spellInfo) const
-{
-    if (!spellInfo)
-        return 1.0f;
-    
-    float fSpellThreatMultiplicator = sSpellMgr.GetSpellThreatMultiplicator(spellInfo->Id);
-
-    if(!fSpellThreatMultiplicator)
-        return 1.0f;
-    
-    return fSpellThreatMultiplicator;
-}
-
 /**
  * Calculates caster part of melee damage bonuses,
  * also includes different bonuses dependent from target auras
@@ -11759,9 +11745,9 @@ void Unit::ExitVehicle()
         return;
 
     m_pVehicle->RemovePassenger(this);
-	
-	if((GetTypeId() == TYPEID_PLAYER) && (((Player*)this)->GetQuestStatus(12779) == QUEST_STATUS_INCOMPLETE) && (m_pVehicle->GetVehicleId() == 156))
-		((Player*)this)->CastSpell(((Player*)this), 74470, false);
+    
+    if((GetTypeId() == TYPEID_PLAYER) && (((Player*)this)->GetQuestStatus(12779) == QUEST_STATUS_INCOMPLETE) && (m_pVehicle->GetVehicleId() == 156))
+        ((Player*)this)->CastSpell(((Player*)this), 74470, false);
 
     m_pVehicle = NULL;
 
