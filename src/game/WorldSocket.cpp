@@ -42,6 +42,7 @@
 #include "WorldSocketMgr.h"
 #include "Log.h"
 #include "DBCStores.h"
+#include "Config/Config.h"
 
 #if defined( __GNUC__ )
 #pragma pack(1)
@@ -854,7 +855,18 @@ int WorldSocket::HandleAuthSession (WorldPacket& recvPacket)
     }
 
     id = fields[0].GetUInt32 ();
-    security = fields[1].GetUInt16 ();
+
+    uint32 realmID = sConfig.GetIntDefault("RealmID", 0);
+
+    QueryResult *result2 = LoginDatabase.PQuery("SELECT Security FROM account_forcepermission WHERE AccountID = '%u' AND `realmID` = '%u'", id, realmID);
+
+	if(result2)
+        security = (*result2)[0].GetUInt16();
+    else
+        security = SEC_PLAYER;
+
+    delete result2;
+ 
     if(security > SEC_ADMINISTRATOR)                        // prevent invalid security settings in DB
         security = SEC_ADMINISTRATOR;
 
