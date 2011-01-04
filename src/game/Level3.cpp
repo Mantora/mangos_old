@@ -7556,7 +7556,7 @@ bool ChatHandler::HandleMmapTestArea(char* args)
         PSendSysMessage("Found %i Creatures.", creatureList.size());
 
         uint32 paths = 0;
-        uint32 uStartTime = getMSTime();
+        uint32 uStartTime = WorldTimer::getMSTime();
 
         float gx,gy,gz;
         m_session->GetPlayer()->GetPosition(gx,gy,gz);
@@ -7566,7 +7566,7 @@ bool ChatHandler::HandleMmapTestArea(char* args)
             ++paths;
         }
 
-        uint32 uPathLoadTime = getMSTimeDiff(uStartTime, getMSTime());
+        uint32 uPathLoadTime = WorldTimer::getMSTimeDiff(uStartTime, WorldTimer::getMSTime());
         PSendSysMessage("Generated %i paths in %i ms", paths, uPathLoadTime);
     }
     else
