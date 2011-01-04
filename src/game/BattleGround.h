@@ -204,7 +204,14 @@ enum ScoreType
     SCORE_GRAVEYARDS_DEFENDED   = 12,
     SCORE_TOWERS_ASSAULTED      = 13,
     SCORE_TOWERS_DEFENDED       = 14,
-    SCORE_SECONDARY_OBJECTIVES  = 15
+    SCORE_SECONDARY_OBJECTIVES  = 15,
+    //SA
+	SCORE_GATES_DESTROYED		= 16,
+	SCORE_DEMOLISHERS_DESTROYED	= 17,
+    /** World of Warcraft Armory **/
+    SCORE_DAMAGE_TAKEN          = 18,
+    SCORE_HEALING_TAKEN         = 19
+    /** World of Warcraft Armory **/
 };
 
 enum ArenaType
@@ -288,6 +295,10 @@ class BattleGroundScore
         uint32 BonusHonor;
         uint32 DamageDone;
         uint32 HealingDone;
+        /** World of Warcraft Armory **/
+        uint32 DamageTaken;
+        uint32 HealingTaken;
+        /** World of Warcraft Armory **/
 };
 
 /*
@@ -346,6 +357,12 @@ class BattleGround
         uint32 GetBattlemasterEntry() const;
         uint32 GetBonusHonorFromKill(uint32 kills) const;
         bool IsRandom() { return m_IsRandom; }
+
+        // Strand of the Ancients and Isle of Conquest related
+        virtual Team   GetDefender()                    const   { return TEAM_NONE; }
+        virtual uint8  GetGydController(uint8 /*gyd*/)  const   { return false; }
+        virtual uint8  GetNodeControll(uint8 /*node*/)  const   { return false; }
+        virtual uint32 GetVehicleFaction(uint8 vehicleType) const { return 35; }
 
         // Set methods:
         void SetName(char const* Name)      { m_Name = Name; }
@@ -453,6 +470,9 @@ class BattleGround
         void SendMessageToAll(int32 entry, ChatMsg type, Player const* source = NULL);
         void SendYellToAll(int32 entry, uint32 language, ObjectGuid guid);
         void PSendMessageToAll(int32 entry, ChatMsg type, Player const* source, ...  );
+		void SendWarningToAll(int32 entry, ...);
+
+        GameObject* GetBGObject(uint32 type);
 
         // specialized version with 2 string id args
         void SendMessage2ToAll(int32 entry, ChatMsg type, Player const* source, int32 strId1 = 0, int32 strId2 = 0);
@@ -494,6 +514,11 @@ class BattleGround
         virtual void EventPlayerDroppedFlag(Player* /*player*/) {}
         virtual void EventPlayerClickedOnFlag(Player* /*player*/, GameObject* /*target_obj*/) {}
         virtual void EventPlayerCapturedFlag(Player* /*player*/) {}
+
+        virtual void EventPlayerDamageGO(Player* /*player*/, GameObject* /*target_obj*/, uint32 /*eventId*/) {}
+        virtual void EventSpawnGOSA(Player* /*owner*/, Creature* /*obj*/, float /*x*/, float /*y*/, float /*z*/) {}
+        virtual void VirtualUpdatePlayerScore(Player* /*Source*/, uint32 /*type*/, uint32 /*value*/) {}
+
         void EventPlayerLoggedIn(Player* player, ObjectGuid plr_guid);
         void EventPlayerLoggedOut(Player* player);
 

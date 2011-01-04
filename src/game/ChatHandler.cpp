@@ -30,7 +30,6 @@
 #include "Group.h"
 #include "Guild.h"
 #include "ObjectAccessor.h"
-#include "ScriptCalls.h"
 #include "Player.h"
 #include "SpellAuras.h"
 #include "Language.h"
@@ -147,15 +146,17 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
                 lang = ModLangAuras.front()->GetModifier()->m_miscvalue;
         }
 
-        if (!_player->CanSpeak())
-        {
-            std::string timeStr = secsToTimeString(m_muteTime - time(NULL));
-            SendNotification(GetMangosString(LANG_WAIT_BEFORE_SPEAKING), timeStr.c_str());
-            return;
-        }
-
         if (type != CHAT_MSG_AFK && type != CHAT_MSG_DND)
+        {
+            if (!_player->CanSpeak())
+            {
+                std::string timeStr = secsToTimeString(m_muteTime - time(NULL));
+                SendNotification(GetMangosString(LANG_WAIT_BEFORE_SPEAKING), timeStr.c_str());
+                return;
+            }
+
             GetPlayer()->UpdateSpeakTime();
+        }
     }
 
     switch(type)
@@ -518,7 +519,7 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
                 if(Channel *chn = cMgr->GetChannel(channel, _player))
                 {
                     chn->Say(_player->GetGUID(), msg.c_str(), lang);
-                    GetPlayer()->HandleChatSpyMessage(msg, CHAT_MSG_CHANNEL, lang, NULL, channel);
+                    //GetPlayer()->HandleChatSpyMessage(msg, CHAT_MSG_CHANNEL, lang, NULL, channel);
                 }
         } break;
 

@@ -23,6 +23,7 @@
 #include "Unit.h"
 #include "Util.h"
 #include "WorldPacket.h"
+#include "CreatureAI.h"
 
 VehicleKit::VehicleKit(Unit* base, VehicleEntry const* vehicleInfo) : m_vehicleInfo(vehicleInfo), m_pBase(base), m_uiNumFreeSeats(0)
 {
@@ -32,6 +33,15 @@ VehicleKit::VehicleKit(Unit* base, VehicleEntry const* vehicleInfo) : m_vehicleI
 
         if (!seatId)
             continue;
+
+        if(base)
+        {
+            if(m_vehicleInfo->m_flags & VEHICLE_FLAG_NO_STRAFE)
+                base->m_movementInfo.AddMovementFlag2(MOVEFLAG2_NO_STRAFE);
+
+            if(m_vehicleInfo->m_flags & VEHICLE_FLAG_NO_JUMPING)
+                base->m_movementInfo.AddMovementFlag2(MOVEFLAG2_NO_JUMPING);
+        }
 
         if (VehicleSeatEntry const *seatInfo = sVehicleSeatStore.LookupEntry(seatId))
         {
@@ -143,7 +153,7 @@ bool VehicleKit::AddPassenger(Unit *passenger, int8 seatId)
     passenger->m_movementInfo.AddMovementFlag(MOVEFLAG_ONTRANSPORT);
     passenger->m_movementInfo.SetTransportData(m_pBase->GetGUID(),
         seatInfo->m_attachmentOffsetX, seatInfo->m_attachmentOffsetY, seatInfo->m_attachmentOffsetZ,
-        seatInfo->m_passengerYaw, getMSTime(), seat->first, seatInfo);
+        seatInfo->m_passengerYaw, WorldTimer::getMSTime(), seat->first, seatInfo);
 
     if (passenger->GetTypeId() == TYPEID_PLAYER)
     {
@@ -174,7 +184,7 @@ bool VehicleKit::AddPassenger(Unit *passenger, int8 seatId)
 
         passenger->SetCharm(m_pBase);
 
-        if(m_pBase->HasAuraType(SPELL_AURA_FLY) || m_pBase->HasAuraType(SPELL_AURA_MOD_FLIGHT_SPEED))
+        if(m_pBase->HasAuraType(SPELL_AURA_FLY) || m_pBase->HasAuraType(SPELL_AURA_MOD_FLIGHT_SPEED) || ((Creature*)m_pBase)->CanFly())
         {
             WorldPacket data;
             data.Initialize(SMSG_MOVE_SET_CAN_FLY, 12);
@@ -186,6 +196,8 @@ bool VehicleKit::AddPassenger(Unit *passenger, int8 seatId)
         if (passenger->GetTypeId() == TYPEID_PLAYER)
         {
             m_pBase->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
+            if(m_pBase->GetMap() && !m_pBase->GetMap()->IsBattleGround())
+                m_pBase->setFaction(passenger->getFaction());
 
             if (CharmInfo* charmInfo = m_pBase->InitCharmInfo(m_pBase))
             {
@@ -200,12 +212,25 @@ bool VehicleKit::AddPassenger(Unit *passenger, int8 seatId)
         }
 
         ((Creature*)m_pBase)->AIM_Initialize();
+
+        if(m_pBase->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE))
+        {
+            WorldPacket data2(SMSG_FORCE_MOVE_ROOT, 8+4);
+            data2 << m_pBase->GetPackGUID();
+            data2 << (uint32)(2);
+            m_pBase->SendMessageToSet(&data2,false);
+        }
     }
 
     passenger->SendMonsterMoveTransport(m_pBase, SPLINETYPE_FACINGANGLE, SPLINEFLAG_UNKNOWN5, 0, 0.0f);
 
     if (m_pBase->GetTypeId() == TYPEID_UNIT)
+    {
+        if (((Creature*)m_pBase)->AI())
+                ((Creature*)m_pBase)->AI()->PassengerBoarded(passenger, seat->first, true);
+
         RelocatePassengers(m_pBase->GetPositionX(), m_pBase->GetPositionY(), m_pBase->GetPositionZ()+0.5f, m_pBase->GetOrientation());
+    }
 
     UpdateFreeSeatCount();
     return true;
@@ -273,6 +298,10 @@ void VehicleKit::RemovePassenger(Unit *passenger)
     passenger->UpdateAllowedPositionZ(px, py, pz);
     passenger->SetPosition(px, py, pz + 0.5f, po);
     UpdateFreeSeatCount();
+
+    if (m_pBase->GetTypeId() == TYPEID_UNIT)
+        if (((Creature*)m_pBase)->AI())
+            ((Creature*)m_pBase)->AI()->PassengerBoarded(passenger, seat->first, true);
 }
 
 void VehicleKit::Reset()

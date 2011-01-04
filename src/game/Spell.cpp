@@ -1349,7 +1349,7 @@ void Spell::DoSpellHitOnUnit(Unit *unit, const uint32 effectMask)
         m_diminishGroup = GetDiminishingReturnsGroupForSpell(m_spellInfo,m_triggeredByAuraSpell);
         m_diminishLevel = unit->GetDiminishing(m_diminishGroup);
         // Increase Diminishing on unit, current informations for actually casts will use values above
-        if ((GetDiminishingReturnsGroupType(m_diminishGroup) == DRTYPE_PLAYER && unit->GetTypeId() == TYPEID_PLAYER) ||
+        if ((GetDiminishingReturnsGroupType(m_diminishGroup) == DRTYPE_PLAYER && (unit->GetCharmerOrOwner() ? unit->GetCharmerOrOwner()->GetTypeId() : unit->GetTypeId()) == TYPEID_PLAYER) ||
             GetDiminishingReturnsGroupType(m_diminishGroup) == DRTYPE_ALL)
             unit->IncrDiminishing(m_diminishGroup);
     }
@@ -1628,6 +1628,8 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 65121:                                 // XT002's Light Bomb (h)
                 case 63024:                                 // XT002's Gravitiy Bomb
                 case 64234:                                 // XT002's Gravitiy Bomb (h)
+                case 61916:                                 // Lightning Whirl (10 man)
+                case 63482:                                 // Lightning Whirl (25 man)
                     unMaxTargets = 1;
                     break;
                 case 28542:                                 // Life Drain
@@ -1661,6 +1663,12 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                 case 70835:                                 // Bone Storm
                 case 70836:                                 // Bone Storm
                     radius = DEFAULT_VISIBILITY_INSTANCE;
+                    break;
+                case 69845:                                 // Sindragosa Frost bomb (hack!)
+                case 71053:
+                case 71054:
+                case 71055:
+                    radius = 50;
                     break;
                 case 72350:                                 // Fury of Frostmourne
                 case 72351:                                 // Fury of Frostmourne 
@@ -2175,6 +2183,11 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
                         targetUnitMap.push_back(owner);
                     break;
                 }
+                case 59754:                                 // Rune Tap triggered by Glyph of Rune Tap (does not include caster)
+                {
+                    FillRaidOrPartyTargets(targetUnitMap, m_caster, m_caster, radius, false, true, false);
+                    break;
+                }
                 default:
                 {
                     FillRaidOrPartyTargets(targetUnitMap, m_caster, m_caster, radius, false, true, true);
@@ -2238,6 +2251,18 @@ void Spell::SetTargetMap(SpellEffectIndex effIndex, uint32 targetMode, UnitList&
             if (VehicleKit* vehicle = m_caster->GetVehicle())
                 if (Unit* target = vehicle->GetBase())
                     targetUnitMap.push_back(target);
+            break;
+        case TARGET_UNIT_PASSENGER_0:
+        case TARGET_UNIT_PASSENGER_1:
+        case TARGET_UNIT_PASSENGER_2:
+        case TARGET_UNIT_PASSENGER_3:
+        case TARGET_UNIT_PASSENGER_4:
+        case TARGET_UNIT_PASSENGER_5:
+        case TARGET_UNIT_PASSENGER_6:
+        case TARGET_UNIT_PASSENGER_7:
+            if (m_caster->GetTypeId() == TYPEID_UNIT && m_caster->GetObjectGuid().IsVehicle())
+                if (Unit *unit = m_caster->GetVehicleKit()->GetPassenger(targetMode - TARGET_UNIT_PASSENGER_0))
+                    targetUnitMap.push_back(unit);
             break;
         case TARGET_CASTER_COORDINATES:
         {
@@ -3225,18 +3250,16 @@ void Spell::cast(bool skipCheck)
             // Bandages
             if (m_spellInfo->Mechanic == MECHANIC_BANDAGE)
                 AddPrecastSpell(11196);                     // Recently Bandaged
-            else if(m_spellInfo->Id == 7744)                // Will of the Forsaken
-                AddTriggeredSpell(72757);                   // PvP trinket Cooldown
-            else if (m_spellInfo->Id == 20594)              // Stoneskin
+            // Stoneskin
+            else if (m_spellInfo->Id == 20594)
                 AddTriggeredSpell(65116);                   // Stoneskin - armor 10% for 8 sec
-            else if (m_spellInfo->Id == 71904)              // Chaos Bane strength buff
+            // Chaos Bane strength buff
+            else if (m_spellInfo->Id == 71904)
                 AddTriggeredSpell(73422);
             else if (m_spellInfo->Id == 74607)
-                AddTriggeredSpell(74610);                   // Fiery combustion
+                AddTriggeredSpell(74610);                  // Fiery combustion
             else if (m_spellInfo->Id == 74799)
-                AddTriggeredSpell(74800);                   // Soul consumption
-            else if(m_spellInfo->Id == 42292)               // PvP trinket
-                AddTriggeredSpell(72752);                   // Will of the Forsaken Cooldown
+                AddTriggeredSpell(74800);                  // Soul consumption
             break;
         }
         case SPELLFAMILY_MAGE:
@@ -3247,9 +3270,9 @@ void Spell::cast(bool skipCheck)
             // Fingers of Frost
             else if (m_spellInfo->Id == 44544)
                 AddPrecastSpell(74396);                     // Fingers of Frost
-			// Mirror Image (glyph)
-			else if (m_spellInfo->Id == 55342 && m_caster->HasAura(63093))
-				AddPrecastSpell(65047); //summon one more
+            // Mirror Image (glyph)
+            else if (m_spellInfo->Id == 55342 && m_caster->HasAura(63093))
+                AddPrecastSpell(65047); //summon one more
             break;
         }
         case SPELLFAMILY_WARRIOR:
@@ -3265,9 +3288,9 @@ void Spell::cast(bool skipCheck)
             else if (m_spellInfo->Id == 64382)
                 AddTriggeredSpell(64380);                     // Shattering Throw
 
-			// Item - Warrior T10 Melee 4P Bonus
+            // Item - Warrior T10 Melee 4P Bonus
             else if (m_spellInfo->Id == 46916 || m_spellInfo->Id == 52437)
-				if (Aura *aur = m_caster->GetAura(70847, EFFECT_INDEX_0))
+                if (Aura *aur = m_caster->GetAura(70847, EFFECT_INDEX_0))
                     if (roll_chance_i(aur->GetModifier()->m_amount))
                         AddTriggeredSpell(70849);
             break;
@@ -3302,7 +3325,7 @@ void Spell::cast(bool skipCheck)
             // Faerie Fire (Feral)
             if (m_spellInfo->Id == 16857 && m_caster->GetShapeshiftForm() != FORM_CAT)
                 AddTriggeredSpell(60089);
-			// Item - Druid T10 Balance 2P Bonus
+            // Item - Druid T10 Balance 2P Bonus
             else if (m_spellInfo->Id == 16870 && m_caster->HasAura(70718))
                 AddTriggeredSpell(70721);
             // Berserk (Bear Mangle part)
@@ -3311,7 +3334,7 @@ void Spell::cast(bool skipCheck)
             break;
         }
         case SPELLFAMILY_ROGUE:
-		{
+        {
             // Fan of Knives (main hand)
             if (m_spellInfo->Id == 51723 && m_caster->GetTypeId() == TYPEID_PLAYER &&
                 ((Player*)m_caster)->haveOffhandWeapon())
@@ -3319,7 +3342,7 @@ void Spell::cast(bool skipCheck)
                 AddTriggeredSpell(52874);                   // Fan of Knives (offhand)
             }
             break;
-		}
+        }
         case SPELLFAMILY_HUNTER:
         {
             // Lock and Load
@@ -3348,14 +3371,14 @@ void Spell::cast(bool skipCheck)
                 if (m_targets.getUnitTarget() && m_targets.getUnitTarget() == m_caster) 
                 {
                     AddPrecastSpell(61987);                 // Avenging Wrath Marker 
-				}
+                }
             }
             // Lay on Hands
             else if (m_spellInfo->SpellFamilyFlags & UI64LIT(0x0000000000008000))
             {
                 // only for self cast
                 if (m_caster == m_targets.getUnitTarget())
-				{
+                {
                     AddPrecastSpell(25771);                     // Forbearance
                     AddPrecastSpell(61987);                 // Avenging Wrath Marker
                 }
@@ -3994,7 +4017,7 @@ void Spell::SendSpellGo()
     data << uint8(m_cast_count);                            // pending spell cast?
     data << uint32(m_spellInfo->Id);                        // spellId
     data << uint32(castFlags);                              // cast flags
-    data << uint32(getMSTime());                            // timestamp
+    data << uint32(WorldTimer::getMSTime());                            // timestamp
 
     WriteSpellGoTargets(&data);
 
@@ -4631,14 +4654,14 @@ void Spell::HandleThreatSpells(uint32 spellId)
     if(!m_targets.getUnitTarget()->CanHaveThreatList())
         return;
 
-    uint16 threat = sSpellMgr.GetSpellThreat(spellId);
+    SpellThreatEntry const* threatEntry = sSpellMgr.GetSpellThreatEntry(spellId);
 
-    if(!threat)
+    if(!threatEntry || threatEntry->threat)
         return;
 
-    m_targets.getUnitTarget()->AddThreat(m_caster, float(threat), false, GetSpellSchoolMask(m_spellInfo), m_spellInfo);
+    m_targets.getUnitTarget()->AddThreat(m_caster, float(threatEntry->threat), false, GetSpellSchoolMask(m_spellInfo), m_spellInfo);
 
-    DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell %u, rank %u, added an additional %i threat", spellId, sSpellMgr.GetSpellRank(spellId), threat);
+    DEBUG_FILTER_LOG(LOG_FILTER_SPELL_CAST, "Spell %u, rank %u, added an additional %i threat", spellId, sSpellMgr.GetSpellRank(spellId), threatEntry->threat);
 }
 
 void Spell::HandleEffects(Unit *pUnitTarget,Item *pItemTarget,GameObject *pGOTarget,SpellEffectIndex i, float DamageMultiplier)
@@ -5973,20 +5996,19 @@ SpellCastResult Spell::CheckPetCast(Unit* target)
 
         Unit* _target = m_targets.getUnitTarget();
 
-        if(_target && _target != (Unit*)m_caster)                                         //for target dead/target not valid
+        if(_target)                                         //for target dead/target not valid
         {
-
             if(IsPositiveSpell(m_spellInfo->Id) && !IsDispelSpell(m_spellInfo))
             {
                 if(m_caster->IsHostileTo(_target))
                 {
-                    DEBUG_LOG("Charmed creature attempt to cast positive spell %d, but target is hostile",m_spellInfo->Id);
+                    DEBUG_LOG("Charmed creature attempt to cast positive spell %d, but target (guid %u) is hostile",m_spellInfo->Id, target->GetObjectGuid().GetRawValue());
                     return SPELL_FAILED_BAD_TARGETS;
                 }
             }
-            else if (!_target->isTargetableForAttack())
+            else if (!_target->isTargetableForAttack() || !_target->isVisibleForOrDetect(m_caster,m_caster,true))
             {
-                DEBUG_LOG("Charmed creature attempt to cast spell %d, but target is not targetable",m_spellInfo->Id);
+                DEBUG_LOG("Charmed creature attempt to cast spell %d, but target (guid %u) is not targetable or not detectable",m_spellInfo->Id,target->GetObjectGuid().GetRawValue());
                 return SPELL_FAILED_BAD_TARGETS;            // guessed error
             }
             else
@@ -5999,12 +6021,13 @@ SpellCastResult Spell::CheckPetCast(Unit* target)
                                    || m_spellInfo->EffectImplicitTargetA[j] == TARGET_IN_FRONT_OF_CASTER_30
                                    || m_spellInfo->EffectImplicitTargetA[j] == TARGET_MASTER
                                    || m_spellInfo->EffectImplicitTargetA[j] == TARGET_IN_FRONT_OF_CASTER
+                                   || m_spellInfo->EffectImplicitTargetA[j] == TARGET_EFFECT_SELECT
                                    || m_spellInfo->EffectImplicitTargetA[j] == TARGET_CASTER_COORDINATES);
                 }
                 if (m_caster->IsFriendlyTo(target) && !(!m_caster->GetCharmerOrOwner() || !m_caster->GetCharmerOrOwner()->IsFriendlyTo(target))
                      && !dualEffect && !IsDispelSpell(m_spellInfo))
                 {
-                    DEBUG_LOG("Charmed creature attempt to cast spell %d, but target is not valid",m_spellInfo->Id);
+                    DEBUG_LOG("Charmed creature attempt to cast spell %d, but target (guid %u) is not valid",m_spellInfo->Id,target->GetObjectGuid().GetRawValue());
                     return SPELL_FAILED_BAD_TARGETS;
                 }
             }
@@ -7014,6 +7037,14 @@ bool Spell::CheckTarget( Unit* target, SpellEffectIndex eff )
 
     // Check vampiric bite
     if (m_spellInfo->Id == 70946 && target->HasAura(70867))
+        return false;
+
+    // Sindragosa frost bomb hack
+    if ((m_spellInfo->Id == 69845
+        || m_spellInfo->Id == 71053
+        || m_spellInfo->Id == 71054
+        || m_spellInfo->Id == 71055)
+         && target->HasAura(70867))
         return false;
 
     // Check targets for LOS visibility (except spells without range limitations )

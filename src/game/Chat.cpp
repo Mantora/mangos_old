@@ -544,7 +544,6 @@ ChatCommand * ChatHandler::getCommandTable()
         { "spell_scripts",               SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadSpellScriptsCommand,            "", NULL },
         { "spell_target_position",       SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadSpellTargetPositionCommand,     "", NULL },
         { "spell_threats",               SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadSpellThreatsCommand,            "", NULL },
-        { "spell_threat_multiplicator",  SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadSpellThreatMultiplicatorCommand,"", NULL },
         { "spell_disabled",              SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadSpellDisabledCommand,           "", NULL },
         { "anticheat",                   SEC_ADMINISTRATOR, true,  &ChatHandler::HandleReloadAntiCheatCommand,               "", NULL },
 
@@ -782,6 +781,8 @@ ChatCommand * ChatHandler::getCommandTable()
         { "listfreeze",     SEC_ADMINISTRATOR,     true, &ChatHandler::HandleListFreezeCommand,          "", NULL },
         { "chatspy",        SEC_ADMINISTRATOR,     true, NULL,                                           "", chatspyCommandTable },
         { "mmap",           SEC_GAMEMASTER,     false, NULL,                                           "", mmapCommandTable },
+        { "dev",            SEC_ADMINISTRATOR,     true, &ChatHandler::HandleDevCommand,                 "", NULL },
+
         { NULL,             0,                  false, NULL,                                           "", NULL }
     };
 

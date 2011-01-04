@@ -1141,7 +1141,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         bool Create( uint32 guidlow, const std::string& name, uint8 race, uint8 class_, uint8 gender, uint8 skin, uint8 face, uint8 hairStyle, uint8 hairColor, uint8 facialHair, uint8 outfitId );
 
-        void Update( uint32 time );
+        void Update( uint32 update_diff, uint32 time );
 
         static bool BuildEnumData( QueryResult * result,  WorldPacket * p_data );
 
@@ -1379,7 +1379,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void UpdateItemDuration(uint32 time, bool realtimeonly = false);
         void AddEnchantmentDurations(Item *item);
         void RemoveEnchantmentDurations(Item *item);
-        void RemoveAllEnchantments(EnchantmentSlot slot);
+        void RemoveAllEnchantments(EnchantmentSlot slot, bool isArenaRemove = false);
         void AddEnchantmentDuration(Item *item,EnchantmentSlot slot,uint32 duration);
         void ApplyEnchantment(Item *item,EnchantmentSlot slot,bool apply, bool apply_dur = true, bool ignore_condition = false);
         void ApplyEnchantment(Item *item,bool apply);

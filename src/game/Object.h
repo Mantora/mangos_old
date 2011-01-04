@@ -88,6 +88,28 @@ struct WorldLocation
         : mapid(loc.mapid), coord_x(loc.coord_x), coord_y(loc.coord_y), coord_z(loc.coord_z), orientation(loc.orientation) {}
 };
 
+
+//use this class to measure time between world update ticks
+//essential for units updating their spells after cells become active 
+class WorldUpdateCounter
+{
+    public:
+        WorldUpdateCounter() : m_tmStart(0) {}
+
+        time_t timeElapsed()
+        {
+            if(!m_tmStart)
+                m_tmStart = WorldTimer::tickPrevTime();
+
+            return WorldTimer::getMSTimeDiff(m_tmStart, WorldTimer::tickTime());
+        }
+
+        void Reset() { m_tmStart = WorldTimer::tickTime(); }
+
+    private:
+        uint32 m_tmStart;
+};
+
 class MANGOS_DLL_SPEC Object
 {
     public:
@@ -387,9 +409,31 @@ class MANGOS_DLL_SPEC WorldObject : public Object
     friend struct WorldObjectChangeAccumulator;
 
     public:
+
+        //class is used to manipulate with WorldUpdateCounter
+        //it is needed in order to get time diff between two object's Update() calls
+        class MANGOS_DLL_SPEC UpdateHelper
+        {
+            public:
+                explicit UpdateHelper(WorldObject * obj) : m_obj(obj) {}
+                ~UpdateHelper() { }
+
+                void Update( uint32 time_diff )
+                { 
+                    m_obj->Update( m_obj->m_updateTracker.timeElapsed(), time_diff);
+                    m_obj->m_updateTracker.Reset();
+                }
+
+            private:
+                UpdateHelper( const UpdateHelper& );
+                UpdateHelper& operator=( const UpdateHelper& );
+
+                WorldObject * const m_obj;
+        };
+
         virtual ~WorldObject ( ) {}
 
-        virtual void Update ( uint32 /*time_diff*/ ) { }
+        virtual void Update ( uint32 /*update_diff*/, uint32 /*time_diff*/ ) {}
 
         void _Create(ObjectGuid guid, uint32 phaseMask);
 
@@ -530,7 +574,6 @@ class MANGOS_DLL_SPEC WorldObject : public Object
 
         void SetMap(Map * map);
         Map * GetMap() const { return m_currMap; }
-        Map * GetMapSafe() const { return m_currMap; }
         //used to check all object's GetMap() calls when object is not in world!
         void ResetMap() { m_currMap = NULL; }
 
@@ -561,6 +604,8 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         ViewPoint& GetViewPoint() { return m_viewPoint; }
         Creature* GetClosestCreatureWithEntry(WorldObject* pSource, uint32 uiEntry, float fMaxSearchRange);
         GameObject* GetClosestGameObjectWithEntry(WorldObject* pSource, uint32 uiEntry, float fMaxSearchRange);
+        void GetGameObjectListWithEntryInGrid(std::list<GameObject*>& lList, uint32 uiEntry, float fMaxSearchRange);
+        void GetCreatureListWithEntryInGrid(std::list<Creature*>& lList, uint32 uiEntry, float fMaxSearchRange);
 
     protected:
         explicit WorldObject();
@@ -593,6 +638,8 @@ class MANGOS_DLL_SPEC WorldObject : public Object
         float m_orientation;
 
         ViewPoint m_viewPoint;
+
+        WorldUpdateCounter m_updateTracker;
 };
 
 #endif

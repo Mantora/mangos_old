@@ -35,7 +35,6 @@
 #include "BattleGround.h"
 #include "BattleGroundAV.h"
 #include "Util.h"
-#include "ScriptCalls.h"
 #include "ScriptMgr.h"
 
 GameObject::GameObject() : WorldObject()
@@ -176,7 +175,7 @@ bool GameObject::Create(uint32 guidlow, uint32 name_id, Map *map, uint32 phaseMa
     return true;
 }
 
-void GameObject::Update(uint32 update_diff)
+void GameObject::Update(uint32 update_diff, uint32 /*p_time*/)
 {
     if (GetObjectGuid().IsMOTransport())
     {
@@ -963,7 +962,7 @@ void GameObject::Use(Unit* user)
     uint32 spellId = 0;
     bool triggered = false;
 
-	if (!user || user->GetTypeId() == TYPEID_PLAYER && Script->GOHello((Player*)user, this))
+    if (user->GetTypeId() == TYPEID_PLAYER && sScriptMgr.OnGameObjectUse((Player*)user, this))
         return;
 
     switch(GetGoType())
@@ -995,7 +994,7 @@ void GameObject::Use(Unit* user)
 
             Player* player = (Player*)user;
 
-            if (!Script->GOGossipHello(player, this))
+            if (!sScriptMgr.OnGossipHello(player, this))
             {
                 player->PrepareGossipMenu(this, GetGOInfo()->questgiver.gossipID);
                 player->SendPreparedGossip(this);
@@ -1013,7 +1012,7 @@ void GameObject::Use(Unit* user)
             {
                 DEBUG_LOG("Chest ScriptStart id %u for GO %u", GetGOInfo()->chest.eventId, GetDBTableGUIDLow());
 
-                if (!Script->ProcessEventId(GetGOInfo()->chest.eventId, user, this, true))
+                if (!sScriptMgr.OnProcessEvent(GetGOInfo()->chest.eventId, user, this, true))
                     GetMap()->ScriptsStart(sEventScripts, GetGOInfo()->chest.eventId, user, this);
             }
 
@@ -1123,7 +1122,7 @@ void GameObject::Use(Unit* user)
                 }
                 else if (info->goober.gossipID)             // ...or gossip, if page does not exist
                 {
-                    if (!Script->GOGossipHello(player, this))
+                    if (!sScriptMgr.OnGossipHello(player, this))
                     {
                         player->PrepareGossipMenu(this, info->goober.gossipID);
                         player->SendPreparedGossip(this);
@@ -1134,8 +1133,13 @@ void GameObject::Use(Unit* user)
                 {
                     DEBUG_FILTER_LOG(LOG_FILTER_AI_AND_MOVEGENSS, "Goober ScriptStart id %u for GO entry %u (GUID %u).", info->goober.eventId, GetEntry(), GetDBTableGUIDLow());
 
-                    if (!Script->ProcessEventId(info->goober.eventId, player, this, true))
+                    if (!sScriptMgr.OnProcessEvent(info->goober.eventId, player, this, true))
                         GetMap()->ScriptsStart(sEventScripts, info->goober.eventId, player, this);
+
+                    if (player->CanUseBattleGroundObject())
+                        if (BattleGround *bg = player->GetBattleGround())
+                            if (bg->GetTypeID(true) == BATTLEGROUND_SA)
+                                bg->EventPlayerDamageGO(player, this, info->goober.eventId);
                 }
 
                 // possible quest objective for active quests
@@ -1196,7 +1200,7 @@ void GameObject::Use(Unit* user)
 
             if (info->camera.eventID)
             {
-                if (!Script->ProcessEventId(info->camera.eventID, player, this, true))
+                if (!sScriptMgr.OnProcessEvent(info->camera.eventID, player, this, true))
                     GetMap()->ScriptsStart(sEventScripts, info->camera.eventID, player, this);
             }
 
@@ -1581,10 +1585,24 @@ void GameObject::DamageTaken(Unit* pDoneBy, uint32 damage)
     if (GetGoType() != GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING || !m_health)
         return;
 
+    Player* pWho = NULL;
+    if (pDoneBy && pDoneBy->GetTypeId() == TYPEID_PLAYER)
+        pWho = (Player*)pDoneBy;
+
+    if(pDoneBy && ((Creature*)pDoneBy)->GetVehicleKit())
+        pWho = (Player*)pDoneBy->GetCharmerOrOwner();
+
     DEBUG_FILTER_LOG(LOG_FILTER_DAMAGE, "GO damage taken: %u to health %u", damage, m_health);
 
     if (m_health > damage)
+    {
         m_health -= damage;
+
+        // For Strand of the Ancients and probably Isle of Conquest
+        if (pWho)
+            if (BattleGround *bg = pWho->GetBattleGround())
+                bg->EventPlayerDamageGO(pWho, this, m_goInfo->destructibleBuilding.damageEvent);
+    }
     else
         m_health = 0;
 
@@ -1595,6 +1613,14 @@ void GameObject::DamageTaken(Unit* pDoneBy, uint32 damage)
             RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
             SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DESTROYED);
             SetUInt32Value(GAMEOBJECT_DISPLAYID, m_goInfo->destructibleBuilding.destroyedDisplayId);
+
+            if (pWho)
+            {
+                sScriptMgr.OnGoDestroyed(pWho, this, m_goInfo->destructibleBuilding.destroyedEvent);
+
+                if (BattleGround *bg = pWho->GetBattleGround())
+                    bg->EventPlayerDamageGO(pWho, this, m_goInfo->destructibleBuilding.destroyedEvent);
+            }
         }
     }
     else                                            // from intact to damaged
@@ -1613,6 +1639,10 @@ void GameObject::DamageTaken(Unit* pDoneBy, uint32 damage)
             // otherwise we just handle it as "destroyed"
             else
                 m_health = 0;
+
+            if (pWho)
+                if (BattleGround *bg = pWho->GetBattleGround())
+                    bg->EventPlayerDamageGO(pWho, this, m_goInfo->destructibleBuilding.damagedEvent);
          }
     }
     SetGoAnimProgress(m_health * 255 / GetMaxHealth());

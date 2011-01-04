@@ -575,10 +575,10 @@ void Channel::Say(uint64 p, const char *what, uint32 lang)
     }
     else
     {
-        // ChatSpy
+        /*// ChatSpy
         for(PlayerList::iterator itr = players.begin(); itr != players.end(); ++itr)
             if(Player* pl = sObjectMgr.GetPlayer(itr->first))
-                pl->HandleChatSpyMessage(what, CHAT_MSG_CHANNEL, lang, plr, GetName());
+                pl->HandleChatSpyMessage(what, CHAT_MSG_CHANNEL, lang, plr, GetName());*/
 	
         uint32 messageLength = strlen(what) + 1;
 

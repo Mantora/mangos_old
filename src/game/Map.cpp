@@ -30,7 +30,7 @@
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "World.h"
-#include "ScriptCalls.h"
+#include "ScriptMgr.h"
 #include "Group.h"
 #include "MapRefManager.h"
 #include "DBCEnums.h"
@@ -479,7 +479,6 @@ void Map::Update(const uint32 &t_diff)
         Player* plr = m_mapRefIter->getSource();
         if(plr && plr->IsInWorld())
         {
-            //plr->Update(t_diff);
             WorldSession * pSession = plr->GetSession();
             MapSessionFilter updater(pSession);
 
@@ -492,7 +491,10 @@ void Map::Update(const uint32 &t_diff)
     {
         Player* plr = m_mapRefIter->getSource();
         if(plr && plr->IsInWorld())
-            plr->Update(t_diff);
+        {
+            WorldObject::UpdateHelper helper(plr);
+            helper.Update(t_diff);
+        }
     }
 
     /// update active cells around players and active objects
@@ -716,8 +718,8 @@ Map::PlayerRelocation(Player *player, float x, float y, float z, float orientati
     }
 
     // FG: attempt to use less CPU, reduce calling interval of CPU-intensive grid search to min. 500 ms
-    uint32 timems = getMSTime();
-    if(getMSTimeDiff(player->m_grid_update_timer, timems) >= 500)
+    uint32 timems = WorldTimer::getMSTime();
+    if(WorldTimer::getMSTimeDiff(player->m_grid_update_timer, timems) >= 500)
         player->m_grid_update_timer = timems;
     else
         return;
@@ -1412,7 +1414,7 @@ bool InstanceMap::Add(Player *player)
                             sLog.outError("GroupBind save players: %d, group count: %d", groupBind->save->GetPlayerCount(), groupBind->save->GetGroupCount());
                         else
                             sLog.outError("GroupBind save NULL");
-                        MANGOS_ASSERT(false);
+                        //MANGOS_ASSERT(false);
                     }
                     // if the group/leader is permanently bound to the instance
                     // players also become permanently bound when they enter
@@ -1497,7 +1499,7 @@ void InstanceMap::CreateInstanceData(bool load)
     if (mInstance)
     {
         i_script_id = mInstance->script_id;
-        i_data = Script->CreateInstanceData(this);
+        i_data = sScriptMgr.CreateInstanceData(this);
     }
 
     if(!i_data)

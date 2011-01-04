@@ -80,6 +80,7 @@ struct AreaTrigger
     uint8  requiredLevel;
     uint32 requiredItem;
     uint32 requiredItem2;
+    uint8  heroicLevel;
     uint32 heroicKey;
     uint32 heroicKey2;
     uint32 requiredQuest;

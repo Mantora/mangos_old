@@ -32,7 +32,7 @@
 #include "UpdateData.h"
 #include "LootMgr.h"
 #include "Chat.h"
-#include "ScriptCalls.h"
+#include "ScriptMgr.h"
 #include <zlib/zlib.h>
 #include "ObjectAccessor.h"
 #include "Object.h"
@@ -252,7 +252,7 @@ void WorldSession::HandleWhoOpcode( WorldPacket & recv_data )
     uint32 count = m.size();
     data.put( 0, clientcount );                             // insert right count, listed count
     //data.put( 4, count > 50 ? count : clientcount );        // insert right count, online count
-	data.put( 4, clientcount );                             // insert right count, online count
+    data.put( 4, clientcount );                             // insert right count, online count
 
     SendPacket(&data);
     DEBUG_LOG( "WORLD: Send SMSG_WHO Message" );
@@ -710,7 +710,7 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
         return;
     }
 
-    if(Script->scriptAreaTrigger(pl, atEntry))
+    if (sScriptMgr.OnAreaTrigger(pl, atEntry))
         return;
 
     uint32 quest_id = sObjectMgr.GetQuestForAreaTrigger( Trigger_ID );
@@ -786,6 +786,9 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket & recv_data)
         {
             if (at->requiredQuestHeroic && !GetPlayer()->GetQuestRewardStatus(at->requiredQuestHeroic))
                 missingQuest = true;
+            // check level for heroic mode
+            if (GetPlayer()->getLevel() < at->heroicLevel && !sWorld.getConfig(CONFIG_BOOL_INSTANCE_IGNORE_LEVEL))
+                missingLevel = true;
         }
         else
         {
@@ -958,7 +961,8 @@ void WorldSession::HandleNextCinematicCamera( WorldPacket & /*recv_data*/ )
 
 void WorldSession::HandleMoveTimeSkippedOpcode( WorldPacket & recv_data )
 {
-    /*  WorldSession::Update( getMSTime() );*/
+    /*  WorldSession::Update( WorldTimer::getMSTime() );*/
+//    DEBUG_LOG( "WORLD: Time Lag/Synchronization Resent/Update" );
 
     ObjectGuid guid;
     uint32 time_skipped;
@@ -1344,7 +1348,7 @@ void WorldSession::HandleTimeSyncResp( WorldPacket & recv_data )
 
     DEBUG_LOG("Time sync received: counter %u, client ticks %u, time since last sync %u", counter, clientTicks, clientTicks - _player->m_timeSyncClient);
 
-    uint32 ourTicks = clientTicks + (getMSTime() - _player->m_timeSyncServer);
+    uint32 ourTicks = clientTicks + (WorldTimer::getMSTime() - _player->m_timeSyncServer);
 
     // diff should be small
     DEBUG_LOG("Our ticks: %u, diff %u, latency %u", ourTicks, ourTicks - clientTicks, GetLatency());

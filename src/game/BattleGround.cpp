@@ -765,16 +765,53 @@ void BattleGround::EndBattleGround(Team winner)
             winner_rating = winner_arena_team->GetStats().rating;
             int32 winner_change = winner_arena_team->WonAgainst(loser_rating);
             int32 loser_change = loser_arena_team->LostAgainst(winner_rating);
-            uint32 noratinglimit = sWorld.getConfig(CONFIG_UINT32_LOSERNOCHANGE);
-            uint32 halfratinglimit = sWorld.getConfig(CONFIG_UINT32_LOSERHALFCHANGE);
-
-            if(winner_rating <= noratinglimit || loser_rating <= noratinglimit)
-                loser_change = 0;
-            else if (loser_rating <= halfratinglimit)
-                loser_change /= 2;
             DEBUG_LOG("--- Winner rating: %u, Loser rating: %u, Winner change: %i, Loser change: %i ---", winner_rating, loser_rating, winner_change, loser_change);
             SetArenaTeamRatingChangeForTeam(winner, winner_change);
             SetArenaTeamRatingChangeForTeam(GetOtherTeam(winner), loser_change);
+            /** World of Warcraft Armory **/
+            if (sWorld.getConfig(CONFIG_BOOL_ARMORY_ENABLE) && sWorld.getConfig(CONFIG_BOOL_ARENA_ARMORY_ENABLE))
+            {
+                uint32 maxChartID;
+                QueryResult *result = CharacterDatabase.PQuery("SELECT MAX(gameid) FROM armory_game_chart");
+                if(!result)
+                    maxChartID = 0;
+                else
+                {
+                    maxChartID = (*result)[0].GetUInt32();
+                    delete result;
+                }
+                uint32 gameID = maxChartID+1;
+                for(BattleGroundScoreMap::const_iterator itr = m_PlayerScores.begin(); itr != m_PlayerScores.end(); ++itr)
+                {
+                    Player *plr = sObjectMgr.GetPlayer(itr->first);
+                    if (!plr)
+                        continue;
+                    uint32 plTeamID = plr->GetArenaTeamId(winner_arena_team->GetSlot());
+                    int changeType;
+                    uint32 resultRating;
+                    uint32 resultTeamID;
+                    int32 ratingChange;
+                    if (plTeamID == winner_arena_team->GetId())
+                    {
+                        changeType = 1; //win
+                        resultRating = winner_rating;
+                        resultTeamID = plTeamID;
+                        ratingChange = winner_change;
+                    }
+                    else
+                    {
+                        changeType = 2; //lose
+                        resultRating = loser_rating;
+                        resultTeamID = loser_arena_team->GetId();
+                        ratingChange = loser_change;
+                    }
+                    std::ostringstream sql_query;
+                    //                                                        gameid,              teamid,                     guid,                    changeType,             ratingChange,               teamRating,                  damageDone,                          deaths,                          healingDone,                           damageTaken,                           healingTaken,                         killingBlows,                      mapId,                 start,                   end
+                    sql_query << "INSERT INTO armory_game_chart VALUES ('" << gameID << "', '" << resultTeamID << "', '" << plr->GetGUID() << "', '" << changeType << "', '" << ratingChange  << "', '" << resultRating << "', '" << itr->second->DamageDone << "', '" << itr->second->Deaths << "', '" << itr->second->HealingDone << "', '" << itr->second->DamageTaken << "', '" << itr->second->HealingTaken << "', '" << itr->second->KillingBlows << "', '" << m_MapId << "', '" << m_StartTime << "', '" << m_EndTime << "')";
+                    CharacterDatabase.Execute(sql_query.str().c_str());
+                }
+            }
+            /** World of Warcraft Armory **/
         }
         else
         {
@@ -1271,7 +1308,8 @@ void BattleGround::AddPlayer(Player *plr)
     {
         plr->RemoveArenaSpellCooldowns();
         plr->RemoveArenaAuras();
-        plr->RemoveAllEnchantments(TEMP_ENCHANTMENT_SLOT);
+        if (plr->getClass() != CLASS_ROGUE) 
+            plr->RemoveAllEnchantments(TEMP_ENCHANTMENT_SLOT, true);
         if (team == ALLIANCE)                               // gold
         {
             if (plr->GetTeam() == HORDE)
@@ -1458,6 +1496,14 @@ void BattleGround::UpdatePlayerScore(Player *Source, uint32 type, uint32 value)
         case SCORE_HEALING_DONE:                            // Healing Done
             itr->second->HealingDone += value;
             break;
+        /** World of Warcraft Armory **/
+        case SCORE_DAMAGE_TAKEN:
+            itr->second->DamageTaken += value;              // Damage Taken
+            break;
+        case SCORE_HEALING_TAKEN:
+            itr->second->HealingTaken += value;             // Healing Taken
+            break;
+        /** World of Warcraft Armory **/
         default:
             sLog.outError("BattleGround: Unknown player score type %u", type);
             break;
@@ -1663,12 +1709,16 @@ void BattleGround::SpawnBGObject(ObjectGuid guid, uint32 respawntime)
             obj->SetLootState(GO_READY);
         obj->SetRespawnTime(0);
         map->Add(obj);
+        if (obj->GetGOInfo()->type == GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
+            obj->Rebuild(NULL);
     }
     else
     {
         map->Add(obj);
         obj->SetRespawnTime(respawntime);
         obj->SetLootState(GO_JUST_DEACTIVATED);
+        if (obj->GetGOInfo()->type == GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
+            obj->Rebuild(NULL);
     }
 }
 
@@ -1755,6 +1805,42 @@ void BattleGround::SendYell2ToAll(int32 entry, uint32 language, ObjectGuid guid,
     MaNGOS::BattleGround2YellBuilder bg_builder(language, entry, source, arg1, arg2);
     MaNGOS::LocalizedPacketDo<MaNGOS::BattleGround2YellBuilder> bg_do(bg_builder);
     BroadcastWorker(bg_do);
+}
+
+void BattleGround::SendWarningToAll(int32 entry, ...)
+{
+    const char *format = sObjectMgr.GetMangosStringForDBCLocale(entry);
+    va_list ap;
+    char str [1024];
+    va_start(ap, entry);
+    vsnprintf(str,1024,format, ap);
+    va_end(ap);
+    std::string msg = (std::string)str;
+
+    WorldPacket data(SMSG_MESSAGECHAT, 200);
+
+    data << (uint8)CHAT_MSG_RAID_BOSS_EMOTE;
+    data << (uint32)LANG_UNIVERSAL;
+    data << (uint64)0;
+    data << (uint32)0;                                     // 2.1.0
+    data << (uint32)1;
+    data << (uint8)0;
+    data << (uint64)0;
+    data << (uint32)(strlen(msg.c_str())+1);
+    data << msg.c_str();
+    data << (uint8)0;
+    uint8 control = 0;
+    for (BattleGroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
+    {
+        if (control == 40)  // More than 40 iterations? This is imposible, so, break me!
+            break;
+
+        if (Player *plr = ObjectAccessor::FindPlayer(ObjectGuid(itr->first)))
+            if (plr->GetSession())
+                plr->GetSession()->SendPacket(&data);
+
+        ++control;
+    }
 }
 
 void BattleGround::EndNow()
@@ -1931,4 +2017,12 @@ void BattleGround::SetBracket( PvPDifficultyEntry const* bracketEntry )
 {
     m_BracketId  = bracketEntry->GetBracketId();
     SetLevelRange(bracketEntry->minLevel,bracketEntry->maxLevel);
+}
+
+GameObject* BattleGround::GetBGObject(uint32 type)
+{
+    GameObject *obj = GetBgMap()->GetGameObject(m_BgObjects[type]);
+    if (!obj)
+        sLog.outError("couldn't get gameobject %i",type);
+    return obj;
 }

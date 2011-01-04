@@ -157,7 +157,7 @@ void PlayerTaxi::InitTaxiNodesForLevel(uint32 race, uint32 chrClass, uint32 leve
         case RACE_DWARF:    SetTaximaskNode(6);  break;     // Dwarf
         case RACE_NIGHTELF: SetTaximaskNode(26);
                             SetTaximaskNode(27); break;     // Night Elf
-        case RACE_UNDEAD_PLAYER: SetTaximaskNode(11); break;// Undead
+        case RACE_UNDEAD:   SetTaximaskNode(11); break;     // Undead
         case RACE_TAUREN:   SetTaximaskNode(22); break;     // Tauren
         case RACE_GNOME:    SetTaximaskNode(6);  break;     // Gnome
         case RACE_TROLL:    SetTaximaskNode(23); break;     // Troll
@@ -1195,7 +1195,7 @@ void Player::SetDrunkValue(uint16 newDrunkenValue, uint32 itemId)
     SendMessageToSet(&data, true);
 }
 
-void Player::Update( uint32 p_time )
+void Player::Update( uint32 update_diff, uint32 p_time )
 {
     if(!IsInWorld())
         return;
@@ -1215,25 +1215,25 @@ void Player::Update( uint32 p_time )
 
     //used to implement delayed far teleports
     SetCanDelayTeleport(true);
-    Unit::Update( p_time );
+    Unit::Update( update_diff, p_time );
     SetCanDelayTeleport(false);
 
     // update player only attacks
     if(uint32 ranged_att = getAttackTimer(RANGED_ATTACK))
     {
-        setAttackTimer(RANGED_ATTACK, (p_time >= ranged_att ? 0 : ranged_att - p_time) );
+        setAttackTimer(RANGED_ATTACK, (update_diff >= ranged_att ? 0 : ranged_att - update_diff) );
     }
 
     if(uint32 off_att = getAttackTimer(OFF_ATTACK))
     {
-        setAttackTimer(OFF_ATTACK, (p_time >= off_att ? 0 : off_att - p_time) );
+        setAttackTimer(OFF_ATTACK, (update_diff >= off_att ? 0 : off_att - update_diff) );
     }
 
     time_t now = time (NULL);
 
     UpdatePvPFlag(now);
 
-    UpdateContestedPvP(p_time);
+    UpdateContestedPvP(update_diff);
 
     UpdateDuelFlag(now);
 
@@ -1254,7 +1254,7 @@ void Player::Update( uint32 p_time )
         while (iter != m_timedquests.end())
         {
             QuestStatusData& q_status = mQuestStatus[*iter];
-            if( q_status.m_timer <= p_time )
+            if( q_status.m_timer <= update_diff )
             {
                 uint32 quest_id  = *iter;
                 ++iter;                                     // current iter will be removed in FailQuest
@@ -1262,7 +1262,7 @@ void Player::Update( uint32 p_time )
             }
             else
             {
-                q_status.m_timer -= p_time;
+                q_status.m_timer -= update_diff;
                 if (q_status.uState != QUEST_NEW) q_status.uState = QUEST_CHANGED;
                 ++iter;
             }
@@ -1365,23 +1365,23 @@ void Player::Update( uint32 p_time )
 
     if (m_regenTimer)
     {
-        if(p_time >= m_regenTimer)
+        if(update_diff >= m_regenTimer)
             m_regenTimer = 0;
         else
-            m_regenTimer -= p_time;
+            m_regenTimer -= update_diff;
     }
 
     if (m_weaponChangeTimer > 0)
     {
-        if(p_time >= m_weaponChangeTimer)
+        if(update_diff >= m_weaponChangeTimer)
             m_weaponChangeTimer = 0;
         else
-            m_weaponChangeTimer -= p_time;
+            m_weaponChangeTimer -= update_diff;
     }
 
     if (m_zoneUpdateTimer > 0)
     {
-        if(p_time >= m_zoneUpdateTimer)
+        if(update_diff >= m_zoneUpdateTimer)
         {
             uint32 newzone, newarea;
             GetZoneAndAreaId(newzone,newarea);
@@ -1399,15 +1399,15 @@ void Player::Update( uint32 p_time )
             }
         }
         else
-            m_zoneUpdateTimer -= p_time;
+            m_zoneUpdateTimer -= update_diff;
     }
 
     if (m_timeSyncTimer > 0)
     {
-        if(p_time >= m_timeSyncTimer)
+        if(update_diff >= m_timeSyncTimer)
             SendTimeSync();
         else
-            m_timeSyncTimer -= p_time;
+            m_timeSyncTimer -= update_diff;
     }
 
     if (isAlive())
@@ -1428,29 +1428,29 @@ void Player::Update( uint32 p_time )
 
     if(m_nextSave > 0)
     {
-        if(p_time >= m_nextSave)
+        if(update_diff >= m_nextSave)
         {
             // m_nextSave reseted in SaveToDB call
             SaveToDB();
             DETAIL_LOG("Player '%s' (GUID: %u) saved", GetName(), GetGUIDLow());
         }
         else
-            m_nextSave -= p_time;
+            m_nextSave -= update_diff;
     }
 
     //Handle Water/drowning
-    HandleDrowning(p_time);
+    HandleDrowning(update_diff);
 
     //Handle detect stealth players
     if (m_DetectInvTimer > 0)
     {
-        if (p_time >= m_DetectInvTimer)
+        if (update_diff >= m_DetectInvTimer)
         {
             HandleStealthedUnitsDetection();
             m_DetectInvTimer = 3000;
         }
         else
-            m_DetectInvTimer -= p_time;
+            m_DetectInvTimer -= update_diff;
     }
 
     // Played time
@@ -1464,7 +1464,7 @@ void Player::Update( uint32 p_time )
 
     if (m_drunk)
     {
-        m_drunkTimer += p_time;
+        m_drunkTimer += update_diff;
 
         if (m_drunkTimer > 10*IN_MILLISECONDS)
             HandleSobering();
@@ -1483,8 +1483,8 @@ void Player::Update( uint32 p_time )
             m_deathTimer -= p_time;
     }
 
-    UpdateEnchantTime(p_time);
-    UpdateHomebindTime(p_time);
+    UpdateEnchantTime(update_diff);
+    UpdateHomebindTime(update_diff);
 
     // group update
     SendUpdateToOutOfRangeGroupMembers();
@@ -8919,6 +8919,41 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
             break;
         case 3703:                                          // Shattrath City
             break;
+        case 4384:                                          // SA
+            if (bg && bg->GetTypeID(true) == BATTLEGROUND_SA)
+                bg->FillInitialWorldStates(data, count);
+            else
+            {
+                // 1-3 A defend, 4-6 H defend, 7-9 unk defend, 1 - ok, 2 - half destroyed, 3 - destroyed
+                data << uint32(0xf09) << uint32(0x4);       // 7  3849 Gate of Temple
+                data << uint32(0xe36) << uint32(0x4);       // 8  3638 Gate of Yellow Moon
+                data << uint32(0xe27) << uint32(0x4);       // 9  3623 Gate of Green Emerald
+                data << uint32(0xe24) << uint32(0x4);       // 10 3620 Gate of Blue Sapphire
+                data << uint32(0xe21) << uint32(0x4);       // 11 3617 Gate of Red Sun
+                data << uint32(0xe1e) << uint32(0x4);       // 12 3614 Gate of Purple Ametyst
+
+                data << uint32(0xdf3) << uint32(0x0);       // 13 3571 bonus timer (1 - on, 0 - off)
+                data << uint32(0xded) << uint32(0x0);       // 14 3565 Horde Attacker
+                data << uint32(0xdec) << uint32(0x1);       // 15 3564 Alliance Attacker
+                // End Round (timer), better explain this by example, eg. ends in 19:59 -> A:BC
+                data << uint32(0xde9) << uint32(0x9);       // 16 3561 C
+                data << uint32(0xde8) << uint32(0x5);       // 17 3560 B
+                data << uint32(0xde7) << uint32(0x19);      // 18 3559 A
+                data << uint32(0xe35) << uint32(0x1);       // 19 3637 East g - Horde control
+                data << uint32(0xe34) << uint32(0x1);       // 20 3636 West g - Horde control
+                data << uint32(0xe33) << uint32(0x1);       // 21 3635 South g - Horde control
+                data << uint32(0xe32) << uint32(0x0);       // 22 3634 East g - Alliance control
+                data << uint32(0xe31) << uint32(0x0);       // 23 3633 West g - Alliance control
+                data << uint32(0xe30) << uint32(0x0);       // 24 3632 South g - Alliance control
+                data << uint32(0xe2f) << uint32(0x1);       // 25 3631 Chamber of Ancients - Horde control
+                data << uint32(0xe2e) << uint32(0x0);       // 26 3630 Chamber of Ancients - Alliance control
+                data << uint32(0xe2d) << uint32(0x0);       // 27 3629 Beach1 - Horde control
+                data << uint32(0xe2c) << uint32(0x0);       // 28 3628 Beach2 - Horde control
+                data << uint32(0xe2b) << uint32(0x1);       // 29 3627 Beach1 - Alliance control
+                data << uint32(0xe2a) << uint32(0x1);       // 30 3626 Beach2 - Alliance control
+                // and many unks...
+            }
+            break;
         default:
             FillInitialWorldState(data,count, 0x914, 0x0);  // 2324 7
             FillInitialWorldState(data,count, 0x913, 0x0);  // 2323 8
@@ -12759,7 +12794,7 @@ void Player::RemoveEnchantmentDurations(Item *item)
     }
 }
 
-void Player::RemoveAllEnchantments(EnchantmentSlot slot)
+void Player::RemoveAllEnchantments(EnchantmentSlot slot, bool isArenaRemove)
 {
     // remove enchantments from equipped items first to clean up the m_enchantDuration list
     for(EnchantDurationList::iterator itr = m_enchantDuration.begin(), next; itr != m_enchantDuration.end(); itr = next)
@@ -12767,6 +12802,20 @@ void Player::RemoveAllEnchantments(EnchantmentSlot slot)
         next = itr;
         if (itr->slot == slot)
         {
+            if(isArenaRemove && itr->item) // Do not remove poisons at arenas
+            {
+                uint32 enchant_id = itr->item->GetEnchantmentId(slot);
+                if(enchant_id)
+                {
+                    SpellItemEnchantmentEntry const *pEnchant = sSpellItemEnchantmentStore.LookupEntry(enchant_id);
+                    if(pEnchant && pEnchant->aura_id == 26) // 26 is poison
+                    {
+                        ++next;
+                        continue;
+                    }
+                }
+            }
+
             if (itr->item && itr->item->GetEnchantmentId(slot))
             {
                 // remove from stats
@@ -14287,6 +14336,21 @@ void Player::RewardQuest(Quest const *pQuest, uint32 reward, Object* questGiver,
     if (announce)
         SendQuestReward(pQuest, XP, questGiver);
 
+    bool handled = false;
+
+    switch(questGiver->GetTypeId())
+    {
+        case TYPEID_UNIT:
+            handled = sScriptMgr.OnQuestRewarded(this, (Creature*)questGiver, pQuest);
+            break;
+        case TYPEID_GAMEOBJECT:
+            handled = sScriptMgr.OnQuestRewarded(this, (GameObject*)questGiver, pQuest);
+            break;
+    }
+
+    if (!handled && pQuest->GetQuestCompleteScript() != 0)
+        GetMap()->ScriptsStart(sQuestEndScripts, pQuest->GetQuestCompleteScript(), questGiver, this);
+
     // cast spells after mark quest complete (some spells have quest completed state reqyurements in spell_area data)
     if (pQuest->GetRewSpellCast() > 0)
         CastSpell(this, pQuest->GetRewSpellCast(), true);
@@ -15357,9 +15421,6 @@ void Player::SendQuestReward( Quest const *pQuest, uint32 XP, Object * questGive
     data << uint32(pQuest->GetBonusTalents());              // bonus talents
     data << uint32(0);                                      // arena points
     GetSession()->SendPacket( &data );
-
-    if (pQuest->GetQuestCompleteScript() != 0)
-        GetMap()->ScriptsStart(sQuestEndScripts, pQuest->GetQuestCompleteScript(), questGiver, this);
 }
 
 void Player::SendQuestFailed( uint32 quest_id, InventoryChangeFailure reason)
@@ -21801,7 +21862,6 @@ void Player::ApplyGlyphs(bool apply)
         ApplyGlyph(i,apply);
 }
 
-
 bool Player::isTotalImmune()
 {
     AuraList const& immune = GetAurasByType(SPELL_AURA_SCHOOL_IMMUNITY);
@@ -23098,7 +23158,7 @@ void Player::BuildTeleportAckMsg( WorldPacket *data, float x, float y, float z, 
     *data << uint32(0);                                     // this value increments every time
     *data << uint32(m_movementInfo.GetMovementFlags());     // movement flags
     *data << uint16(0);                                     // 2.3.0
-    *data << uint32(getMSTime());                           // time
+    *data << uint32(WorldTimer::getMSTime());                           // time
     *data << x;
     *data << y;
     *data << z;
@@ -23116,7 +23176,7 @@ void Player::ResetTimeSync()
     m_timeSyncCounter = 0;
     m_timeSyncTimer = 0;
     m_timeSyncClient = 0;
-    m_timeSyncServer = getMSTime();
+    m_timeSyncServer = WorldTimer::getMSTime();
 }
 
 void Player::SendTimeSync()
@@ -23127,7 +23187,7 @@ void Player::SendTimeSync()
 
     // Schedule next sync in 10 sec
     m_timeSyncTimer = 10000;
-    m_timeSyncServer = getMSTime();
+    m_timeSyncServer = WorldTimer::getMSTime();
 }
 
 void Player::SendDuelCountdown(uint32 counter)

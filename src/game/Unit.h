@@ -777,6 +777,7 @@ class MovementInfo
         MovementFlags GetMovementFlags() const { return MovementFlags(moveFlags); }
         void SetMovementFlags(MovementFlags f) { moveFlags = f; }
         MovementFlags2 GetMovementFlags2() const { return MovementFlags2(moveFlags2); }
+		void AddMovementFlag2(MovementFlags2 f) { moveFlags2 |= f; }
 
         // Position manipulations
         Position const *GetPos() const { return &pos; }
@@ -1209,7 +1210,7 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void ApplyDiminishingAura(DiminishingGroup  group, bool apply);
         void ClearDiminishings() { m_Diminishing.clear(); }
 
-        virtual void Update( uint32 time );
+        virtual void Update( uint32 update_diff, uint32 time );
 
         void setAttackTimer(WeaponAttackType type, uint32 time) { m_attackTimer[type] = time; }
         void resetAttackTimer(WeaponAttackType type = BASE_ATTACK);
@@ -1503,8 +1504,6 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void CastCustomSpell(Unit* Victim,SpellEntry const *spellInfo, int32 const* bp0, int32 const* bp1, int32 const* bp2, bool triggered, Item *castItem= NULL, Aura* triggeredByAura = NULL, ObjectGuid originalCaster = ObjectGuid(), SpellEntry const* triggeredBy = NULL);
         void CastSpell(float x, float y, float z, uint32 spellId, bool triggered, Item *castItem = NULL, Aura* triggeredByAura = NULL, ObjectGuid originalCaster = ObjectGuid(), SpellEntry const* triggeredBy = NULL);
         void CastSpell(float x, float y, float z, SpellEntry const *spellInfo, bool triggered, Item *castItem = NULL, Aura* triggeredByAura = NULL, ObjectGuid originalCaster = ObjectGuid(), SpellEntry const* triggeredBy = NULL);
-
-        float getSpellThreatMultiplicator(SpellEntry const * spellInfo) const;
 
         void DeMorph();
 

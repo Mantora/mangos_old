@@ -720,7 +720,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder *holder)
 
     CharacterDatabase.PExecute("UPDATE characters SET online = 1 WHERE guid = '%u'", pCurrChar->GetGUIDLow());
     LoginDatabase.PExecute("UPDATE account SET active_realm_id = %u WHERE id = '%u'", realmID, GetAccountId());
-    pCurrChar->SetInGameTime( getMSTime() );
+    pCurrChar->SetInGameTime( WorldTimer::getMSTime() );
 
     // announce group about member online (must be after add to player list to receive announce to self)
     if (Group *group = pCurrChar->GetGroup())
@@ -1236,7 +1236,7 @@ void WorldSession::HandleCharFactionOrRaceChangeOpcode(WorldPacket& recv_data)
         {
             case RACE_ORC:
             case RACE_TAUREN:
-            case RACE_UNDEAD_PLAYER:
+            case RACE_UNDEAD:
             case RACE_TROLL:
             case RACE_BLOODELF:
             //case RACE_GOBLIN: for cataclysm

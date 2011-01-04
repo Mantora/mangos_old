@@ -3058,26 +3058,15 @@ void ObjectMgr::LoadPlayerInfo()
             float  positionZ     = fields[6].GetFloat();
             float  orientation   = fields[7].GetFloat();
 
-            if(current_race >= MAX_RACES)
-            {
-                sLog.outErrorDb("Wrong race %u in `playercreateinfo` table, ignoring.",current_race);
-                continue;
-            }
-
             ChrRacesEntry const* rEntry = sChrRacesStore.LookupEntry(current_race);
-            if(!rEntry)
+            if(!rEntry || !((1 << (current_race-1)) & RACEMASK_ALL_PLAYABLE))
             {
                 sLog.outErrorDb("Wrong race %u in `playercreateinfo` table, ignoring.",current_race);
                 continue;
             }
 
-            if(current_class >= MAX_CLASSES)
-            {
-                sLog.outErrorDb("Wrong class %u in `playercreateinfo` table, ignoring.",current_class);
-                continue;
-            }
-
-            if(!sChrClassesStore.LookupEntry(current_class))
+            ChrClassesEntry const* cEntry = sChrClassesStore.LookupEntry(current_class);
+            if(!cEntry || !((1 << (current_class-1)) & CLASSMASK_ALL_PLAYABLE))
             {
                 sLog.outErrorDb("Wrong class %u in `playercreateinfo` table, ignoring.",current_class);
                 continue;
@@ -3144,14 +3133,17 @@ void ObjectMgr::LoadPlayerInfo()
                 Field* fields = result->Fetch();
 
                 uint32 current_race = fields[0].GetUInt32();
-                if(current_race >= MAX_RACES)
+                uint32 current_class = fields[1].GetUInt32();
+
+                ChrRacesEntry const* rEntry = sChrRacesStore.LookupEntry(current_race);
+                if(!rEntry || !((1 << (current_race-1)) & RACEMASK_ALL_PLAYABLE))
                 {
                     sLog.outErrorDb("Wrong race %u in `playercreateinfo_item` table, ignoring.",current_race);
                     continue;
                 }
 
-                uint32 current_class = fields[1].GetUInt32();
-                if(current_class >= MAX_CLASSES)
+                ChrClassesEntry const* cEntry = sChrClassesStore.LookupEntry(current_class);
+                if(!cEntry || !((1 << (current_class-1)) & CLASSMASK_ALL_PLAYABLE))
                 {
                     sLog.outErrorDb("Wrong class %u in `playercreateinfo_item` table, ignoring.",current_class);
                     continue;
@@ -3213,14 +3205,17 @@ void ObjectMgr::LoadPlayerInfo()
                 Field* fields = result->Fetch();
 
                 uint32 current_race = fields[0].GetUInt32();
-                if(current_race >= MAX_RACES)
+                uint32 current_class = fields[1].GetUInt32();
+
+                ChrRacesEntry const* rEntry = sChrRacesStore.LookupEntry(current_race);
+                if(!rEntry || !((1 << (current_race-1)) & RACEMASK_ALL_PLAYABLE))
                 {
                     sLog.outErrorDb("Wrong race %u in `playercreateinfo_spell` table, ignoring.",current_race);
                     continue;
                 }
 
-                uint32 current_class = fields[1].GetUInt32();
-                if(current_class >= MAX_CLASSES)
+                ChrClassesEntry const* cEntry = sChrClassesStore.LookupEntry(current_class);
+                if(!cEntry || !((1 << (current_class-1)) & CLASSMASK_ALL_PLAYABLE))
                 {
                     sLog.outErrorDb("Wrong class %u in `playercreateinfo_spell` table, ignoring.",current_class);
                     continue;
@@ -3272,14 +3267,17 @@ void ObjectMgr::LoadPlayerInfo()
                 Field* fields = result->Fetch();
 
                 uint32 current_race = fields[0].GetUInt32();
-                if(current_race >= MAX_RACES)
+                uint32 current_class = fields[1].GetUInt32();
+
+                ChrRacesEntry const* rEntry = sChrRacesStore.LookupEntry(current_race);
+                if(!rEntry || !((1 << (current_race-1)) & RACEMASK_ALL_PLAYABLE))
                 {
                     sLog.outErrorDb("Wrong race %u in `playercreateinfo_action` table, ignoring.",current_race);
                     continue;
                 }
 
-                uint32 current_class = fields[1].GetUInt32();
-                if(current_class >= MAX_CLASSES)
+                ChrClassesEntry const* cEntry = sChrClassesStore.LookupEntry(current_class);
+                if(!cEntry || !((1 << (current_class-1)) & CLASSMASK_ALL_PLAYABLE))
                 {
                     sLog.outErrorDb("Wrong class %u in `playercreateinfo_action` table, ignoring.",current_class);
                     continue;
@@ -3430,14 +3428,17 @@ void ObjectMgr::LoadPlayerInfo()
             Field* fields = result->Fetch();
 
             uint32 current_race = fields[0].GetUInt32();
-            if(current_race >= MAX_RACES)
+            uint32 current_class = fields[1].GetUInt32();
+
+            ChrRacesEntry const* rEntry = sChrRacesStore.LookupEntry(current_race);
+            if(!rEntry || !((1 << (current_race-1)) & RACEMASK_ALL_PLAYABLE))
             {
                 sLog.outErrorDb("Wrong race %u in `player_levelstats` table, ignoring.",current_race);
                 continue;
             }
 
-            uint32 current_class = fields[1].GetUInt32();
-            if(current_class >= MAX_CLASSES)
+            ChrClassesEntry const* cEntry = sChrClassesStore.LookupEntry(current_class);
+            if(!cEntry || !((1 << (current_class-1)) & CLASSMASK_ALL_PLAYABLE))
             {
                 sLog.outErrorDb("Wrong class %u in `player_levelstats` table, ignoring.",current_class);
                 continue;
@@ -3483,13 +3484,13 @@ void ObjectMgr::LoadPlayerInfo()
     for (int race = 0; race < MAX_RACES; ++race)
     {
         // skip nonexistent races
-        if(!sChrRacesStore.LookupEntry(race))
+        if(!((1 << (race-1)) & RACEMASK_ALL_PLAYABLE) || !sChrRacesStore.LookupEntry(race))
             continue;
 
         for (int class_ = 0; class_ < MAX_CLASSES; ++class_)
         {
             // skip nonexistent classes
-            if(!sChrClassesStore.LookupEntry(class_))
+            if(!((1 << (class_-1)) & CLASSMASK_ALL_PLAYABLE) || !sChrClassesStore.LookupEntry(class_))
                 continue;
 
             PlayerInfo* pInfo = &playerInfo[race][class_];
@@ -5689,8 +5690,8 @@ void ObjectMgr::LoadAreaTriggerTeleports()
 
     uint32 count = 0;
 
-    //                                                0   1               2              3               4           5            6                    7                           8                     9           10                 11                 12                 13
-    QueryResult *result = WorldDatabase.Query("SELECT id, required_level, required_item, required_item2, heroic_key, heroic_key2, required_quest_done, required_quest_done_heroic, required_failed_text, target_map, target_position_x, target_position_y, target_position_z, target_orientation FROM areatrigger_teleport");
+    //                                                0   1               2              3               4             5           6            7                    8                           9                     10          11                 12                 13                 14
+    QueryResult *result = WorldDatabase.Query("SELECT id, required_level, required_item, required_item2, heroic_level, heroic_key, heroic_key2, required_quest_done, required_quest_done_heroic, required_failed_text, target_map, target_position_x, target_position_y, target_position_z, target_orientation FROM areatrigger_teleport");
     if (!result)
     {
 
@@ -5720,16 +5721,17 @@ void ObjectMgr::LoadAreaTriggerTeleports()
         at.requiredLevel        = fields[1].GetUInt8();
         at.requiredItem         = fields[2].GetUInt32();
         at.requiredItem2        = fields[3].GetUInt32();
-        at.heroicKey            = fields[4].GetUInt32();
-        at.heroicKey2           = fields[5].GetUInt32();
-        at.requiredQuest        = fields[6].GetUInt32();
-        at.requiredQuestHeroic  = fields[7].GetUInt32();
-        at.requiredFailedText   = fields[8].GetCppString();
-        at.target_mapId         = fields[9].GetUInt32();
-        at.target_X             = fields[10].GetFloat();
-        at.target_Y             = fields[11].GetFloat();
-        at.target_Z             = fields[12].GetFloat();
-        at.target_Orientation   = fields[13].GetFloat();
+        at.heroicLevel			= fields[4].GetUInt8();
+        at.heroicKey            = fields[5].GetUInt32();
+        at.heroicKey2           = fields[6].GetUInt32();
+        at.requiredQuest        = fields[7].GetUInt32();
+        at.requiredQuestHeroic  = fields[8].GetUInt32();
+        at.requiredFailedText   = fields[9].GetCppString();
+        at.target_mapId         = fields[10].GetUInt32();
+        at.target_X             = fields[11].GetFloat();
+        at.target_Y             = fields[12].GetFloat();
+        at.target_Z             = fields[13].GetFloat();
+        at.target_Orientation   = fields[14].GetFloat();
 
         AreaTriggerEntry const* atEntry = sAreaTriggerStore.LookupEntry(Trigger_ID);
         if (!atEntry)
@@ -7708,7 +7710,7 @@ const char *ObjectMgr::GetMangosString(int32 entry, int locale_idx) const
 
 const char * GetMangosString(int32 entry, int locale_idx)
 {
-	return sObjectMgr.GetMangosString(entry, locale_idx);
+    return sObjectMgr.GetMangosString(entry, locale_idx);
 }
 
 void ObjectMgr::LoadSpellDisabledEntrys()
