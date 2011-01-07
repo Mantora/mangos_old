@@ -172,6 +172,8 @@
       <Filter>World/Handlers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\game\MapUpdater.cpp">
+    </ClCompile>
+    <ClCompile Include="..\..\src\game\MassMailMgr.cpp">
       <Filter>World/Handlers</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\game\MiscHandler.cpp">
@@ -603,7 +605,9 @@
     <ClInclude Include="..\..\src\game\MapManager.h">
       <Filter>World/Handlers</Filter>
     </ClInclude>
-	<ClInclude Include="..\..\src\game\MapUpdater.h">
+    <ClInclude Include="..\..\src\game\MapUpdater.h">
+    </ClInclude>
+    <ClInclude Include="..\..\src\game\MassMailMgr.h">
       <Filter>World/Handlers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\game\NPCHandler.h">

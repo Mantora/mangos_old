@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -427,8 +427,6 @@ Player::Player (WorldSession *session): Unit(), m_mover(this), m_camera(this), m
     // players always accept
     if(GetSession()->GetSecurity() == SEC_PLAYER)
         SetAcceptWhispers(true);
-
-    m_comboPoints = 0;
 
     m_usedTalentCount = 0;
     m_questRewardTalentCount = 0;
@@ -3786,7 +3784,6 @@ void Player::_SaveSpellCooldowns()
     time_t curTime = time(NULL);
     time_t infTime = curTime + infinityCooldownDelayCheck;
 
-    /* copied following sql-code partly from achievementmgr */
     bool first_round = true;
     std::ostringstream ss;
 
@@ -4310,9 +4307,11 @@ void Player::DeleteFromDB(ObjectGuid playerguid, uint32 accountId, bool updateRe
                         continue;
                     }
 
-                    MailDraft draft(subject, body);
+                    MailDraft draft;
                     if (mailTemplateId)
-                        draft = MailDraft(mailTemplateId, false);   // items already included
+                        draft.SetMailTemplate(mailTemplateId, false);// items already included
+                    else
+                        draft.SetSubjectAndBody(subject, body);
 
                     if (has_items)
                     {
@@ -4355,7 +4354,7 @@ void Player::DeleteFromDB(ObjectGuid playerguid, uint32 accountId, bool updateRe
 
                     uint32 pl_account = sObjectMgr.GetPlayerAccountIdByGUID(playerguid);
 
-                    draft.AddMoney(money).SendReturnToSender(pl_account, playerguid, ObjectGuid(HIGHGUID_PLAYER, sender));
+                    draft.SetMoney(money).SendReturnToSender(pl_account, playerguid, ObjectGuid(HIGHGUID_PLAYER, sender));
                 }
                 while (resultMail->NextRow());
 
@@ -6124,6 +6123,16 @@ void Player::SendActionButtons(uint32 state) const
     DETAIL_LOG( "Action Buttons for '%u' spec '%u' Initialized", GetGUIDLow(), m_activeSpec );
 }
 
+void Player::SendLockActionButtons() const
+{
+    DETAIL_LOG( "Locking Action Buttons for '%u' spec '%u'", GetGUIDLow(), m_activeSpec);
+    WorldPacket data(SMSG_ACTION_BUTTONS, 1);
+    // sending 2 locks actions bars, neither user can remove buttons, nor client removes buttons at spell unlearn
+    // they remain locked until server sends new action buttons
+    data << uint8(2);
+    GetSession()->SendPacket( &data );
+}
+
 bool Player::IsActionButtonDataValid(uint8 button, uint32 action, uint8 type, Player* player, bool msg)
 {
     if(button >= MAX_ACTION_BUTTONS)
@@ -7516,14 +7525,14 @@ void Player::_ApplyItemBonuses(ItemPrototype const *proto, uint8 slot, bool appl
             ApplyFeralAPBonus(feral_bonus, apply);
     }
     // Druids get feral AP bonus from weapon dps (also use DPS from ScalingStatValue)
-    if(getClass() == CLASS_DRUID)
+    if (getClass() == CLASS_DRUID)
     {
         int32 feral_bonus = proto->getFeralBonus(extraDPS);
         if (feral_bonus > 0)
             ApplyFeralAPBonus(feral_bonus, apply);
     }
 
-    if (!IsUseEquippedWeapon(attType))
+    if (!CanUseEquippedWeapon(attType))
         return;
 
     if (proto->Delay)
@@ -9504,7 +9513,7 @@ Item* Player::GetWeaponForAttack(WeaponAttackType attackType, bool nonbroken, bo
     if (!item || item->GetProto()->Class != ITEM_CLASS_WEAPON)
         return NULL;
 
-    if (useable && !IsUseEquippedWeapon(attackType))
+    if (useable && !CanUseEquippedWeapon(attackType))
         return NULL;
 
     if (nonbroken && item->IsBroken())
@@ -9522,7 +9531,7 @@ Item* Player::GetShield(bool useable) const
     if (!useable)
         return item;
 
-    if (item->IsBroken() || !IsUseEquippedWeapon(OFF_ATTACK))
+    if (item->IsBroken() || !CanUseEquippedWeapon(OFF_ATTACK))
         return NULL;
 
     return item;
@@ -12588,7 +12597,7 @@ void Player::SendEquipError( uint8 msg, Item* pItem, Item *pItem2, uint32 itemid
             case EQUIP_ERR_CANT_EQUIP_LEVEL_I:
             case EQUIP_ERR_PURCHASE_LEVEL_TOO_LOW:
             {
-                ItemPrototype const* proto = pItem ? pItem->GetProto() : sObjectMgr.GetItemPrototype(itemid);
+                ItemPrototype const* proto = pItem ? pItem->GetProto() : ObjectMgr::GetItemPrototype(itemid);
                 data << uint32(proto ? proto->RequiredLevel : 0);
                 break;
             }
@@ -12603,7 +12612,7 @@ void Player::SendEquipError( uint8 msg, Item* pItem, Item *pItem2, uint32 itemid
             case EQUIP_ERR_ITEM_MAX_LIMIT_CATEGORY_SOCKETED_EXCEEDED_IS:
             case EQUIP_ERR_ITEM_MAX_LIMIT_CATEGORY_EQUIPPED_EXCEEDED_IS:
             {
-                ItemPrototype const* proto = pItem ? pItem->GetProto() : sObjectMgr.GetItemPrototype(itemid);
+                ItemPrototype const* proto = pItem ? pItem->GetProto() : ObjectMgr::GetItemPrototype(itemid);
                 uint32 LimitCategory=proto ? proto->ItemLimitCategory : 0;
                 if (pItem)
                     // check unique-equipped on gems
@@ -12628,7 +12637,6 @@ void Player::SendEquipError( uint8 msg, Item* pItem, Item *pItem2, uint32 itemid
                         {
                             LimitCategory=pGem->ItemLimitCategory;
                             break;
-                         
                         }
                     }
 
@@ -13352,7 +13360,7 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
                 }
                 case GOSSIP_OPTION_TRAINER:
                     // pet trainers not have spells in fact now
-                    /* FIXME: gossip menu with single unlearn pet talents option not show by some reason 
+                    /* FIXME: gossip menu with single unlearn pet talents option not show by some reason
                     if (pCreature->GetCreatureInfo()->trainer_type == TRAINER_TYPE_PETS)
                         hasMenuItem = false;
                     else */
@@ -13364,7 +13372,7 @@ void Player::PrepareGossipMenu(WorldObject *pSource, uint32 menuId)
                         hasMenuItem = false;
                     break;
                 case GOSSIP_OPTION_UNLEARNPETSKILLS:
-                    if (pCreature->GetCreatureInfo()->trainer_type != TRAINER_TYPE_PETS || pCreature->GetCreatureInfo()->trainer_class != CLASS_HUNTER) 
+                    if (pCreature->GetCreatureInfo()->trainer_type != TRAINER_TYPE_PETS || pCreature->GetCreatureInfo()->trainer_class != CLASS_HUNTER)
                         hasMenuItem = false;
                     else if (Pet * pet = GetPet())
                     {
@@ -17787,8 +17795,6 @@ void Player::_SaveAuras()
     if (auraHolders.empty())
         return;
 
-    /* copied following sql-code partly from achievementmgr */
-
     for(SpellAuraHolderMap::const_iterator itr = auraHolders.begin(); itr != auraHolders.end(); ++itr)
     {
         SpellAuraHolder *holder = itr->second;
@@ -20404,64 +20410,29 @@ void Player::InitPrimaryProfessions()
     SetFreePrimaryProfessions(sWorld.getConfig(CONFIG_UINT32_MAX_PRIMARY_TRADE_SKILL));
 }
 
-void Player::SendComboPoints()
+void Player::SendComboPoints(ObjectGuid targetGuid, uint8 combopoints)
 {
-    Unit *combotarget = ObjectAccessor::GetUnit(*this, m_comboTargetGuid);
+    Unit* combotarget = GetMap()->GetUnit(targetGuid);
     if (combotarget)
     {
         WorldPacket data(SMSG_UPDATE_COMBO_POINTS, combotarget->GetPackGUID().size()+1);
         data << combotarget->GetPackGUID();
-        data << uint8(m_comboPoints);
+        data << uint8(combopoints);
         GetSession()->SendPacket(&data);
     }
 }
 
-void Player::AddComboPoints(Unit* target, int8 count)
+void Player::SendPetComboPoints(Unit* pet, ObjectGuid targetGuid, uint8 combopoints)
 {
-    if(!count)
-        return;
-
-    // without combo points lost (duration checked in aura)
-    RemoveSpellsCausingAura(SPELL_AURA_RETAIN_COMBO_POINTS);
-
-    if(target->GetObjectGuid() == m_comboTargetGuid)
+    Unit* combotarget = pet ? pet->GetMap()->GetUnit(targetGuid) : NULL;
+    if (pet && combotarget)
     {
-        m_comboPoints += count;
+        WorldPacket data(SMSG_PET_UPDATE_COMBO_POINTS, combotarget->GetPackGUID().size()+pet->GetPackGUID().size()+1);
+        data << pet->GetPackGUID();
+        data << combotarget->GetPackGUID();
+        data << uint8(combopoints);
+        GetSession()->SendPacket(&data);
     }
-    else
-    {
-        if (!m_comboTargetGuid.IsEmpty())
-            if(Unit* target2 = ObjectAccessor::GetUnit(*this, m_comboTargetGuid))
-                target2->RemoveComboPointHolder(GetGUIDLow());
-
-        m_comboTargetGuid = target->GetObjectGuid();
-        m_comboPoints = count;
-
-        target->AddComboPointHolder(GetGUIDLow());
-    }
-
-    if (m_comboPoints > 5) m_comboPoints = 5;
-    if (m_comboPoints < 0) m_comboPoints = 0;
-
-    SendComboPoints();
-}
-
-void Player::ClearComboPoints()
-{
-    if (m_comboTargetGuid.IsEmpty())
-        return;
-
-    // without combopoints lost (duration checked in aura)
-    RemoveSpellsCausingAura(SPELL_AURA_RETAIN_COMBO_POINTS);
-
-    m_comboPoints = 0;
-
-    SendComboPoints();
-
-    if(Unit* target = ObjectAccessor::GetUnit(*this,m_comboTargetGuid))
-        target->RemoveComboPointHolder(GetGUIDLow());
-
-    m_comboTargetGuid.Clear();
 }
 
 void Player::SetGroup(Group *group, int8 subgroup)
@@ -22979,6 +22950,9 @@ void Player::ActivateSpec(uint8 specNum)
     RemoveArenaAuras();
 
     SendActionButtons(2);
+
+    // prevent deletion of action buttons by client at spell unlearn or by player while spec change in progress
+    SendLockActionButtons();
 
     ApplyGlyphs(false);
 

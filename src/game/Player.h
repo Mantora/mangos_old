@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1593,12 +1593,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         ObjectGuid const& GetSelectionGuid( ) const { return m_curSelectionGuid; }
         void SetSelectionGuid(ObjectGuid guid) { m_curSelectionGuid = guid; SetTargetGuid(guid); }
 
-        uint8 GetComboPoints() { return m_comboPoints; }
-        ObjectGuid const& GetComboTargetGuid() const { return m_comboTargetGuid; }
-
-        void AddComboPoints(Unit* target, int8 count);
-        void ClearComboPoints();
-        void SendComboPoints();
+        void SendComboPoints(ObjectGuid targetGuid, uint8 combopoints);
+        void SendPetComboPoints(Unit* pet, ObjectGuid targetGuid, uint8 combopoints);
 
         void SendCalendarResult(CalendarResponseResult result, std::string str);
 
@@ -1777,6 +1773,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void removeActionButton(uint8 spec, uint8 button);
         void SendActionButtons(uint32 state) const;
         void SendInitialActionButtons() const { SendActionButtons(1); }
+        void SendLockActionButtons() const;
         ActionButton const* GetActionButton(uint8 button);
 
         PvPInfo pvpInfo;
@@ -2562,9 +2559,6 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         uint32 m_ExtraFlags;
         ObjectGuid m_curSelectionGuid;
-
-        ObjectGuid m_comboTargetGuid;
-        int8 m_comboPoints;
 
         QuestStatusMap mQuestStatus;
 

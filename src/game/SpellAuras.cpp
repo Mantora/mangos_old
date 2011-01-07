@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -304,7 +304,7 @@ pAuraHandler AuraHandler[TOTAL_AURAS]=
     &Aura::HandleNULL,                                      //251 SPELL_AURA_MOD_ENEMY_DODGE
     &Aura::HandleModCombatSpeedPct,                         //252 SPELL_AURA_SLOW_ALL
     &Aura::HandleNoImmediateEffect,                         //253 SPELL_AURA_MOD_BLOCK_CRIT_CHANCE             implemented in Unit::CalculateMeleeDamage
-    &Aura::HandleAuraModDisarm,                             //254 SPELL_AURA_MOD_DISARM_SHIELD disarm Shield/offhand
+    &Aura::HandleAuraModDisarm,                             //254 SPELL_AURA_MOD_DISARM_OFFHAND     also disarm shield
     &Aura::HandleNoImmediateEffect,                         //255 SPELL_AURA_MOD_MECHANIC_DAMAGE_TAKEN_PERCENT    implemented in Unit::SpellDamageBonusTaken
     &Aura::HandleNoReagentUseAura,                          //256 SPELL_AURA_NO_REAGENT_USE Use SpellClassMask for spell select
     &Aura::HandleNULL,                                      //257 SPELL_AURA_MOD_TARGET_RESIST_BY_SPELL_CLASS Use SpellClassMask for spell select
@@ -3387,7 +3387,7 @@ void Aura::HandleAuraModShapeshift(bool apply, bool Real)
                         if ((int32)target->GetPower(POWER_ENERGY) > furorChance)
                         {
                             target->SetPower(POWER_ENERGY, 0);
-                            target->CastCustomSpell(target, 17099, &furorChance, NULL, NULL, this);
+                            target->CastCustomSpell(target, 17099, &furorChance, NULL, NULL, true, NULL, this);
                         }
                     }
                     else if(furorChance)                    // only if talent known
@@ -4305,39 +4305,38 @@ void Aura::HandleAuraModDisarm(bool apply, bool Real)
     if(!apply && target->HasAuraType(GetModifier()->m_auraname))
         return;
 
-    uint32 flags = 0;
-    uint32 field = 0;
-    WeaponAttackType attack_type = OFF_ATTACK;
+    uint32 flags;
+    uint32 field;
+    WeaponAttackType attack_type;
 
     switch (GetModifier()->m_auraname)
     {
-      case SPELL_AURA_MOD_DISARM:
+        default:
+        case SPELL_AURA_MOD_DISARM:
         {
             field = UNIT_FIELD_FLAGS;
             flags = UNIT_FLAG_DISARMED;
             attack_type = BASE_ATTACK;
+            break;
         }
-        break;
-      case SPELL_AURA_MOD_DISARM_SHIELD:
+        case SPELL_AURA_MOD_DISARM_OFFHAND:
         {
             field = UNIT_FIELD_FLAGS_2;
             flags = UNIT_FLAG2_DISARM_OFFHAND;
+            attack_type = OFF_ATTACK;
+            break;
         }
-        break;
-      case SPELL_AURA_MOD_DISARM_RANGED:
+        case SPELL_AURA_MOD_DISARM_RANGED:
         {
             field = UNIT_FIELD_FLAGS_2;
             flags = UNIT_FLAG2_DISARM_RANGED;
+            attack_type = RANGED_ATTACK;
+            break;
         }
-        break;
     }
 
-    if(apply)
-        target->SetFlag(field, flags);
-    else
-        target->RemoveFlag(field, flags);
+    target->ApplyModFlag(field, flags, apply);
 
-    // only at real add/remove aura
     if (target->GetTypeId() != TYPEID_PLAYER)
         return;
 
@@ -5463,7 +5462,7 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                     if (caster->GetTypeId() != TYPEID_PLAYER)
                         break;
 
-                    uint8 cp = ((Player*)caster)->GetComboPoints();
+                    uint8 cp = caster->GetComboPoints();
 
                     // Idol of Feral Shadows. Cant be handled as SpellMod in SpellAura:Dummy due its dependency from CPs
                     Unit::AuraList const& dummyAuras = caster->GetAurasByType(SPELL_AURA_DUMMY);
@@ -5492,7 +5491,7 @@ void Aura::HandlePeriodicDamage(bool apply, bool Real)
                     //4 points: ${($m1+$b1*4+0.03428571*$AP)*7} damage over 14 secs
                     //5 points: ${($m1+$b1*5+0.0375*$AP)*8} damage over 16 secs
                     float AP_per_combo[6] = {0.0f, 0.015f, 0.024f, 0.03f, 0.03428571f, 0.0375f};
-                    uint8 cp = ((Player*)caster)->GetComboPoints();
+                    uint8 cp = caster->GetComboPoints();
                     if (cp > 5) cp = 5;
                     m_modifier.m_amount += int32(caster->GetTotalAttackPowerValue(BASE_ATTACK) * AP_per_combo[cp]);
                 }
@@ -7000,10 +6999,7 @@ void Aura::HandleAuraRetainComboPoints(bool apply, bool Real)
     if(!Real)
         return;
 
-    if(GetTarget()->GetTypeId() != TYPEID_PLAYER)
-        return;
-
-    Player *target = (Player*)GetTarget();
+    Unit* target = GetTarget();
 
     // combo points was added in SPELL_EFFECT_ADD_COMBO_POINTS handler
     // remove only if aura expire by time (in case combo points amount change aura removed without combo points lost)
@@ -8153,6 +8149,21 @@ void Aura::PeriodicDummyTick()
                         target->CastCustomSpell(caster, 66125, &heal, NULL, NULL, true, NULL, this);
                     return;
                 }
+                case 71340:                                // Pact of darkfallen remove effect
+                {
+                    int32 radius = m_modifier.m_amount  / 1000;
+                    bool inRadius = true;
+                    Map::PlayerList const& pList = target->GetMap()->GetPlayers();
+                    for (Map::PlayerList::const_iterator itr = pList.begin(); itr != pList.end(); ++itr)
+                        if (itr->getSource() && itr->getSource()->HasAura(spell->Id) && !itr->getSource()->IsWithinDistInMap(target,radius))
+                        {
+                            inRadius = false;
+                            break;
+                        }
+                    if (inRadius)
+                        target->RemoveAurasDueToSpell(spell->Id);
+                    return;
+                }
 // Exist more after, need add later
                 default:
                     break;
@@ -9285,11 +9296,7 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                     break;
                 }
                 case 70867:                                 // Soul of Blood Qween
-                case 70879:
                 case 71473:
-                case 71525:
-                case 71530:
-                case 71531:
                 case 71532:
                 case 71533:
                 {

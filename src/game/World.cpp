@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,6 +42,7 @@
 #include "SpellMgr.h"
 #include "Chat.h"
 #include "DBCStores.h"
+#include "MassMailMgr.h"
 #include "LootMgr.h"
 #include "ItemEnchantmentMgr.h"
 #include "MapManager.h"
@@ -630,6 +631,8 @@ void World::LoadConfigSettings(bool reload)
 
     setConfig(CONFIG_UINT32_MAIL_DELIVERY_DELAY, "MailDeliveryDelay", HOUR);
 
+    setConfigMin(CONFIG_UINT32_MASS_MAILER_SEND_PER_TICK, "MassMailer.SendPerTick", 10, 1);
+
     setConfigPos(CONFIG_UINT32_UPTIME_UPDATE, "UpdateUptimeInterval", 10);
     if (reload)
     {
@@ -1184,7 +1187,7 @@ void World::SetInitialWorldSettings()
     sLog.outString();
 
     sLog.outString( "Loading Npc Text Id..." );
-    sObjectMgr.LoadNpcTextId();                             // must be after load Creature and LoadGossipText
+    sObjectMgr.LoadNpcGossips();                            // must be after load Creature and LoadGossipText
 
     sLog.outString( "Loading Gossip scripts..." );
     sScriptMgr.LoadGossipScripts();                         // must be before gossip menu options
@@ -1216,7 +1219,7 @@ void World::SetInitialWorldSettings()
     sObjectMgr.LoadGameObjectLocales();                     // must be after GameobjectInfo loading
     sObjectMgr.LoadItemLocales();                           // must be after ItemPrototypes loading
     sObjectMgr.LoadQuestLocales();                          // must be after QuestTemplates loading
-    sObjectMgr.LoadNpcTextLocales();                        // must be after LoadGossipText
+    sObjectMgr.LoadGossipTextLocales();                     // must be after LoadGossipText
     sObjectMgr.LoadPageTextLocales();                       // must be after PageText loading
     sObjectMgr.LoadGossipMenuItemsLocales();                // must be after gossip menu items loading
     sObjectMgr.LoadPointOfInterestLocales();                // must be after POI loading
@@ -1288,8 +1291,22 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading CreatureEventAI Scripts...");
     sEventAIMgr.LoadCreatureEventAI_Scripts();
 
-    sLog.outString( "Initializing Scripts..." );
-    sScriptMgr.LoadScriptLibrary(MANGOS_SCRIPT_NAME);
+    sLog.outString("Initializing Scripts...");
+    switch(sScriptMgr.LoadScriptLibrary(MANGOS_SCRIPT_NAME))
+    {
+        case SCRIPT_LOAD_OK:
+            sLog.outString("Scripting library loaded.");
+            break;
+        case SCRIPT_LOAD_ERR_NOT_FOUND:
+            sLog.outError("Scripting library not found or not accessible.");
+            break;
+        case SCRIPT_LOAD_ERR_WRONG_API:
+            sLog.outError("Scripting library has wrong list functions (outdated?).");
+            break;
+        case SCRIPT_LOAD_ERR_OUTDATED:
+            sLog.outError("Scripting library build for old mangosd revision. You need rebuild it.");
+            break;
+    }
 
     ///- Initialize game time and timers
     sLog.outString( "DEBUG:: Initialize game time and timers" );
@@ -1444,6 +1461,9 @@ void World::Update(uint32 diff)
 
     ///- Update the game time and check for shutdown time
     _UpdateGameTime();
+
+    ///-Update mass mailer tasks if any
+    sMassMailMgr.Update();
 
     /// Handle daily quests reset time
     if (m_gameTime > m_NextDailyQuestReset)
