@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -91,6 +91,8 @@ enum GroupMemberFlags
     MEMBER_STATUS_UNK3      = 0x0020,                       // used in calls from Lua_GetPlayerMapPosition/Lua_GetBattlefieldFlagPosition
     MEMBER_STATUS_AFK       = 0x0040,                       // Lua_UnitIsAFK
     MEMBER_STATUS_DND       = 0x0080,                       // Lua_UnitIsDND
+    MEMBER_STATUS_RAF       = 0x0100,                       // RAF status in party/raid
+    MEMBER_STATUS_UNK4      = 0x0200,                       // something to do with vehicles
 };
 
 enum GroupType                                              // group type flags?

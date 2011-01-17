@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1091,7 +1091,7 @@ enum Opcodes
     SMSG_SEND_UNLEARN_SPELLS                        = 0x41E,
     SMSG_PROPOSE_LEVEL_GRANT                        = 0x41F,
     CMSG_ACCEPT_LEVEL_GRANT                         = 0x420,
-    SMSG_REFER_A_FRIEND_FAILURE                     = 0x421,
+    SMSG_REFER_A_FRIEND_ERROR                       = 0x421,
     SMSG_SPLINE_MOVE_SET_FLYING                     = 0x422,
     SMSG_SPLINE_MOVE_UNSET_FLYING                   = 0x423,
     SMSG_SUMMON_CANCEL                              = 0x424,

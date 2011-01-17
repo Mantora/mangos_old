@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -835,9 +835,11 @@ void WorldSession::HandleRequestPartyMemberStatsOpcode( WorldPacket &recv_data )
     if(pet)
         mask1 = 0x7FFFFFFF;                                 // for hunters and other classes with pets
 
+    uint16 online_status = GetPlayer()->IsReferAFriendLinked(player) ?  (MEMBER_STATUS_ONLINE | MEMBER_STATUS_RAF) : MEMBER_STATUS_ONLINE;
+
     Powers powerType = player->getPowerType();
     data << uint32(mask1);                                  // group update mask
-    data << uint16(MEMBER_STATUS_ONLINE);                   // member's online status
+    data << uint16(online_status);                          // member's online status
     data << uint32(player->GetHealth());                    // GROUP_UPDATE_FLAG_CUR_HP
     data << uint32(player->GetMaxHealth());                 // GROUP_UPDATE_FLAG_MAX_HP
     data << uint8(powerType);                               // GROUP_UPDATE_FLAG_POWER_TYPE

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,6 +52,10 @@ class AccountMgr
         bool GetName(uint32 acc_id, std::string &name);
         uint32 GetCharactersCount(uint32 acc_id);
         std::string CalculateShaPassHash(std::string& name, std::string& password);
+
+        std::vector<uint32> GetRAFAccounts(uint32 accid, bool referred = true);
+        AccountOpResult AddRAFLink(uint32 accid, uint32 friendid);
+        AccountOpResult DeleteRAFLink(uint32 accid, uint32 friendid);
 
         static bool normalizeString(std::string& utf8str);
 };

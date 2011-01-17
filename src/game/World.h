@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -134,6 +134,7 @@ enum eConfigUInt32Values
     CONFIG_UINT32_START_GM_LEVEL,
     CONFIG_UINT32_GROUP_VISIBILITY,
     CONFIG_UINT32_MAIL_DELIVERY_DELAY,
+    CONFIG_UINT32_MASS_MAILER_SEND_PER_TICK,
     CONFIG_UINT32_UPTIME_UPDATE,
     CONFIG_UINT32_AUCTION_DEPOSIT_MIN,
     CONFIG_UINT32_SKILL_CHANCE_ORANGE,
@@ -196,6 +197,9 @@ enum eConfigUInt32Values
 	CONFIG_UINT32_EXTERNAL_MAIL_INTERVAL,
     CONFIG_UINT32_LOSERNOCHANGE,
     CONFIG_UINT32_LOSERHALFCHANGE,
+    CONFIG_UINT32_RAF_MAXGRANTLEVEL,
+    CONFIG_UINT32_RAF_MAXREFERALS,
+    CONFIG_UINT32_RAF_MAXREFERERS,
     CONFIG_UINT32_VALUE_COUNT
 };
 
@@ -232,6 +236,8 @@ enum eConfigFloatValues
     CONFIG_FLOAT_RATE_XP_KILL,
     CONFIG_FLOAT_RATE_XP_QUEST,
     CONFIG_FLOAT_RATE_XP_EXPLORE,
+    CONFIG_FLOAT_RATE_RAF_XP,
+    CONFIG_FLOAT_RATE_RAF_LEVELPERLEVEL,
     CONFIG_FLOAT_RATE_REPUTATION_GAIN,
     CONFIG_FLOAT_RATE_REPUTATION_LOWLEVEL_KILL,
     CONFIG_FLOAT_RATE_REPUTATION_LOWLEVEL_QUEST,
@@ -279,6 +285,8 @@ enum eConfigFloatValues
     CONFIG_FLOAT_CREATURE_FAMILY_ASSISTANCE_RADIUS,
     CONFIG_FLOAT_GROUP_XP_DISTANCE,
     CONFIG_FLOAT_THREAT_RADIUS,
+    CONFIG_FLOAT_GHOST_RUN_SPEED_WORLD,
+    CONFIG_FLOAT_GHOST_RUN_SPEED_BG,
     CONFIG_FLOAT_VALUE_COUNT
 };
 
@@ -326,6 +334,9 @@ enum eConfigBoolValues
     CONFIG_BOOL_ALL_TAXI_PATHS,
     CONFIG_BOOL_DECLINED_NAMES_USED,
     CONFIG_BOOL_SKILL_MILLING,
+    CONFIG_BOOL_SKILL_FAIL_LOOT_FISHING,
+    CONFIG_BOOL_SKILL_FAIL_GAIN_FISHING,
+    CONFIG_BOOL_SKILL_FAIL_POSSIBLE_FISHINGPOOL,
     CONFIG_BOOL_BATTLEGROUND_CAST_DESERTER,
     CONFIG_BOOL_BATTLEGROUND_QUEUE_ANNOUNCER_START,
     CONFIG_BOOL_ARENA_AUTO_DISTRIBUTE_POINTS,
@@ -598,9 +609,6 @@ class World
         char const* GetDBVersion() { return m_DBVersion.c_str(); }
         char const* GetCreatureEventAIVersion() { return m_CreatureEventAIVersion.c_str(); }
 
-        //used Script version
-        void SetScriptsVersion(char const* version) { m_ScriptsVersion = version ? version : "unknown scripting library"; }
-        char const* GetScriptsVersion() { return m_ScriptsVersion.c_str(); }
         ACE_Thread_Mutex m_spellUpdateLock;
 
     protected:
@@ -704,7 +712,6 @@ class World
         //used versions
         std::string m_DBVersion;
         std::string m_CreatureEventAIVersion;
-        std::string m_ScriptsVersion;
 };
 
 extern uint32 realmID;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -154,7 +154,7 @@ typedef std::vector<uint32> AutoSpellList;
 #define ACTIVE_SPELLS_MAX           4
 
 #define PET_FOLLOW_DIST  1.0f
-#define PET_FOLLOW_ANGLE M_PI_F/2
+#define PET_FOLLOW_ANGLE (M_PI_F/2.0f)
 
 class Player;
 struct PetScalingData;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -594,11 +594,11 @@ void WorldSession::HandleSpellClick( WorldPacket & recv_data )
     ObjectGuid guid;
     recv_data >> guid;
 
-    if (_player->isInCombat())                              // client prevent click and set different icon at combat state
-        return;
-
     Creature *unit = _player->GetMap()->GetAnyTypeCreature(guid);
     if (!unit)
+        return;
+
+    if (_player->isInCombat() && !guid.IsVehicle())                              // client prevent click and set different icon at combat state
         return;
 
     SpellClickInfoMapBounds clickPair = sObjectMgr.GetSpellClickInfoMapBounds(unit->GetEntry());

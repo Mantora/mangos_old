@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -828,6 +828,10 @@ class MANGOS_DLL_SPEC WorldSession
         void HandleReadyForAccountDataTimesOpcode(WorldPacket& recv_data);
         void HandleQueryQuestsCompletedOpcode(WorldPacket& recv_data);
         void HandleQuestPOIQueryOpcode(WorldPacket& recv_data);
+
+        // Refer-A-Friend
+        void HandleGrantLevel(WorldPacket& recv_data);
+        void HandleAcceptGrantLevel(WorldPacket& recv_data);
 
     private:
         // private trade methods

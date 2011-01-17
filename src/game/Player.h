@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -835,6 +835,32 @@ enum TransferAbortReason
     TRANSFER_ABORT_MAP_NOT_ALLOWED              = 0x10,     // Map can't be entered at this time.
 };
 
+enum ReferAFriendError
+{
+    ERR_REFER_A_FRIEND_NONE                          = 0x00,
+    ERR_REFER_A_FRIEND_NOT_REFERRED_BY               = 0x01,
+    ERR_REFER_A_FRIEND_TARGET_TOO_HIGH               = 0x02,
+    ERR_REFER_A_FRIEND_INSUFFICIENT_GRANTABLE_LEVELS = 0x03,
+    ERR_REFER_A_FRIEND_TOO_FAR                       = 0x04,
+    ERR_REFER_A_FRIEND_DIFFERENT_FACTION             = 0x05,
+    ERR_REFER_A_FRIEND_NOT_NOW                       = 0x06,
+    ERR_REFER_A_FRIEND_GRANT_LEVEL_MAX_I             = 0x07,
+    ERR_REFER_A_FRIEND_NO_TARGET                     = 0x08,
+    ERR_REFER_A_FRIEND_NOT_IN_GROUP                  = 0x09,
+    ERR_REFER_A_FRIEND_SUMMON_LEVEL_MAX_I            = 0x0A,
+    ERR_REFER_A_FRIEND_SUMMON_COOLDOWN               = 0x0B,
+    ERR_REFER_A_FRIEND_INSUF_EXPAN_LVL               = 0x0C,
+    ERR_REFER_A_FRIEND_SUMMON_OFFLINE_S              = 0x0D
+};
+
+enum AccountLinkedState
+{
+    STATE_NOT_LINKED = 0x00,
+    STATE_REFER      = 0x01,
+    STATE_REFERRAL   = 0x02,
+    STATE_DUAL       = 0x04,
+};
+
 enum InstanceResetWarningType
 {
     RAID_INSTANCE_WARNING_HOURS     = 1,                    // WARNING! %s is scheduled to reset in %d hour(s).
@@ -1593,12 +1619,8 @@ class MANGOS_DLL_SPEC Player : public Unit
         ObjectGuid const& GetSelectionGuid( ) const { return m_curSelectionGuid; }
         void SetSelectionGuid(ObjectGuid guid) { m_curSelectionGuid = guid; SetTargetGuid(guid); }
 
-        uint8 GetComboPoints() { return m_comboPoints; }
-        ObjectGuid const& GetComboTargetGuid() const { return m_comboTargetGuid; }
-
-        void AddComboPoints(Unit* target, int8 count);
-        void ClearComboPoints();
-        void SendComboPoints();
+        void SendComboPoints(ObjectGuid targetGuid, uint8 combopoints);
+        void SendPetComboPoints(Unit* pet, ObjectGuid targetGuid, uint8 combopoints);
 
         void SendCalendarResult(CalendarResponseResult result, std::string str);
 
@@ -1656,7 +1678,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         bool HasActiveSpell(uint32 spell) const;            // show in spellbook
         TrainerSpellState GetTrainerSpellState(TrainerSpell const* trainer_spell) const;
         bool IsSpellFitByClassAndRace( uint32 spell_id ) const;
-        bool IsNeedCastPassiveSpellAtLearn(SpellEntry const* spellInfo) const;
+        bool IsNeedCastPassiveLikeSpellAtLearn(SpellEntry const* spellInfo) const;
         bool IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex index) const;
 
         void SendProficiency(ItemClass itemClass, uint32 itemSubclassMask);
@@ -1777,6 +1799,7 @@ class MANGOS_DLL_SPEC Player : public Unit
         void removeActionButton(uint8 spec, uint8 button);
         void SendActionButtons(uint32 state) const;
         void SendInitialActionButtons() const { SendActionButtons(1); }
+        void SendLockActionButtons() const;
         ActionButton const* GetActionButton(uint8 button);
 
         PvPInfo pvpInfo;
@@ -1917,7 +1940,7 @@ class MANGOS_DLL_SPEC Player : public Unit
 
         void BuildCreateUpdateBlockForPlayer( UpdateData *data, Player *target ) const;
         void DestroyForPlayer( Player *target, bool anim = false ) const;
-        void SendLogXPGain(uint32 GivenXP,Unit* victim,uint32 RestXP);
+        void SendLogXPGain(uint32 GivenXP,Unit* victim,uint32 BonusXP, bool ReferAFriend);
 
         // notifiers
         void SendAttackSwingCantAttack();
@@ -2251,6 +2274,22 @@ class MANGOS_DLL_SPEC Player : public Unit
         void ChangeSpeakTime(int utime);
 
         /*********************************************************/
+        /*** REFER-A-FRIEND SYSTEM ***/
+        /*********************************************************/
+        void SendReferFriendError(ReferAFriendError err, Player * target = NULL);
+        ReferAFriendError GetReferFriendError(Player * target, bool summon);
+        void AccessGrantableLevel(ObjectGuid guid) { m_curGrantLevelGiverGuid = guid; }
+        bool IsAccessGrantableLevel(ObjectGuid guid) { return m_curGrantLevelGiverGuid == guid; }
+        uint32 GetGrantableLevels() { return m_GrantableLevelsCount; }
+        void ChangeGrantableLevels(uint8 increase = 0);
+        bool CheckRAFConditions();
+        AccountLinkedState GetAccountLinkedState();
+        bool IsReferAFriendLinked(Player * target);
+        void LoadAccountLinkedState();
+        std::vector<uint32> m_referredAccounts;
+        std::vector<uint32> m_referalAccounts;
+
+        /*********************************************************/
         /***                 VARIOUS SYSTEMS                   ***/
         /*********************************************************/
         bool HasMovementFlag(MovementFlags f) const;        // for script access to m_movementInfo.HasMovementFlag
@@ -2563,9 +2602,6 @@ class MANGOS_DLL_SPEC Player : public Unit
         uint32 m_ExtraFlags;
         ObjectGuid m_curSelectionGuid;
 
-        ObjectGuid m_comboTargetGuid;
-        int8 m_comboPoints;
-
         QuestStatusMap mQuestStatus;
 
         SkillStatusMap mSkillStatus;
@@ -2679,6 +2715,11 @@ class MANGOS_DLL_SPEC Player : public Unit
         DeclinedName *m_declinedname;
         Runes *m_runes;
         EquipmentSets m_EquipmentSets;
+        // Refer-A-Friend
+        ObjectGuid m_curGrantLevelGiverGuid;
+
+        int32 m_GrantableLevelsCount;
+
     private:
         // internal common parts for CanStore/StoreItem functions
         uint8 _CanStoreItem_InSpecificSlot( uint8 bag, uint8 slot, ItemPosCountVec& dest, ItemPrototype const *pProto, uint32& count, bool swap, Item *pSrcItem ) const;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@
 #include "Util.h"
 #include "revision_sql.h"
 #include "MaNGOSsoap.h"
+#include "MassMailMgr.h"
 #include "DBCStores.h"
 
 #include <ace/OS_NS_signal.h>
@@ -345,6 +346,9 @@ int Master::Run()
 
     ///- Clean account database before leaving
     clearOnlineAccounts();
+
+    // send all still queued mass mails (before DB connections shutdown)
+    sMassMailMgr.Update(true);
 
     ///- Wait for DB delay threads to end
     CharacterDatabase.HaltDelayThread();
