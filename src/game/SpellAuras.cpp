@@ -2254,9 +2254,6 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     case 58591:                                 // Stoneclaw Totem X
                         target->CastSpell(target, 58585, true);
                         return;
-                    case 58914:                             // Kill Command
-                        target->CastSpell(target, 34027, true, NULL, this);
-                        return;
                     case 62061:                             // Festive Holiday Mount
                         if (target->HasAuraType(SPELL_AURA_MOUNTED))
                             // Reindeer Transformation
@@ -2386,6 +2383,16 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                 // Fingers of Frost stacks set to max at apply
                 if (GetId() == 74396)
                     GetHolder()->SetAuraCharges(GetSpellProto()->StackAmount);
+                break;
+            }
+            case SPELLFAMILY_HUNTER:
+            {
+                switch(GetId())
+                {
+                    case 34026:                             // Kill Command
+                        target->CastSpell(target, 34027, true, NULL, this);
+                        return;
+                }
                 break;
             }
             case SPELLFAMILY_SHAMAN:
@@ -3024,7 +3031,7 @@ void Aura::HandleAuraDummy(bool apply, bool Real)
                     if (totem && apply)
                         ((Player*)target)->GetCamera().SetView(totem);
                     else
-                        ((Player*)target)->GetCamera().ResetView(totem);
+                        ((Player*)target)->GetCamera().ResetView();
 
                     return;
                 }
@@ -6596,7 +6603,7 @@ void Aura::HandleShapeshiftBoosts(bool apply)
     uint32 HotWSpellId = 0;
     uint32 MasterShaperSpellId = 0;
 
-    uint32 form = GetModifier()->m_miscvalue;
+    ShapeshiftForm form = ShapeshiftForm(GetModifier()->m_miscvalue);
 
     Unit *target = GetTarget();
 
@@ -6692,11 +6699,9 @@ void Aura::HandleShapeshiftBoosts(bool apply)
                 if (itr->second.state == PLAYERSPELL_REMOVED) continue;
                 if (itr->first==spellId1 || itr->first==spellId2) continue;
                 SpellEntry const *spellInfo = sSpellStore.LookupEntry(itr->first);
-                if (!spellInfo || !(spellInfo->Attributes & (SPELL_ATTR_PASSIVE | SPELL_ATTR_UNK7)))
+                if (!spellInfo || !IsNeedCastSpellAtFormApply(spellInfo, form))
                     continue;
-                // passive spells with SPELL_ATTR_EX2_NOT_NEED_SHAPESHIFT are already active without shapeshift, do no recast!
-                if (spellInfo->Stances & (1<<(form-1)) && !(spellInfo->AttributesEx2 & SPELL_ATTR_EX2_NOT_NEED_SHAPESHIFT))
-                    target->CastSpell(target, itr->first, true, NULL, this);
+                target->CastSpell(target, itr->first, true, NULL, this);
             }
             // remove auras that do not require shapeshift, but are not active in this specific form (like Improved Barkskin)
             Unit::SpellAuraHolderMap& tAuras = target->GetSpellAuraHolderMap();
@@ -8799,11 +8804,12 @@ m_permanent(false), m_isRemovedOnShapeLost(true), m_deleted(false), m_in_use(0)
             break;
         // some auras applied with max stack
         case 24575:                                         // Brittle Armor
-        case 24662:                                         // Restless Strength
         case 24659:                                         // Unstable Power
+        case 24662:                                         // Restless Strength
         case 26464:                                         // Mercurial Shield
         case 34027:                                         // Kill Command
         case 55166:                                         // Tidal Force
+        case 58914:                                         // Kill Command (pet part)
         case 71564:                                         // Deadly Precision
             m_stackAmount = m_spellProto->StackAmount;
             break;
@@ -9305,6 +9311,14 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                         return;
                     break;
                 }
+                case 58914:                                     // Kill Command, pet aura
+                {
+                    // need remove here becase dummy aura hamdler apply/unapply at stack changes
+                    if (!apply)
+                        if(Unit* caster = GetCaster())
+                            caster->RemoveAurasDueToSpell(34027);
+                    return;
+                }
                 case 70867:                                 // Soul of Blood Qween
                 case 71473:
                 case 71532:
@@ -9658,46 +9672,84 @@ void SpellAuraHolder::HandleSpellSpecificBoosts(bool apply)
                 case 34460:
                     spellId1 = 75447;
                     break;
-                case 19574:          // The Beast Within and Bestial Wrath - immunity
-                case 34471:
+                case 19574:                                 // Bestial Wrath - immunity
+                case 34471:                                 // The Beast Within - immunity
+                {
                     spellId1 = 24395;
                     spellId2 = 24396;
                     spellId3 = 24397;
                     spellId4 = 26592;
                     break;
-                default:
-                    break;
-            }
-
-            // Freezing Trap Effect
-            if (m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000008))
-            {
-                if(!apply)
+                }
+                case 34027:                                 // Kill Command, owner aura (spellmods)
                 {
-                    Unit *caster = GetCaster();
-                    // Glyph of Freezing Trap
-                    if (caster && caster->HasAura(56845))
+                    if (apply)
                     {
-                        cast_at_remove = true;
-                        spellId1 = 61394;
+                        if (m_target->HasAura(35029))       // Focused Fire, rank 1
+                            spellId1 = 60110;               // Kill Command, Focused Fire rank 1 bonus
+                        else if (m_target->HasAura(35030))  // Focused Fire, rank 2
+                            spellId1 = 60113;               // Kill Command, Focused Fire rank 2 bonus
+                        else
+                            return;
+                    }
+                    else
+                    {
+                        spellId1 = 34026;                   // Kill Command, owner casting aura
+                        spellId2 = 60110;                   // Kill Command, Focused Fire rank 1 bonus
+                        spellId3 = 60113;                   // Kill Command, Focused Fire rank 2 bonus
+                        if (Unit* pet = m_target->GetPet())
+                            pet->RemoveAurasDueToSpell(58914); // Kill Command, pet aura
+                    }
+                    break;
+                }
+                case 35029:                                 // Focused Fire, rank 1
+                {
+                    if (apply && !m_target->HasAura(34027)) // Kill Command, owner casting aura
+                        return;
+
+                    spellId1 = 60110;                       // Kill Command, Focused Fire rank 1 bonus
+                    break;
+                }
+                case 35030:                                 // Focused Fire, rank 2
+                {
+                    if (apply && !m_target->HasAura(34027)) // Kill Command, owner casting aura
+                        return;
+
+                    spellId1 = 60113;                       // Kill Command, Focused Fire rank 2 bonus
+                    break;
+                }
+                default:
+                    // Freezing Trap Effect
+                    if (m_spellProto->SpellFamilyFlags & UI64LIT(0x0000000000000008))
+                    {
+                        if(!apply)
+                        {
+                            Unit *caster = GetCaster();
+                            // Glyph of Freezing Trap
+                            if (caster && caster->HasAura(56845))
+                            {
+                                cast_at_remove = true;
+                                spellId1 = 61394;
+                            }
+                            else
+                                return;
+                        }
+                        else
+                            return;
+                    }
+                    // Aspect of the Dragonhawk dodge
+                    else if (GetSpellProto()->SpellFamilyFlags2 & 0x00001000)
+                    {
+                        spellId1 = 61848;
+
+                        // triggered spell have same category as main spell and cooldown
+                        if (apply && m_target->GetTypeId()==TYPEID_PLAYER)
+                            ((Player*)m_target)->RemoveSpellCooldown(61848);
                     }
                     else
                         return;
-                }
-                else
-                    return;
+                    break;
             }
-            // Aspect of the Dragonhawk dodge
-            else if (GetSpellProto()->SpellFamilyFlags2 & 0x00001000)
-            {
-                spellId1 = 61848;
-
-                // triggered spell have same category as main spell and cooldown
-                if (apply && m_target->GetTypeId()==TYPEID_PLAYER)
-                    ((Player*)m_target)->RemoveSpellCooldown(61848);
-            }
-            else
-                return;
             break;
         }
         case SPELLFAMILY_PALADIN:
