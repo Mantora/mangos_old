@@ -397,7 +397,6 @@ class ScriptMgr
 
         bool (MANGOS_IMPORT* m_pOnGossipHello) (Player*, Creature*);
         bool (MANGOS_IMPORT* m_pOnGOGossipHello) (Player*, GameObject*);
-		bool (MANGOS_IMPORT* m_pOnGODestroyed) (Unit*, GameObject*, uint32);
         bool (MANGOS_IMPORT* m_pOnGossipSelect) (Player*, Creature*, uint32, uint32);
         bool (MANGOS_IMPORT* m_pOnGOGossipSelect) (Player*, GameObject*, uint32, uint32);
         bool (MANGOS_IMPORT* m_pOnGossipSelectWithCode) (Player*, Creature*, uint32, uint32, const char*);
