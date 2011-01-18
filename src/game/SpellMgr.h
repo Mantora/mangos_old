@@ -632,7 +632,6 @@ typedef UNORDERED_MAP<uint32, SpellBonusEntry>     SpellBonusMap;
 typedef std::map<uint32, uint8> SpellElixirMap;
 typedef std::map<uint32, float> SpellProcItemEnchantMap;
 typedef std::map<uint32, uint16> SpellThreatMap;
-typedef std::map<uint32, float> SpellThreatMultiplicatorMap;
 
 // Spell script target related declarations (accessed using SpellMgr functions)
 enum SpellTargetType
@@ -861,15 +860,6 @@ class SpellMgr
             SpellThreatMap::const_iterator itr = mSpellThreatMap.find(spellid);
             if(itr==mSpellThreatMap.end())
                 return 0;
-
-            return itr->second;
-        }
-
-        float GetSpellThreatMultiplicator(uint32 spellid) const
-        {
-            SpellThreatMultiplicatorMap::const_iterator itr = mSpellThreatMultiplicatorMap.find(spellid);
-            if(itr==mSpellThreatMultiplicatorMap.end())
-                return 1.0f;
 
             return itr->second;
         }
@@ -1126,7 +1116,6 @@ class SpellMgr
         void LoadSpellBonuses();
         void LoadSpellTargetPositions();
         void LoadSpellThreats();
-        void LoadSpellThreatMultiplicators();
         void LoadSkillLineAbilityMap();
         void LoadSpellPetAuras();
         void LoadPetLevelupSpellMap();
@@ -1144,7 +1133,6 @@ class SpellMgr
         SpellTargetPositionMap mSpellTargetPositions;
         SpellElixirMap     mSpellElixirs;
         SpellThreatMap     mSpellThreatMap;
-        SpellThreatMultiplicatorMap mSpellThreatMultiplicatorMap;
         SpellProcEventMap  mSpellProcEventMap;
         SpellProcItemEnchantMap mSpellProcItemEnchantMap;
         SpellBonusMap      mSpellBonusMap;

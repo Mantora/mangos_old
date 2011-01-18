@@ -1178,9 +1178,11 @@ uint32 Unit::DealDamage(Unit *pVictim, uint32 damage, CleanDamage const* cleanDa
         }
         if (pVictim->GetTypeId() != TYPEID_PLAYER)
         {
-            if(spellProto)
-               pVictim->AddThreat(this, float(damage*getSpellThreatMultiplicator(spellProto)), (cleanDamage && cleanDamage->hitOutCome == MELEE_HIT_CRIT), damageSchoolMask, spellProto);
-        }
+            if(spellProto && IsDamageToThreatSpell(spellProto))
+                pVictim->AddThreat(this, float((damage + (cleanDamage ? cleanDamage->absorb : 0))*2), (cleanDamage && cleanDamage->hitOutCome == MELEE_HIT_CRIT), damageSchoolMask, spellProto);
+            else
+                pVictim->AddThreat(this, float(damage + (cleanDamage ? cleanDamage->absorb : 0)), (cleanDamage && cleanDamage->hitOutCome == MELEE_HIT_CRIT), damageSchoolMask, spellProto);
+		}
         else                                                // victim is a player
         {
             // Rage from damage received
@@ -7842,17 +7844,20 @@ bool Unit::IsImmuneToSpellEffect(SpellEntry const* spellInfo, SpellEffectIndex i
     return false;
 }
 
-float Unit::getSpellThreatMultiplicator(SpellEntry const * spellInfo) const
+bool Unit::IsDamageToThreatSpell(SpellEntry const * spellInfo) const
 {
     if (!spellInfo)
-        return 1.0f;
-    
-    float fSpellThreatMultiplicator = sSpellMgr.GetSpellThreatMultiplicator(spellInfo->Id);
+        return false;
 
-    if(!fSpellThreatMultiplicator)
-        return 1.0f;
-    
-    return fSpellThreatMultiplicator;
+    uint32 family = spellInfo->SpellFamilyName;
+    uint64 flags = spellInfo->SpellFamilyFlags;
+
+    if ((family == 5 && flags == 256) ||                    //Searing Pain
+        (family == 6 && flags == 8192) ||                   //Mind Blast
+        (family == 11 && flags == 1048576))                 //Earth Shock
+        return true;
+
+    return false;
 }
 
 /**
