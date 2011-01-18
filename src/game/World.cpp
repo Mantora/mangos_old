@@ -1027,6 +1027,9 @@ void World::SetInitialWorldSettings()
     sLog.outString( "Loading Aggro Spells Definitions...");
     sSpellMgr.LoadSpellThreats();
 
+    sLog.outString( "Loading Spell Threat Multiplicator Definitions...");
+    sSpellMgr.LoadSpellThreatMultiplicators();
+
     sLog.outString( "Loading NPC Texts..." );
     sObjectMgr.LoadGossipText();
 

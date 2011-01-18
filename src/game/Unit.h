@@ -1474,6 +1474,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         void CastSpell(float x, float y, float z, uint32 spellId, bool triggered, Item *castItem = NULL, Aura* triggeredByAura = NULL, ObjectGuid originalCaster = ObjectGuid(), SpellEntry const* triggeredBy = NULL);
         void CastSpell(float x, float y, float z, SpellEntry const *spellInfo, bool triggered, Item *castItem = NULL, Aura* triggeredByAura = NULL, ObjectGuid originalCaster = ObjectGuid(), SpellEntry const* triggeredBy = NULL);
 
+        float getSpellThreatMultiplicator(SpellEntry const * spellInfo) const;
+
         void DeMorph();
 
         void SendAttackStateUpdate(CalcDamageInfo *damageInfo);

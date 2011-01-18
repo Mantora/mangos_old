@@ -1679,39 +1679,14 @@ void SpellMgr::LoadSpellElixirs()
     sLog.outString( ">> Loaded %u spell elixir definitions", count );
 }
 
-struct DoSpellThreat
-{
-    DoSpellThreat(SpellThreatMap& _threatMap, SpellThreatEntry const& _ste) : threatMap(_threatMap), ste(_ste) {}
-    void operator() (uint32 spell_id)
-    {
-        // add ranks only for not filled data (spells adding flat threat are usually different for ranks for example)
-        SpellThreatMap::const_iterator spellItr = threatMap.find(spell_id);
-        if (spellItr == threatMap.end())
-            threatMap[spell_id] = ste;
-
-        // just assert that entry is not redundant
-        else
-        {
-            SpellThreatEntry const& r_ste = spellItr->second;
-            if (ste.threat == r_ste.threat && ste.multiplier == r_ste.multiplier && ste.ap_multiplier == r_ste.ap_multiplier)
-                sLog.outErrorDb("Spell %u listed in `spell_threat` as custom rank has same data as Rank 1, so redundant", spell_id);
-        }
-    }
-
-    SpellThreatMap& threatMap;
-    SpellThreatEntry const& ste;
-};
-
 void SpellMgr::LoadSpellThreats()
 {
     mSpellThreatMap.clear();                                // need for reload case
 
     uint32 count = 0;
-    uint32 customRank = 0;
 
-    //                                                0      1       2           3
-    QueryResult *result = WorldDatabase.Query("SELECT entry, Threat, Multiplier, AP_Multiplier FROM spell_threat");
-
+    //                                                0      1
+    QueryResult *result = WorldDatabase.Query("SELECT entry, Threat FROM spell_threat");
     if( !result )
     {
 
@@ -1724,9 +1699,6 @@ void SpellMgr::LoadSpellThreats()
         return;
     }
 
-    std::set<uint32> firstRankSpells;
-    std::set<uint32> firstRankSpellsWithCustomRanks;
-
     barGoLink bar( (int)result->GetRowCount() );
 
     do
@@ -1736,6 +1708,7 @@ void SpellMgr::LoadSpellThreats()
         bar.step();
 
         uint32 entry = fields[0].GetUInt32();
+        uint16 Threat = fields[1].GetUInt16();
 
         if (!sSpellStore.LookupEntry(entry))
         {
@@ -1743,63 +1716,61 @@ void SpellMgr::LoadSpellThreats()
             continue;
         }
 
-        SpellThreatEntry ste;
-        ste.threat = fields[1].GetUInt16();
-        ste.multiplier = fields[2].GetFloat();
-        ste.ap_multiplier = fields[3].GetFloat();
-
-        mSpellThreatMap[entry] = ste;
-
-
-        uint32 first_id = GetFirstSpellInChain(entry);
-
-        // by default, spell ranks are expected to have same data
-        if(first_id)
-        {
-            firstRankSpells.insert(first_id);
-
-            if(first_id != entry)
-            {
-                // let have independent data in table for spells with flat threat bonus
-                if(!ste.threat)
-                {
-                    sLog.outErrorDb("Spell %u listed in `spell_threat` is not first rank (%u) in chain", entry, first_id);
-                    // prevent loading since it won't have an effect anyway
-                    continue;
-                }
-                // for later check that first rank also added
-                else
-                {
-                    firstRankSpellsWithCustomRanks.insert(first_id);
-                    ++customRank;
-                }
-            }
-        }
+        mSpellThreatMap[entry] = Threat;
 
         ++count;
-
     } while( result->NextRow() );
-
-    // check that first rank added for custom ranks
-    for (std::set<uint32>::const_iterator itr = firstRankSpellsWithCustomRanks.begin(); itr != firstRankSpellsWithCustomRanks.end(); ++itr)
-        if (mSpellThreatMap.find(*itr) == mSpellThreatMap.end())
-            sLog.outErrorDb("Spell %u must be listed in `spell_threat` as first rank for listed custom ranks of spell but not found!", *itr);
-
-    // fill absent non first ranks data base at first rank data
-    for(std::set<uint32>::const_iterator itr = firstRankSpells.begin(); itr != firstRankSpells.end(); ++itr)
-    {
-        SpellThreatMap::const_iterator speItr = mSpellThreatMap.find(*itr);
-        if (speItr != mSpellThreatMap.end())
-        {
-            DoSpellThreat worker(mSpellThreatMap, speItr->second);
-            doForHighRanks(speItr->first, worker);
-        }
-    }
 
     delete result;
 
     sLog.outString();
     sLog.outString( ">> Loaded %u aggro generating spells", count );
+}
+
+void SpellMgr::LoadSpellThreatMultiplicators()
+{
+    mSpellThreatMultiplicatorMap.clear();
+
+    uint32 count = 0;
+
+    QueryResult* result = WorldDatabase.Query("SELECT entry, threat_multiplicator FROM spell_threat_multiplicator");
+
+    if(!result)
+    {
+        barGoLink bar(1);
+        bar.step();
+
+        sLog.outString();
+        sLog.outString(">> Loaded %u aggro multiplicating spells", count);
+        return;
+    }
+
+    barGoLink bar((int)result->GetRowCount());
+
+    do
+    {
+        Field *fields = result->Fetch();
+        bar.step();
+
+        uint32 entry = fields[0].GetUInt32();
+
+        float threat_multiplicator = fields[1].GetFloat();
+
+        if(!sSpellStore.LookupEntry(entry))
+        {
+            sLog.outErrorDb("Spell %u listed in `spell_threat_multiplier` does not exist", entry);
+            continue;
+        }
+
+        mSpellThreatMultiplicatorMap[entry] = threat_multiplicator;
+
+        ++count;
+    } while (result->NextRow());
+
+    delete result;
+
+    sLog.outString();
+    sLog.outString(">> Loaded %u aggro multiplicating spells", count);
 }
 
 bool SpellMgr::IsRankSpellDueToSpell(SpellEntry const *spellInfo_1,uint32 spellId_2) const

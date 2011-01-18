@@ -629,16 +629,10 @@ typedef UNORDERED_MAP<uint32, SpellBonusEntry>     SpellBonusMap;
 #define ELIXIR_SHATTRATH_MASK 0x08
 #define ELIXIR_WELL_FED       0x10                          // Some foods have SPELLFAMILY_POTION
 
-struct SpellThreatEntry
-{
-    uint16 threat;
-    float multiplier;
-    float ap_multiplier;
-};
-
 typedef std::map<uint32, uint8> SpellElixirMap;
 typedef std::map<uint32, float> SpellProcItemEnchantMap;
-typedef std::map<uint32, SpellThreatEntry> SpellThreatMap;
+typedef std::map<uint32, uint16> SpellThreatMap;
+typedef std::map<uint32, float> SpellThreatMultiplicatorMap;
 
 // Spell script target related declarations (accessed using SpellMgr functions)
 enum SpellTargetType
@@ -862,13 +856,22 @@ class SpellMgr
                 return SPELL_NORMAL;
         }
 
-        SpellThreatEntry const* GetSpellThreatEntry(uint32 spellid) const
+        uint16 GetSpellThreat(uint32 spellid) const
         {
             SpellThreatMap::const_iterator itr = mSpellThreatMap.find(spellid);
-            if (itr != mSpellThreatMap.end())
-                return &itr->second;
+            if(itr==mSpellThreatMap.end())
+                return 0;
 
-            return NULL;
+            return itr->second;
+        }
+
+        float GetSpellThreatMultiplicator(uint32 spellid) const
+        {
+            SpellThreatMultiplicatorMap::const_iterator itr = mSpellThreatMultiplicatorMap.find(spellid);
+            if(itr==mSpellThreatMultiplicatorMap.end())
+                return 1.0f;
+
+            return itr->second;
         }
 
         // Spell proc events
@@ -1123,6 +1126,7 @@ class SpellMgr
         void LoadSpellBonuses();
         void LoadSpellTargetPositions();
         void LoadSpellThreats();
+        void LoadSpellThreatMultiplicators();
         void LoadSkillLineAbilityMap();
         void LoadSpellPetAuras();
         void LoadPetLevelupSpellMap();
@@ -1140,6 +1144,7 @@ class SpellMgr
         SpellTargetPositionMap mSpellTargetPositions;
         SpellElixirMap     mSpellElixirs;
         SpellThreatMap     mSpellThreatMap;
+        SpellThreatMultiplicatorMap mSpellThreatMultiplicatorMap;
         SpellProcEventMap  mSpellProcEventMap;
         SpellProcItemEnchantMap mSpellProcItemEnchantMap;
         SpellBonusMap      mSpellBonusMap;
