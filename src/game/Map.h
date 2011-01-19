@@ -104,6 +104,8 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>
         template<class T> void Add(T *);
         template<class T> void Remove(T *, bool);
 
+        static void DeleteFromWorld(Player* player);        // player object will deleted at call
+
         virtual void Update(const uint32&);
 
         void MessageBroadcast(Player *, WorldPacket *, bool to_self);
@@ -222,12 +224,12 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>
 
         void AddUpdateObject(Object *obj)
         {
-            i_objectsToClientUpdate.insert(obj);
+            i_objectsToClientUpdateQueue.push(obj);
         }
 
         void RemoveUpdateObject(Object *obj)
         {
-            i_objectsToClientUpdate.erase( obj );
+            i_objectsToClientNotUpdate.insert(obj);
         }
 
         // DynObjects currently
@@ -276,6 +278,9 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>
 
         void SendObjectUpdates();
         std::set<Object *> i_objectsToClientUpdate;
+        std::set<Object *> i_objectsToClientNotUpdate;
+        std::queue<Object*> i_objectsToClientUpdateQueue;
+
     protected:
 
         MapEntry const* i_mapEntry;
@@ -320,9 +325,6 @@ class MANGOS_DLL_SPEC Map : public GridRefManager<NGridType>
 
         template<class T>
             void RemoveFromGrid(T*, NGridType *, Cell const&);
-
-        template<class T>
-            void DeleteFromWorld(T*);
 };
 
 class MANGOS_DLL_SPEC InstanceMap : public Map
