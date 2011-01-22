@@ -5883,7 +5883,14 @@ void Spell::EffectTaunt(SpellEffectIndex /*eff_idx*/)
 
     // Also use this effect to set the taunter's threat to the taunted creature's highest value
     if (unitTarget->CanHaveThreatList() && unitTarget->getThreatManager().getCurrentVictim())
-        unitTarget->getThreatManager().addThreat(m_caster,unitTarget->getThreatManager().getCurrentVictim()->getThreat());
+	{
+		float unitTargetVictimThreat = unitTarget->getThreatManager().getCurrentVictim()->getThreat();
+		float unitTargetCasterThreat = unitTarget->getThreatManager().getThreat(m_caster);
+
+		float tauntThreatDiff = unitTargetVictimThreat - unitTargetCasterThreat;
+
+		unitTarget->getThreatManager().addThreat(m_caster, tauntThreatDiff);
+	}
 }
 
 void Spell::EffectWeaponDmg(SpellEffectIndex eff_idx)

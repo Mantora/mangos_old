@@ -46,6 +46,8 @@ float ThreatCalcHelper::calcThreat(Unit* pHatedUnit, Unit* /*pHatingUnit*/, floa
 
         if(crit)
             pThreat *= pHatedUnit->GetTotalAuraMultiplierByMiscMask(SPELL_AURA_MOD_CRITICAL_THREAT,schoolMask);
+
+		pThreat *= 100.0f;
     }
 
     float threat = pHatedUnit->ApplyTotalThreatModifier(pThreat, schoolMask);
@@ -402,8 +404,6 @@ void ThreatManager::addThreat(Unit* pVictim, float pThreat, bool crit, SpellScho
     MANGOS_ASSERT(getOwner()->GetTypeId()== TYPEID_UNIT);
 
     float threat = ThreatCalcHelper::calcThreat(pVictim, iOwner, pThreat, crit, schoolMask, pThreatSpell);
-
-	threat *= 100.0f;
 
     if (threat > 0.0f)
     {
